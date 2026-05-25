@@ -15,10 +15,10 @@ _deps/
 *.so
 *.dylib
 *.exe
-zappy_server
-zappy_gui
-zappy_ai
-zappy_tests
+/zappy_server
+/zappy_gui
+/zappy_ai
+/zappy_tests
 
 # IDE and editor files
 .vscode/
