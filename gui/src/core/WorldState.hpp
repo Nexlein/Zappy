@@ -13,9 +13,9 @@ struct Player {
     Orientation orientation;
     int level;
     std::string team;
-    Resources inventory;
-    int timeToLive;
-    bool incanting;
+    Resources inventory = {};
+    int timeToLive = 0;
+    bool incanting = false;
 };
 
 struct Egg {
