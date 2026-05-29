@@ -49,7 +49,7 @@ void HeadlessRenderer::render(const GameState& state)
     for (const auto& [id, player] : state.world.players) {
         _out << "  Player " << id << ": (" << player.x << ", " << player.y << "), facing "
             << orientationToStr(player.orientation) << ", team " << player.team
-            << ", TTL: " << player.timeToLive << "\n";
+            << ", level " << player.level << ", TTL: " << player.timeToLive << "\n";
     }
 
     _out << "Eggs (" << state.world.eggs.size() << "):\n";
