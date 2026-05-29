@@ -34,6 +34,7 @@ void HeadlessRenderer::render(const GameState& state)
 
     _out << "Connection status: " << statusStr << "\n";
     _out << "Time unit: " << state.timeUnit << "\n";
+    _out << "Map (" << state.world.width << "x" << state.world.height << ")\n";
 
     _out << "Teams (" << state.world.teams.size() << "): ";
     for (size_t i = 0; i < state.world.teams.size(); ++i) {
