@@ -1,4 +1,4 @@
-#include "WorldState.hpp"
+#include "core/WorldState.hpp"
 #include "renderer/HeadlessRenderer.hpp"
 #include <iostream>
 

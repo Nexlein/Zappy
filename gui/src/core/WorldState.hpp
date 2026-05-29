@@ -1,7 +1,7 @@
 #pragma once
 
-#include "core/Resources.hpp"
-#include "core/Orientation.hpp"
+#include "Resources.hpp"
+#include "Orientation.hpp"
 #include <vector>
 #include <unordered_map>
 #include <string>
@@ -13,9 +13,9 @@ struct Player {
     Orientation orientation;
     int level;
     std::string team;
-    Resources inventory;
-    int timeToLive;
-    bool incanting;
+    Resources inventory = {};
+    int timeToLive = 0;
+    bool incanting = false;
 };
 
 struct Egg {
@@ -33,7 +33,6 @@ public:
     std::unordered_map<int, Player> players;
     std::unordered_map<int, Egg> eggs;
     std::vector<std::string> teams;
-    std::string winnerTeam;
 
     Resources& at(int x, int y) {
         return tiles[y * width + x];
