@@ -1,0 +1,38 @@
+# Build directories
+build/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+/zappy_server
+/zappy_gui
+/zappy_ai
+/zappy_tests
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Compiled Python files (if AI uses Python)
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Test outputs
+Testing/
+*.log
