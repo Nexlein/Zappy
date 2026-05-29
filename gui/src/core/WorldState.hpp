@@ -33,7 +33,6 @@ public:
     std::unordered_map<int, Player> players;
     std::unordered_map<int, Egg> eggs;
     std::vector<std::string> teams;
-    std::string winnerTeam;
 
     Resources& at(int x, int y) {
         return tiles[y * width + x];
