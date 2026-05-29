@@ -1,25 +1,10 @@
 #pragma once
 
+#include "core/Resources.hpp"
+#include "core/Orientation.hpp"
 #include <vector>
 #include <unordered_map>
 #include <string>
-
-struct Resources {
-    int food;
-    int linemate;
-    int deraumere;
-    int sibur;
-    int mendiane;
-    int phiras;
-    int thystame;
-};
-
-enum class Orientation {
-    N,
-    E,
-    S,
-    W
-};
 
 struct Player {
     int id;
