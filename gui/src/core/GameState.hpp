@@ -13,7 +13,7 @@ enum class ConnectionStatus {
 class GameState {
 public:
     WorldState world;
-    ConnectionStatus status;
+    ConnectionStatus status = ConnectionStatus::Disconnected;
     int timeUnit;
     std::string winnerTeam;
 
