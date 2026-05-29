@@ -23,6 +23,7 @@ include(GoogleTest)
 # pull in GUI sources needed for protocol/state tests
 set(GUI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/network/TcpSocket.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/network/ProtocolParser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/EventQueue.cpp
 )
 
@@ -30,6 +31,7 @@ set(TEST_SOURCES
     test_main.cpp
     test_tcpsocket.cpp
     test_eventqueue.cpp
+    test_protocolparser.cpp
 )
 
 add_executable(zappy_tests ${TEST_SOURCES} ${GUI_SOURCES})
