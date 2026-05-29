@@ -21,11 +21,16 @@ FetchContent_MakeAvailable(googletest)
 include(GoogleTest)
 
 # pull in GUI sources needed for protocol/state tests
-set(TEST_SOURCES
-    test_main.cpp
+set(GUI_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/network/TcpSocket.cpp
 )
 
-add_executable(zappy_tests ${TEST_SOURCES})
+set(TEST_SOURCES
+    test_main.cpp
+    test_tcpsocket.cpp
+)
+
+add_executable(zappy_tests ${TEST_SOURCES} ${GUI_SOURCES})
 
 target_include_directories(zappy_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src
