@@ -1,7 +1,7 @@
 #pragma once
 
-#include "core/Resources.hpp"
-#include "core/Orientation.hpp"
+#include "Resources.hpp"
+#include "Orientation.hpp"
 #include <vector>
 #include <unordered_map>
 #include <string>

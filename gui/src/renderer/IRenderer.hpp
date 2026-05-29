@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../WorldState.hpp"
+#include "core/WorldState.hpp"
 
 class IRenderer {
 public:
