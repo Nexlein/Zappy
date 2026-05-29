@@ -1,13 +1,13 @@
 #pragma once
 
-#include "core/WorldState.hpp"
+#include "core/GameState.hpp"
 
 class IRenderer {
 public:
     virtual ~IRenderer() = default;
 
     virtual void init() = 0;
-    virtual void render(const WorldState& state) = 0;
+    virtual void render(const GameState& state) = 0;
     virtual bool shouldClose() = 0;
     virtual void shutdown() = 0;
 };

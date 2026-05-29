@@ -9,7 +9,7 @@ public:
     ~HeadlessRenderer() override = default;
 
     void init() override;
-    void render(const WorldState& state) override;
+    void render(const GameState& state) override;
     bool shouldClose() override;
     void shutdown() override;
 
