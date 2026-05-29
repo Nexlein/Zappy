@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/Ressources.hpp"
+#include "core/Resources.hpp"
 #include "core/Orientation.hpp"
 #include <vector>
 #include <unordered_map>

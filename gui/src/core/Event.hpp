@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Ressources.hpp"
+#include "Resources.hpp"
 #include "Orientation.hpp"
 #include <string>
 #include <vector>
