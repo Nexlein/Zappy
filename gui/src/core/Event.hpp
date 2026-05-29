@@ -26,7 +26,7 @@ struct TeamName {
     std::string name;
 };
 
-// pnw #n X Y O L N T
+// pnw #n X Y O L N
 struct PlayerNew {
     int id;
     int x;
