@@ -14,6 +14,8 @@ set(GUI_SOURCES
     src/network/ProtocolParser.cpp
     src/core/EventQueue.cpp
     src/core/GameState.cpp
+    src/core/Args.cpp
+    src/core/App.cpp
 )
 
 add_executable(zappy_gui ${GUI_SOURCES})
