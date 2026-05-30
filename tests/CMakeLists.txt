@@ -26,6 +26,9 @@ set(GUI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/network/ProtocolParser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/EventQueue.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/GameState.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/Args.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/App.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/renderer/HeadlessRenderer.cpp
 )
 
 set(TEST_SOURCES
@@ -34,6 +37,8 @@ set(TEST_SOURCES
     test_eventqueue.cpp
     test_protocolparser.cpp
     test_gamestate.cpp
+    test_args.cpp
+    test_app.cpp
 )
 
 add_executable(zappy_tests ${TEST_SOURCES} ${GUI_SOURCES})
