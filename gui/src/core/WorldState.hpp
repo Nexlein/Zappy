@@ -7,6 +7,9 @@
 #include <ostream>
 #include <unordered_map>
 
+/**
+ * @brief Represents a player in the game.
+ */
 struct Player {
     int id;
     int x;
@@ -27,6 +30,9 @@ inline std::ostream& operator<<(std::ostream& os, const Player& player) {
     return os;
 }
 
+/**
+ * @brief Represents an egg in the game.
+ */
 struct Egg {
     int id;
     int x;
@@ -41,6 +47,9 @@ inline std::ostream& operator<<(std::ostream& os, const Egg& egg) {
     return os;
 }
 
+/**
+ * @brief Represents the state of the world in the game, including the map size, tile contents, players, eggs, and teams.
+ */
 class WorldState {
 public:
     int width;
@@ -50,10 +59,16 @@ public:
     std::unordered_map<int, Egg> eggs;
     std::vector<std::string> teams;
 
+    /**
+     * @brief Accesses the resources at a specific tile coordinate (x, y).
+     */
     Resources& at(int x, int y) {
         return tiles[y * width + x];
     }
 
+    /**
+     * @brief Accesses the resources at a specific tile coordinate (x, y).
+     */
     const Resources& at(int x, int y) const {
         return tiles[y * width + x];
     }
