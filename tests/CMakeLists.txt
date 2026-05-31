@@ -32,13 +32,13 @@ set(GUI_SOURCES
 )
 
 set(TEST_SOURCES
-    test_main.cpp
-    test_tcpsocket.cpp
-    test_eventqueue.cpp
-    test_protocolparser.cpp
-    test_gamestate.cpp
-    test_args.cpp
-    test_app.cpp
+    gui/test_main.cpp
+    gui/test_tcpsocket.cpp
+    gui/test_eventqueue.cpp
+    gui/test_protocolparser.cpp
+    gui/test_gamestate.cpp
+    gui/test_args.cpp
+    gui/test_app.cpp
 )
 
 add_executable(zappy_tests ${TEST_SOURCES} ${GUI_SOURCES})
