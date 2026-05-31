@@ -3,6 +3,9 @@
 #include <ostream>
 #include <stdexcept>
 
+/**
+ * @brief Represents the resources available in the game, including food and various minerals.
+ */
 class Resources {
 public:
     int food = 0;
