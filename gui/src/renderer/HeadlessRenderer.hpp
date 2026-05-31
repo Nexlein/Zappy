@@ -3,6 +3,10 @@
 #include "IRenderer.hpp"
 #include <ostream>
 
+/**
+ * @brief A headless renderer that outputs the game state to a stream (e.g., console) instead of rendering it graphically.
+ * This is useful for debugging or running the application in environments without graphical support.
+ */
 class HeadlessRenderer : public IRenderer {
 public:
     explicit HeadlessRenderer(std::ostream& out);
