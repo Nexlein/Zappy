@@ -2,29 +2,10 @@
 
 #include "WorldState.hpp"
 #include "Event.hpp"
-#include <ostream>
-
-enum class ConnectionStatus {
-    Disconnected,
-    Connecting,
-    Connected,
-    Error
-};
-
-std::ostream& operator<<(std::ostream& os, ConnectionStatus status) {
-    switch (status) {
-        case ConnectionStatus::Disconnected: return os << "Disconnected";
-        case ConnectionStatus::Connecting: return os << "Connecting";
-        case ConnectionStatus::Connected: return os << "Connected";
-        case ConnectionStatus::Error: return os << "Error";
-    }
-    return os << "Unknown";
-}
 
 class GameState {
 public:
     WorldState world;
-    ConnectionStatus status = ConnectionStatus::Disconnected;
     int timeUnit = -1;
     std::string winnerTeam = "";
 
