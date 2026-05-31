@@ -13,7 +13,7 @@ enum class Orientation {
     W = 4
 };
 
-std::ostream& operator<<(std::ostream& os, Orientation orientation) {
+inline std::ostream& operator<<(std::ostream& os, Orientation orientation) {
     switch (orientation) {
         case Orientation::N: return os << "North";
         case Orientation::E: return os << "East";
