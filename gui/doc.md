@@ -48,7 +48,6 @@ WorldState wrapper with event application logic and dirty flag.
 class GameState {
 public:
     WorldState world;
-    ConnectionStatus status;
     int timeUnit;
     std::string winnerTeam;
 
