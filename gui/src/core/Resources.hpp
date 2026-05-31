@@ -27,7 +27,7 @@ public:
     }
 };
 
-std::ostream& operator<<(std::ostream& os, const Resources& res) {
+inline std::ostream& operator<<(std::ostream& os, const Resources& res) {
     os << "Food: " << res.food
        << ", Linemate: " << res.linemate
        << ", Deraumere: " << res.deraumere
