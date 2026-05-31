@@ -1,5 +1,8 @@
 #include "App.hpp"
-
+#include "network/ProtocolParser.hpp"
+#include "renderer/IRenderer.hpp"
+#include "renderer/HeadlessRenderer.hpp"
+#include "renderer/RaylibRenderer.hpp"
 #include <iostream>
 
 #include "network/ProtocolParser.hpp"
