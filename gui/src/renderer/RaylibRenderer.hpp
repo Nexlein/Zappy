@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IRenderer.hpp"
+#include "raylib.h"
 
 /**
  * @brief A renderer that uses Raylib to display the game state graphically.
@@ -15,4 +16,6 @@ public:
     bool shouldClose() override;
     void shutdown() override;
 
+private:
+    Camera3D _camera;
 };
