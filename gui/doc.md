@@ -94,7 +94,43 @@ Text-based state dump for testing/debugging.
 Prints game state updates to stdout when dirty flag set.
 
 ### renderer/RaylibRenderer
-*(Not yet implemented - future 3D visualization)*
+3D visualization using raylib (not yet implemented).
+
+**Camera Design: Orbital Observer**
+- Fixed orbital camera rotating around map center (~45-60° angle)
+- Controls: Arrow keys (or click-drag) to rotate, scroll to zoom
+- Chosen for simplicity and full game state overview
+
+**Interaction: Click-to-Inspect**
+- Raycast on mouse click to select entities (players, eggs, tiles)
+- Inspector panel shows selected entity details
+- No manual camera movement needed (0-player game = pure observation)
+
+**UI Layout:**
+- Top: Time unit, team counts
+- Right panel: Inspector (selected entity stats)
+- Bottom-left: Control hints
+
+**Visual Elements:**
+- Players: 3D models/cubes (color-coded by team)
+- Eggs: Spheres (team color)
+- Tiles: Grid with resource indicators
+- Selection: Highlight/outline selected entity
+- Incantations: Glow/particle effect on incanting players
+- Low food warning: Red tint when `inventory.food < 3`
+
+**Technical Notes:**
+- Use `GetMouseRay()` + `GetRayCollisionMesh()` for click detection
+- Tag 3D entities with game IDs for inspector lookup
+- `Camera3D` with `CAMERA_ORBITAL` mode or manual rotation
+- Inspector: `raygui` panel or manual `DrawText()`
+
+**Implementation Order:**
+1. Basic rendering (cubes for players, grid for tiles, spheres for eggs)
+2. Orbital camera with rotation/zoom
+3. Raycast click detection
+4. Inspector panel
+5. Visual polish (highlights, effects, models)
 
 ## Main Loop
 
