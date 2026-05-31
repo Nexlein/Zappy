@@ -3,8 +3,9 @@
 #include "Resources.hpp"
 #include "Orientation.hpp"
 #include <vector>
-#include <unordered_map>
 #include <string>
+#include <ostream>
+#include <unordered_map>
 
 struct Player {
     int id;
@@ -14,9 +15,17 @@ struct Player {
     int level;
     std::string team;
     Resources inventory = {};
-    int timeToLive = 0;
     bool incanting = false;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Player& player) {
+    os << "Player " << player.id << ":\n"
+       << "  From team " << player.team << ", level " << player.level << "\n"
+       << "  At " << player.x << ", " << player.y << ", facing " << player.orientation << "\n"
+       << "  Inventory: " << player.inventory << "\n"
+       << "  Incanting: " << (player.incanting ? "yes" : "no");
+    return os;
+}
 
 struct Egg {
     int id;
@@ -24,6 +33,13 @@ struct Egg {
     int y;
     std::string team;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Egg& egg) {
+    os << "Egg " << egg.id << ":\n"
+       << "  From team " << egg.team << "\n"
+       << "  At " << egg.x << ", " << egg.y;
+    return os;
+}
 
 class WorldState {
 public:
