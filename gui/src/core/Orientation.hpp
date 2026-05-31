@@ -4,7 +4,8 @@
 
 /**
  * @brief Represents the orientation of an object in the game.
- * Orientation mapped to the intergers as required by the protocol.
+ * Orientation mapped to integers as required by the protocol.
+ * See G-YEP-400_zappy_GUI_protocol.pdf for details.
  */
 enum class Orientation {
     N = 1,
