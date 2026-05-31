@@ -34,7 +34,7 @@ void App::run()
         std::cout << "[INFO] Running in headless mode\n";
         renderer = new HeadlessRenderer(std::cout);
     } else {
-        // When we have a graphic renderer, use it instead of headless
+        // TODO: When we have a graphic renderer, use it instead of headless
         std::cout << "[INFO] Graphical renderer not yet implemented, using headless\n";
         renderer = new HeadlessRenderer(std::cout);
     }
