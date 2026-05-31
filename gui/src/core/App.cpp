@@ -38,6 +38,7 @@ void App::run()
         renderer = new RaylibRenderer();
     }
 
+    renderer->init();
     while (!renderer->shouldClose()) {
         pollAndEnqueue(socket, eventQueue);
 
@@ -48,6 +49,7 @@ void App::run()
         renderer->render(state);
     }
 
+    renderer->shutdown();
     delete renderer;
 }
 
