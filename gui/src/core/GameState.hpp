@@ -2,6 +2,7 @@
 
 #include "WorldState.hpp"
 #include "Event.hpp"
+#include <ostream>
 
 enum class ConnectionStatus {
     Disconnected,
@@ -10,16 +11,31 @@ enum class ConnectionStatus {
     Error
 };
 
+std::ostream& operator<<(std::ostream& os, ConnectionStatus status) {
+    switch (status) {
+        case ConnectionStatus::Disconnected: return os << "Disconnected";
+        case ConnectionStatus::Connecting: return os << "Connecting";
+        case ConnectionStatus::Connected: return os << "Connected";
+        case ConnectionStatus::Error: return os << "Error";
+    }
+    return os << "Unknown";
+}
+
 class GameState {
 public:
     WorldState world;
     ConnectionStatus status = ConnectionStatus::Disconnected;
-    int timeUnit;
-    std::string winnerTeam;
+    int timeUnit = -1;
+    std::string winnerTeam = "";
 
     void applyEvent(const Event& e);
 
+    bool isDirty() const { return dirty; }
+    void clearDirty() const { dirty = false; }
+
 private:
+    mutable bool dirty = false;
+
     void applyMapSize(const MapSize& e);
     void applyTileContent(const TileContent& e);
     void applyTeamName(const TeamName& e);
