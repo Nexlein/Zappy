@@ -2,7 +2,6 @@
 #include <iostream>
 
 void GameState::applyEvent(const Event& e) {
-    // Event is a std::variant, we can use std::visit to apply the correct handler
     std::visit([this](const auto& event) {
         using T = std::decay_t<decltype(event)>;
         if      constexpr (std::is_same_v<T, MapSize>)              applyMapSize(event);
@@ -33,6 +32,7 @@ void GameState::applyEvent(const Event& e) {
             // Is a UnknownCommand or BadParameters, we can ignore them for now
         }
     }, e);
+    dirty = true;
 }
 
 void GameState::applyMapSize(const MapSize& e) {

@@ -1,16 +1,20 @@
 #pragma once
 
+#include <ostream>
 #include <stdexcept>
 
+/**
+ * @brief Represents the resources available in the game, including food and various minerals.
+ */
 class Resources {
 public:
-    int food;
-    int linemate;
-    int deraumere;
-    int sibur;
-    int mendiane;
-    int phiras;
-    int thystame;
+    int food = 0;
+    int linemate = 0;
+    int deraumere = 0;
+    int sibur = 0;
+    int mendiane = 0;
+    int phiras = 0;
+    int thystame = 0;
 
     int& operator[](size_t index) {
         switch (index) {
@@ -25,3 +29,14 @@ public:
         }
     }
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Resources& res) {
+    os << "Food: " << res.food
+       << ", Linemate: " << res.linemate
+       << ", Deraumere: " << res.deraumere
+       << ", Sibur: " << res.sibur
+       << ", Mendiane: " << res.mendiane
+       << ", Phiras: " << res.phiras
+       << ", Thystame: " << res.thystame;
+    return os;
+}
