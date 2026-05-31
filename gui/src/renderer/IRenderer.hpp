@@ -2,6 +2,9 @@
 
 #include "core/GameState.hpp"
 
+/**
+ * @brief Interface for rendering the game state.
+ */
 class IRenderer {
 public:
     virtual ~IRenderer() = default;
