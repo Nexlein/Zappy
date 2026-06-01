@@ -11,5 +11,7 @@ add_subdirectory(gui)
 # optional: build tests alongside everything
 option(ZAPPY_BUILD_TESTS "Build tests" OFF)
 if(ZAPPY_BUILD_TESTS)
+    enable_testing()
     add_subdirectory(tests)
 endif()
+
