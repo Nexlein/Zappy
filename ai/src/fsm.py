@@ -50,11 +50,3 @@ class AIController:
         self.current_state_name = new_state_name
         self.current_state = self.states[self.current_state_name]
         self.current_state.enter(self.context)
-
-
-if __name__ == "__main__":
-    context = DroneContext(team_name="TeamZappy")
-
-    ai = AIController(context)
-
-    print("[Success] FSM Engine initialized successfully.")
