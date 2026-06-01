@@ -7,6 +7,7 @@
 
 from context import DroneContext
 from states.AStates import State
+from states.survival import ForageFood
 
 
 class AIController:
@@ -15,16 +16,12 @@ class AIController:
 
         # We will register our states here as we build them
         self.states: dict[str, State] = {
-            # "ForageFood": ForageFood(),
+            "ForageFood": ForageFood(),
         }
 
-        # Uncomment below once you have your first state built
-        # self.current_state_name = "ForageFood"
-        # self.current_state = self.states[self.current_state_name]
-        # self.current_state.enter(self.context)
-
-        self.current_state_name = None
-        self.current_state = None
+        self.current_state_name = "ForageFood"
+        self.current_state = self.states[self.current_state_name]
+        self.current_state.enter(self.context)
 
     def tick(self) -> str | None:
         """Evaluates logic and returns the next command to send."""
@@ -50,11 +47,3 @@ class AIController:
         self.current_state_name = new_state_name
         self.current_state = self.states[self.current_state_name]
         self.current_state.enter(self.context)
-
-
-if __name__ == "__main__":
-    context = DroneContext(team_name="TeamZappy")
-
-    ai = AIController(context)
-
-    print("[Success] FSM Engine initialized successfully.")
