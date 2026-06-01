@@ -25,25 +25,38 @@ void RaylibRenderer::render(const GameState& state)
     mock.world.players[11] = {11, 5, 1, Orientation::E, 2, "TeamA"};
     mock.world.players[12] = {12, 6, 7, Orientation::S, 3, "TeamB"};
 
+    mock.world.eggs[20] = {20, 4, 4, "TeamA"};
+    mock.world.eggs[21] = {21, 1, 6, "TeamB"};
+
     BeginDrawing();
     ClearBackground(RAYWHITE);
 
     BeginMode3D(_camera);
 
     _drawCustomGrid(mock.world.width, mock.world.height, TILE_SIZE);
+
     for (const auto& [id, player] : mock.world.players) {
         _drawPlayer(player, mock.world.width, mock.world.height);
     }
 
+    for (const auto& [id, egg] : mock.world.eggs) {
+        _drawEgg(egg, mock.world.width, mock.world.height);
+    }
+
     for (int x = 0; x < mock.world.width; x++) {
-        for (int y = 0; y < mock.world.height; y++)
+        for (int y = 0; y < mock.world.height; y++) {
             _drawResources(mock.world.at(x, y), x, y, mock.world.width, mock.world.height);
+        }
     }
 
     EndMode3D();
 
     for (const auto& [id, player] : mock.world.players) {
         _drawPlayerNametag(player, mock.world.width, mock.world.height);
+    }
+
+    for (const auto& [id, egg] : mock.world.eggs) {
+        _drawEggNametag(egg, mock.world.width, mock.world.height);
     }
 
     DrawFPS(10, 10);
@@ -85,6 +98,7 @@ void RaylibRenderer::_drawCustomGrid(int width, int height, float spacing)
 void RaylibRenderer::_drawPlayer(const Player& player, int worldWidth, int worldHeight)
 {
     static const float playerSize = 0.8f;
+
     Vector3 worldPos = _tileToWorld(player.x, player.y, worldWidth, worldHeight);
     worldPos.y = playerSize / 2.0f; // Make player be on top of grid
     Color teamColor = _getTeamColor(player.team);
@@ -149,6 +163,32 @@ void RaylibRenderer::_drawResources(const Resources& resources, int tileX, int t
 
         DrawSphere(drawPos, size, resourceColors[i]);
     }
+}
+
+void RaylibRenderer::_drawEgg(const Egg& egg, int worldWidth, int worldHeight)
+{
+    static const float eggSize = 0.4f;
+
+    Vector3 worldPos = _tileToWorld(egg.x, egg.y, worldWidth, worldHeight);
+    worldPos.y = eggSize / 2.0f; // Make egg be on top of grid
+    Color teamColor = _getTeamColor(egg.team);
+
+    DrawCube(worldPos, eggSize, eggSize, eggSize, teamColor);
+}
+
+void RaylibRenderer::_drawEggNametag(const Egg& egg, int worldWidth, int worldHeight)
+{
+    static const float eggSize = 0.4f;
+    Vector3 worldPos = _tileToWorld(egg.x, egg.y, worldWidth, worldHeight);
+    worldPos.y = eggSize * 1.5f;  // Above cube
+
+    Vector2 screenPos = GetWorldToScreen(worldPos, _camera);
+
+    std::string label = "Egg #" + std::to_string(egg.id);
+    int fontSize = 20;
+    int textWidth = MeasureText(label.c_str(), fontSize);
+
+    DrawText(label.c_str(), screenPos.x - textWidth / 2, screenPos.y, fontSize, BLACK);
 }
 
 Color RaylibRenderer::_getTeamColor(const std::string& teamName)

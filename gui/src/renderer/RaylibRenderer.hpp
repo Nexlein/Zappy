@@ -76,6 +76,22 @@ private:
     void _drawResources(const Resources& resources, int tileX, int tileY, int worldWidth, int worldHeight);
 
     /**
+     * @brief Renders an egg.
+     * @param egg The egg to render.
+     * @param worldWidth The width of the world in tiles.
+     * @param worldHeight The height of the world in tiles.
+     */
+    void _drawEgg(const Egg& egg, int worldWidth, int worldHeight);
+
+    /**
+     * @brief Draws nametag above an egg (2D text).
+     * @param egg The egg to draw nametag for.
+     * @param worldWidth The width of the world in tiles.
+     * @param worldHeight The height of the world in tiles.
+     */
+    void _drawEggNametag(const Egg& egg, int worldWidth, int worldHeight);
+
+    /**
      * @brief Gets or assigns a color for a team.
      * @param teamName The name of the team.
      * @return The color assigned to the team.
