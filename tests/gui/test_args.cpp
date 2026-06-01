@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
+
 #include "core/Args.hpp"
 
 // Valid arguments
-TEST(ArgsTest, ValidPortOnly) {
+TEST(ArgsTest, ValidPortOnly)
+{
     const char* argv[] = {"prog", "-p", "4242"};
     Args args(3, const_cast<char**>(argv));
 
@@ -15,7 +17,8 @@ TEST(ArgsTest, ValidPortOnly) {
     EXPECT_EQ(config.machine, "localhost");
 }
 
-TEST(ArgsTest, ValidPortAndMachine) {
+TEST(ArgsTest, ValidPortAndMachine)
+{
     const char* argv[] = {"prog", "-p", "8080", "-h", "example.com"};
     Args args(5, const_cast<char**>(argv));
 
@@ -28,7 +31,8 @@ TEST(ArgsTest, ValidPortAndMachine) {
     EXPECT_FALSE(config.headless);
 }
 
-TEST(ArgsTest, ValidWithHeadless) {
+TEST(ArgsTest, ValidWithHeadless)
+{
     const char* argv[] = {"prog", "-p", "4242", "--headless"};
     Args args(4, const_cast<char**>(argv));
 
@@ -39,7 +43,8 @@ TEST(ArgsTest, ValidWithHeadless) {
     EXPECT_TRUE(config.headless);
 }
 
-TEST(ArgsTest, ValidAllFlags) {
+TEST(ArgsTest, ValidAllFlags)
+{
     const char* argv[] = {"prog", "-p", "9000", "-h", "server.com", "--headless"};
     Args args(6, const_cast<char**>(argv));
 
@@ -51,7 +56,8 @@ TEST(ArgsTest, ValidAllFlags) {
     EXPECT_TRUE(config.headless);
 }
 
-TEST(ArgsTest, ValidMachineThenPort) {
+TEST(ArgsTest, ValidMachineThenPort)
+{
     const char* argv[] = {"prog", "-h", "192.168.1.1", "-p", "3000"};
     Args args(5, const_cast<char**>(argv));
 
@@ -63,7 +69,8 @@ TEST(ArgsTest, ValidMachineThenPort) {
 }
 
 // Help requested
-TEST(ArgsTest, HelpFlag) {
+TEST(ArgsTest, HelpFlag)
+{
     const char* argv[] = {"prog", "--help"};
     Args args(2, const_cast<char**>(argv));
 
@@ -72,7 +79,8 @@ TEST(ArgsTest, HelpFlag) {
     EXPECT_EQ(args.exitCode(), 0);
 }
 
-TEST(ArgsTest, HelpWithOtherArgs) {
+TEST(ArgsTest, HelpWithOtherArgs)
+{
     const char* argv[] = {"prog", "-p", "4242", "--help"};
     Args args(4, const_cast<char**>(argv));
 
@@ -82,7 +90,8 @@ TEST(ArgsTest, HelpWithOtherArgs) {
 }
 
 // Missing arguments
-TEST(ArgsTest, NoArguments) {
+TEST(ArgsTest, NoArguments)
+{
     const char* argv[] = {"prog"};
     Args args(1, const_cast<char**>(argv));
 
@@ -91,7 +100,8 @@ TEST(ArgsTest, NoArguments) {
     EXPECT_EQ(args.exitCode(), 84);
 }
 
-TEST(ArgsTest, MissingPort) {
+TEST(ArgsTest, MissingPort)
+{
     const char* argv[] = {"prog", "-h", "example.com"};
     Args args(3, const_cast<char**>(argv));
 
@@ -99,7 +109,8 @@ TEST(ArgsTest, MissingPort) {
     EXPECT_EQ(args.exitCode(), 84);
 }
 
-TEST(ArgsTest, PortFlagWithoutValue) {
+TEST(ArgsTest, PortFlagWithoutValue)
+{
     const char* argv[] = {"prog", "-p"};
     Args args(2, const_cast<char**>(argv));
 
@@ -107,7 +118,8 @@ TEST(ArgsTest, PortFlagWithoutValue) {
     EXPECT_EQ(args.exitCode(), 84);
 }
 
-TEST(ArgsTest, MachineFlagWithoutValue) {
+TEST(ArgsTest, MachineFlagWithoutValue)
+{
     const char* argv[] = {"prog", "-p", "4242", "-h"};
     Args args(4, const_cast<char**>(argv));
 
@@ -116,7 +128,8 @@ TEST(ArgsTest, MachineFlagWithoutValue) {
 }
 
 // Invalid port values
-TEST(ArgsTest, InvalidPortNotANumber) {
+TEST(ArgsTest, InvalidPortNotANumber)
+{
     const char* argv[] = {"prog", "-p", "not_a_number"};
     Args args(3, const_cast<char**>(argv));
 
@@ -124,7 +137,8 @@ TEST(ArgsTest, InvalidPortNotANumber) {
     EXPECT_EQ(args.exitCode(), 84);
 }
 
-TEST(ArgsTest, InvalidPortNegative) {
+TEST(ArgsTest, InvalidPortNegative)
+{
     const char* argv[] = {"prog", "-p", "-1"};
     Args args(3, const_cast<char**>(argv));
 
@@ -132,7 +146,8 @@ TEST(ArgsTest, InvalidPortNegative) {
     EXPECT_EQ(args.exitCode(), 84);
 }
 
-TEST(ArgsTest, InvalidPortZero) {
+TEST(ArgsTest, InvalidPortZero)
+{
     const char* argv[] = {"prog", "-p", "0"};
     Args args(3, const_cast<char**>(argv));
 
@@ -140,7 +155,8 @@ TEST(ArgsTest, InvalidPortZero) {
     EXPECT_EQ(args.exitCode(), 84);
 }
 
-TEST(ArgsTest, InvalidPortTooLarge) {
+TEST(ArgsTest, InvalidPortTooLarge)
+{
     const char* argv[] = {"prog", "-p", "70000"};
     Args args(3, const_cast<char**>(argv));
 
@@ -148,7 +164,8 @@ TEST(ArgsTest, InvalidPortTooLarge) {
     EXPECT_EQ(args.exitCode(), 84);
 }
 
-TEST(ArgsTest, ValidPortBoundary1) {
+TEST(ArgsTest, ValidPortBoundary1)
+{
     const char* argv[] = {"prog", "-p", "1"};
     Args args(3, const_cast<char**>(argv));
 
@@ -156,7 +173,8 @@ TEST(ArgsTest, ValidPortBoundary1) {
     EXPECT_EQ(args.getConfig().port, 1);
 }
 
-TEST(ArgsTest, ValidPortBoundary65535) {
+TEST(ArgsTest, ValidPortBoundary65535)
+{
     const char* argv[] = {"prog", "-p", "65535"};
     Args args(3, const_cast<char**>(argv));
 
@@ -165,7 +183,8 @@ TEST(ArgsTest, ValidPortBoundary65535) {
 }
 
 // Unknown arguments
-TEST(ArgsTest, UnknownFlag) {
+TEST(ArgsTest, UnknownFlag)
+{
     const char* argv[] = {"prog", "-p", "4242", "--unknown"};
     Args args(4, const_cast<char**>(argv));
 
@@ -173,7 +192,8 @@ TEST(ArgsTest, UnknownFlag) {
     EXPECT_EQ(args.exitCode(), 84);
 }
 
-TEST(ArgsTest, UnknownShortFlag) {
+TEST(ArgsTest, UnknownShortFlag)
+{
     const char* argv[] = {"prog", "-x", "value"};
     Args args(3, const_cast<char**>(argv));
 
@@ -182,7 +202,8 @@ TEST(ArgsTest, UnknownShortFlag) {
 }
 
 // Edge cases
-TEST(ArgsTest, DuplicatePort) {
+TEST(ArgsTest, DuplicatePort)
+{
     const char* argv[] = {"prog", "-p", "4242", "-p", "8080"};
     Args args(5, const_cast<char**>(argv));
 
@@ -190,7 +211,8 @@ TEST(ArgsTest, DuplicatePort) {
     EXPECT_EQ(args.getConfig().port, 8080);  // Last one wins
 }
 
-TEST(ArgsTest, DuplicateMachine) {
+TEST(ArgsTest, DuplicateMachine)
+{
     const char* argv[] = {"prog", "-p", "4242", "-h", "host1", "-h", "host2"};
     Args args(7, const_cast<char**>(argv));
 

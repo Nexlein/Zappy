@@ -1,19 +1,20 @@
 #pragma once
 
-#include "core/Event.hpp"
-#include <string_view>
 #include <optional>
+#include <string_view>
 #include <vector>
+
+#include "core/Event.hpp"
 
 /**
  * @brief Parses server messages into Event objects.
  * Static class that provides a method to parse raw input strings
  * from the server and convert them into structured Event variants.
- * 
+ *
  * Design pattern: FACTORY
  */
 class ProtocolParser {
-public:
+    public:
     /**
      * @brief Parses a raw input string from the server and converts it into an Event variant.
      * This method stops at the first '\n' character.
@@ -23,8 +24,9 @@ public:
      */
     static std::optional<Event> parse(std::string_view input);
 
-private:
-    static std::vector<std::string_view> _split(std::string_view str, char delimiter, char stopAt = '\n');
+    private:
+    static std::vector<std::string_view> _split(std::string_view str, char delimiter,
+                                                char stopAt = '\n');
     static std::string _joinTokens(const std::vector<std::string_view>& tokens, size_t start);
 
     static std::optional<Event> _parseMSZ(const std::vector<std::string_view>& tokens);

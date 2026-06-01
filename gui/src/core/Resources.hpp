@@ -7,7 +7,7 @@
  * @brief Represents the resources available in the game, including food and various minerals.
  */
 class Resources {
-public:
+    public:
     int food = 0;
     int linemate = 0;
     int deraumere = 0;
@@ -16,27 +16,33 @@ public:
     int phiras = 0;
     int thystame = 0;
 
-    int& operator[](size_t index) {
+    int& operator[](size_t index)
+    {
         switch (index) {
-            case 0: return food;
-            case 1: return linemate;
-            case 2: return deraumere;
-            case 3: return sibur;
-            case 4: return mendiane;
-            case 5: return phiras;
-            case 6: return thystame;
-            default: throw std::out_of_range("Invalid resource index");
+            case 0:
+                return food;
+            case 1:
+                return linemate;
+            case 2:
+                return deraumere;
+            case 3:
+                return sibur;
+            case 4:
+                return mendiane;
+            case 5:
+                return phiras;
+            case 6:
+                return thystame;
+            default:
+                throw std::out_of_range("Invalid resource index");
         }
     }
 };
 
-inline std::ostream& operator<<(std::ostream& os, const Resources& res) {
-    os << "Food: " << res.food
-       << ", Linemate: " << res.linemate
-       << ", Deraumere: " << res.deraumere
-       << ", Sibur: " << res.sibur
-       << ", Mendiane: " << res.mendiane
-       << ", Phiras: " << res.phiras
+inline std::ostream& operator<<(std::ostream& os, const Resources& res)
+{
+    os << "Food: " << res.food << ", Linemate: " << res.linemate << ", Deraumere: " << res.deraumere
+       << ", Sibur: " << res.sibur << ", Mendiane: " << res.mendiane << ", Phiras: " << res.phiras
        << ", Thystame: " << res.thystame;
     return os;
 }
