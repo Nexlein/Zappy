@@ -47,7 +47,7 @@ class BroadcastMessage:
 @dataclass
 class DroneContext:
     """
-    The Single Source of Truth.
+    The shared state modified by the network and read by the FSM.
     Dev A (Network) updates this object.
     Dev B (FSM) reads this object to make decisions.
     """
