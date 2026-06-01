@@ -117,10 +117,10 @@ Color RaylibRenderer::_getTeamColor(const std::string& teamName)
     return newColor;
 }
 
-Vector3 RaylibRenderer::_tileToWorld(int tileX, int tileY, int mapWidth, int mapHeight) const
+Vector3 RaylibRenderer::_tileToWorld(int tileX, int tileY, int worldWidth, int worldHeight) const
 {
-    float offsetX = (mapWidth * TILE_SIZE) / 2.0f;
-    float offsetZ = (mapHeight * TILE_SIZE) / 2.0f;
+    float offsetX = (worldWidth * TILE_SIZE) / 2.0f;
+    float offsetZ = (worldHeight * TILE_SIZE) / 2.0f;
 
     return {
         tileX * TILE_SIZE - offsetX + TILE_SIZE / 2.0f,

@@ -60,9 +60,9 @@ private:
      * @brief Converts tile coordinates to world position.
      * @param tileX Tile x coordinate (game coordinates).
      * @param tileY Tile y coordinate (game coordinates).
-     * @param mapWidth Map width in tiles.
-     * @param mapHeight Map height in tiles.
+     * @param worldWidth World width in tiles.
+     * @param worldHeight World height in tiles.
      * @return World position (centered grid at origin).
      */
-    Vector3 _tileToWorld(int tileX, int tileY, int mapWidth, int mapHeight) const;
+    Vector3 _tileToWorld(int tileX, int tileY, int worldWidth, int worldHeight) const;
 };
