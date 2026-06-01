@@ -19,6 +19,8 @@ void RaylibRenderer::init()
 
 void RaylibRenderer::render(const GameState& state)
 {
+    // Mock is used to add some fake players and eggs for testing purposes
+    // TODO remove mock and use state directly once rendering is implemented and tested
     GameState mock = state;
 
     mock.world.players[10] = {10, 2, 3, Orientation::N, 1, "TeamA"};
