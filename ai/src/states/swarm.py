@@ -5,7 +5,7 @@
 ## The Swarm Layer (Contextual Priority)
 ##
 
-# Contextual Priority
+# Contextual Priority
 
 # From Level 2 onwards, evolution requires teammates.
 # The AI must pause its solo evolution to interact with the network.

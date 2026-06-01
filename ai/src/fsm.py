@@ -23,7 +23,6 @@ class AIController:
         self.current_state = self.states[self.current_state_name]
         self.current_state.enter(self.context)
 
-
     def tick(self) -> str | None:
         """Evaluates logic and returns the next command to send."""
         if not self.current_state:
