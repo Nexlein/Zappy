@@ -12,20 +12,22 @@ import socket
 class TcpClient:
     host: str
     port: int
-    _socket: socket.socket = field(init=False)
+    _socket: socket.socket | None = None
     _buffer: str = ""
 
-    def __post_init__(self):
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
     def connect(self):
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.connect((self.host, self.port))
 
     def send(self, data: str):
+        if self._socket is None:
+            raise RuntimeError("not connected")
         data = data if data.endswith("\n") else data + "\n"
         self._socket.sendall(data.encode())
 
     def receive(self) -> str:
+        if self._socket is None:
+            raise RuntimeError("not connected")
         while "\n" not in self._buffer:
             chunk = self._socket.recv(1024)
             if not chunk:
