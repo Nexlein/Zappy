@@ -8,6 +8,7 @@
 import sys
 import os
 import unittest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../ai/src"))
 
 from tcpClient import TcpClient
@@ -37,7 +38,6 @@ def make_client(chunks=None):
 
 
 class TestSend(unittest.TestCase):
-
     def test_appends_newline(self):
         client = make_client()
         client.send("team1")
@@ -50,7 +50,6 @@ class TestSend(unittest.TestCase):
 
 
 class TestReceive(unittest.TestCase):
-
     def test_single_line(self):
         client = make_client([b"WELCOME\n"])
         self.assertEqual(client.receive(), "WELCOME")
@@ -76,7 +75,6 @@ class TestReceive(unittest.TestCase):
 
 
 class TestHandshake(unittest.TestCase):
-
     def test_full_handshake(self):
         client = make_client([b"WELCOME\n", b"3\n", b"10 20\n"])
         slots, dims = client.handshake("team1")
