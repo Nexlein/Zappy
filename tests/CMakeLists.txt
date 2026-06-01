@@ -56,3 +56,16 @@ target_compile_options(zappy_tests PRIVATE
 )
 
 gtest_discover_tests(zappy_tests)
+
+# Python AI tests
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_Interpreter_FOUND)
+    add_test(NAME zappy_ai_tests
+        COMMAND ${Python3_EXECUTABLE} -m unittest discover -s ${CMAKE_CURRENT_SOURCE_DIR}/ai -p "test_*.py"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../ai
+    )
+    set_tests_properties(zappy_ai_tests PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../ai/src"
+    )
+endif()
+
