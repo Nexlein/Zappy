@@ -9,11 +9,13 @@ from argparse import ArgumentParser
 from dataclasses import dataclass
 import sys
 
+
 @dataclass
 class Config:
     port: int
     teamName: str
     host: str
+
 
 def parseArgs() -> Config:
     if "--help" in sys.argv:
@@ -26,9 +28,23 @@ def parseArgs() -> Config:
         sys.exit(0)
 
     parser = ArgumentParser(description="Zappy AI Client", add_help=False)
-    parser.add_argument("-p", "--port", type=int, required=True, help="Port number to connect to the server")
-    parser.add_argument("-n", "--name", type=str, required=True, help="Name of the team")
-    parser.add_argument("-h", "--host", type=str, default="localhost", help="Hostname of the ai client (default: localhost)")
+    parser.add_argument(
+        "-p",
+        "--port",
+        type=int,
+        required=True,
+        help="Port number to connect to the server",
+    )
+    parser.add_argument(
+        "-n", "--name", type=str, required=True, help="Name of the team"
+    )
+    parser.add_argument(
+        "-h",
+        "--host",
+        type=str,
+        default="localhost",
+        help="Hostname of the ai client (default: localhost)",
+    )
 
     args = parser.parse_args()
     return Config(port=args.port, teamName=args.name, host=args.host)

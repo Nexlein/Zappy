@@ -8,6 +8,7 @@
 from dataclasses import dataclass, field
 import socket
 
+
 @dataclass
 class TcpClient:
     host: str

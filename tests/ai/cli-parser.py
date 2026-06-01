@@ -9,16 +9,21 @@ import sys
 import os
 import unittest
 from unittest.mock import patch
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../ai/src"))
 
 from argsParser import parseArgs, Config
 
-class TestParseArgs(unittest.TestCase):
 
+class TestParseArgs(unittest.TestCase):
     def test_all_args(self):
-        with patch("sys.argv", ["zappy_ai", "-p", "4242", "-n", "team1", "-h", "192.168.1.1"]):
+        with patch(
+            "sys.argv", ["zappy_ai", "-p", "4242", "-n", "team1", "-h", "192.168.1.1"]
+        ):
             config = parseArgs()
-            self.assertEqual(config, Config(port=4242, teamName="team1", host="192.168.1.1"))
+            self.assertEqual(
+                config, Config(port=4242, teamName="team1", host="192.168.1.1")
+            )
 
     def test_default_host(self):
         with patch("sys.argv", ["zappy_ai", "-p", "4242", "-n", "team1"]):
