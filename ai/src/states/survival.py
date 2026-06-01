@@ -39,8 +39,9 @@ class ForageFood(State):
         print("[ForageFood] Exiting state.")
         return None
 
+
 # The Survival Layer (Highest Priority)
-# If the drone runs out of food, it dies and the socket closes. 
+# If the drone runs out of food, it dies and the socket closes.
 # You cannot win if your drones are dead. Therefore, any state that prevents the drone from dying belongs in this category.
 
 # Flee or Evade: (A state you might add later) If an enemy team keeps using the Eject command to push your drone away from resources, your drone might need a survival state to run away and regroup.
