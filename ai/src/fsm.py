@@ -8,6 +8,7 @@
 from context import DroneContext
 from states.AStates import State
 from states.survival import ForageFood
+from states.evolution import SearchStone
 
 
 class AIController:
@@ -17,6 +18,7 @@ class AIController:
         # We will register our states here as we build them
         self.states: dict[str, State] = {
             "ForageFood": ForageFood(),
+            "SearchStone": SearchStone(),
         }
 
         self.current_state_name = "ForageFood"

@@ -18,6 +18,11 @@ fetchcontent_declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 fetchcontent_makeavailable(googletest)
 
+# Silence compiler warnings from external GoogleTest targets
+if(TARGET gtest)
+    target_compile_options(gtest PRIVATE -w)
+endif()
+
 include(GoogleTest)
 
 # pull in GUI sources needed for protocol/state tests
