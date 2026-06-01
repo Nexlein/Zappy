@@ -23,11 +23,22 @@ include(GoogleTest)
 # pull in GUI sources needed for protocol/state tests
 set(GUI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/network/TcpSocket.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/network/ProtocolParser.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/EventQueue.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/GameState.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/Args.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/App.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/renderer/HeadlessRenderer.cpp
 )
 
 set(TEST_SOURCES
-    test_main.cpp
-    test_tcpsocket.cpp
+    gui/test_main.cpp
+    gui/test_tcpsocket.cpp
+    gui/test_eventqueue.cpp
+    gui/test_protocolparser.cpp
+    gui/test_gamestate.cpp
+    gui/test_args.cpp
+    gui/test_app.cpp
 )
 
 add_executable(zappy_tests ${TEST_SOURCES} ${GUI_SOURCES})
