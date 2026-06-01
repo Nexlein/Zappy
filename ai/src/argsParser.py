@@ -1,0 +1,34 @@
+##
+## EPITECH PROJECT, 2026
+## Zappy
+## File description:
+## argsParser
+##
+
+from argparse import ArgumentParser
+from dataclasses import dataclass
+import sys
+
+@dataclass
+class Config:
+    port: int
+    teamName: str
+    machineName: str
+
+def parseArgs() -> Config:
+    if "--help" in sys.argv:
+        print("USAGE: ./zappy_ai -p port -n name -h machine")
+        print("")
+        print("option\t\tdescription")
+        print("-p port\t\tport number")
+        print("-n name\t\tname of the team")
+        print("-h machine\tname of the machine; localhost by default")
+        sys.exit(0)
+
+    parser = ArgumentParser(description="Zappy AI Client", add_help=False)
+    parser.add_argument("-p", "--port", type=int, required=True, help="Port number to connect to the server")
+    parser.add_argument("-n", "--name", type=str, required=True, help="Name of the team")
+    parser.add_argument("-h", "--machine", type=str, default="localhost", help="Hostname of the ai client (default: localhost)")
+
+    args = parser.parse_args()
+    return Config(port=args.port, teamName=args.name, machineName=args.machine)
