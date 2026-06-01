@@ -1,7 +1,10 @@
 #include "RaylibRenderer.hpp"
+#include <cmath>
+#include <iostream>
 
 void RaylibRenderer::init()
 {
+    SetTraceLogLevel(LOG_WARNING);
     InitWindow(800, 600, "Zappy");
     SetTargetFPS(60);
 
@@ -18,9 +21,9 @@ void RaylibRenderer::render(const GameState& state)
 {
     GameState mock = state;
 
-    mock.world.players[0] = {0, 2, 3, Orientation::N, 1, "TeamA"};
-    mock.world.players[1] = {1, 5, 1, Orientation::E, 2, "TeamA"};
-    mock.world.players[2] = {2, 6, 7, Orientation::S, 3, "TeamB"};
+    mock.world.players[10] = {10, 2, 3, Orientation::N, 1, "TeamA"};
+    mock.world.players[11] = {11, 5, 1, Orientation::E, 2, "TeamA"};
+    mock.world.players[12] = {12, 6, 7, Orientation::S, 3, "TeamB"};
 
     BeginDrawing();
     ClearBackground(RAYWHITE);
@@ -30,6 +33,11 @@ void RaylibRenderer::render(const GameState& state)
     _drawCustomGrid(mock.world.width, mock.world.height, TILE_SIZE);
     for (const auto& [id, player] : mock.world.players) {
         _drawPlayer(player, mock.world.width, mock.world.height);
+    }
+
+    for (int x = 0; x < mock.world.width; x++) {
+        for (int y = 0; y < mock.world.height; y++)
+            _drawResources(mock.world.at(x, y), x, y, mock.world.width, mock.world.height);
     }
 
     EndMode3D();
@@ -97,6 +105,50 @@ void RaylibRenderer::_drawPlayerNametag(const Player& player, int worldWidth, in
     int textWidth = MeasureText(label.c_str(), fontSize);
 
     DrawText(label.c_str(), screenPos.x - textWidth / 2, screenPos.y, fontSize, BLACK);
+}
+
+void RaylibRenderer::_drawResources(const Resources& resources, int tileX, int tileY, int worldWidth, int worldHeight)
+{
+    static const Color resourceColors[] = {
+        BROWN,      // food
+        DARKGRAY,   // linemate
+        GREEN,      // deraumere
+        BLUE,       // sibur
+        YELLOW,     // mendiane
+        ORANGE,     // phiras
+        PURPLE      // thystame
+    };
+
+    static const float baseSize = 0.15f;
+
+    for (int i = 0; i < 7; i++) {
+        int count = resources[i];
+        if (count <= 0) continue;
+
+        auto key = std::make_tuple(tileX, tileY, i);
+        auto& cache = _resourcePositions[key];
+
+        // Regenerate position only if resource appeared (was 0, now >0)
+        if (cache.lastCount == 0) {
+            Vector3 tileCenter = _tileToWorld(tileX, tileY, worldWidth, worldHeight);
+
+            float offsetRange = TILE_SIZE / 2.0f - baseSize;
+            float offsetX = (static_cast<float>(rand()) / RAND_MAX) * offsetRange * 2 - offsetRange;
+            float offsetZ = (static_cast<float>(rand()) / RAND_MAX) * offsetRange * 2 - offsetRange;
+
+            cache.position = {tileCenter.x + offsetX, 0.0f, tileCenter.z + offsetZ};
+        }
+
+        cache.lastCount = count;
+
+        // Size grows logarithmically with count, with a minimum size
+        float size = baseSize * (1.0f + std::log(count + 1) * 0.3f);
+
+        Vector3 drawPos = cache.position;
+        drawPos.y = size / 2.0f;  // Sit on ground
+
+        DrawSphere(drawPos, size, resourceColors[i]);
+    }
 }
 
 Color RaylibRenderer::_getTeamColor(const std::string& teamName)

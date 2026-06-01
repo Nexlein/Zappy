@@ -4,6 +4,7 @@
 #include "raylib.h"
 #include <unordered_map>
 #include <string>
+#include <tuple>
 
 /**
  * @brief A renderer that uses Raylib to display the game state graphically.
@@ -21,6 +22,21 @@ public:
 private:
     Camera3D _camera;
     std::unordered_map<std::string, Color> _teamColors;
+
+    // Resource position cache: {tileX, tileY, resourceIndex} -> {count, position}
+    struct ResourceCacheEntry {
+        int lastCount = 0;
+        Vector3 position;
+    };
+    struct TupleHash {
+        size_t operator()(const std::tuple<int, int, int>& t) const {
+            auto h1 = std::hash<int>{}(std::get<0>(t));
+            auto h2 = std::hash<int>{}(std::get<1>(t));
+            auto h3 = std::hash<int>{}(std::get<2>(t));
+            return h1 ^ (h2 << 1) ^ (h3 << 2);
+        }
+    };
+    std::unordered_map<std::tuple<int, int, int>, ResourceCacheEntry, TupleHash> _resourcePositions;
 
     static constexpr float TILE_SIZE = 1.0f;
 
@@ -48,6 +64,16 @@ private:
      * @param worldHeight The height of the world in tiles.
      */
     void _drawPlayerNametag(const Player& player, int worldWidth, int worldHeight);
+
+    /**
+     * @brief Renders the resources on a tile.
+     * @param resources The resources to render.
+     * @param tileX The x coordinate of the tile.
+     * @param tileY The y coordinate of the tile.
+     * @param worldWidth The width of the world in tiles.
+     * @param worldHeight The height of the world in tiles.
+     */
+    void _drawResources(const Resources& resources, int tileX, int tileY, int worldWidth, int worldHeight);
 
     /**
      * @brief Gets or assigns a color for a team.
