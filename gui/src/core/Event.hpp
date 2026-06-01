@@ -1,10 +1,11 @@
 #pragma once
 
-#include "Resources.hpp"
-#include "Orientation.hpp"
 #include <string>
-#include <vector>
 #include <variant>
+#include <vector>
+
+#include "Orientation.hpp"
+#include "Resources.hpp"
 
 // See doc for all Events at @file:G-YEP-400_zappy_GUI_protocol.pdf
 
@@ -154,29 +155,8 @@ struct BadParameters {};
  * @brief Represents an event received from the server.
  * Is a variant of all possible events, each with their own parameters.
  */
-using Event = std::variant<
-    MapSize,
-    TileContent,
-    TeamName,
-    PlayerNew,
-    PlayerPosition,
-    PlayerLevel,
-    PlayerInventory,
-    PlayerExpulsion,
-    PlayerBroadcast,
-    IncantationStart,
-    IncantationEnd,
-    PlayerFork,
-    PlayerResourceDrop,
-    PlayerResourceTake,
-    PlayerDeath,
-    EggNew,
-    EggHatch,
-    EggDeath,
-    TimeUnit,
-    TimeUnitChange,
-    GameEnd,
-    ServerMessage,
-    UnknownCommand,
-    BadParameters
->;
+using Event = std::variant<MapSize, TileContent, TeamName, PlayerNew, PlayerPosition, PlayerLevel,
+                           PlayerInventory, PlayerExpulsion, PlayerBroadcast, IncantationStart,
+                           IncantationEnd, PlayerFork, PlayerResourceDrop, PlayerResourceTake,
+                           PlayerDeath, EggNew, EggHatch, EggDeath, TimeUnit, TimeUnitChange,
+                           GameEnd, ServerMessage, UnknownCommand, BadParameters>;

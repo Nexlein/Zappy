@@ -1,20 +1,12 @@
 #include "Args.hpp"
+
 #include <iostream>
 
-Args::Args(int argc, char** argv)
-{
-    parseArgs(argc, argv);
-}
+Args::Args(int argc, char** argv) { parseArgs(argc, argv); }
 
-bool Args::isValid() const
-{
-    return result == ParseResult::Success;
-}
+bool Args::isValid() const { return result == ParseResult::Success; }
 
-bool Args::isHelpRequested() const
-{
-    return result == ParseResult::HelpRequested;
-}
+bool Args::isHelpRequested() const { return result == ParseResult::HelpRequested; }
 
 int Args::exitCode() const
 {
@@ -24,10 +16,7 @@ int Args::exitCode() const
     return ERROR;
 }
 
-AppConfig Args::getConfig() const
-{
-    return config;
-}
+AppConfig Args::getConfig() const { return config; }
 
 void Args::parseArgs(int argc, char** argv)
 {

@@ -1,9 +1,11 @@
 #include "TcpSocket.hpp"
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netdb.h>
+
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 #include <cstring>
 
 TcpSocket::~TcpSocket()
@@ -28,7 +30,7 @@ void TcpSocket::connect(const std::string& host, int port)
     }
 
     // Resolve hostname
-    struct addrinfo hints{};
+    struct addrinfo hints {};
     struct addrinfo* result = nullptr;
 
     hints.ai_family = AF_INET;
@@ -157,5 +159,5 @@ bool TcpSocket::poll(int timeout_ms)
     if (result == -1) {
         throw TcpException("Failed to poll socket: " + std::string(strerror(errno)));
     }
-    return result > 0; // data is ready
+    return result > 0;  // data is ready
 }

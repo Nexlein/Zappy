@@ -1,23 +1,16 @@
 #include "App.hpp"
-#include "network/ProtocolParser.hpp"
-#include "renderer/IRenderer.hpp"
-#include "renderer/HeadlessRenderer.hpp"
+
 #include <iostream>
 
-App::App(int argc, char** argv)
-    : args(argc, argv)
-{
-}
+#include "network/ProtocolParser.hpp"
+#include "renderer/HeadlessRenderer.hpp"
+#include "renderer/IRenderer.hpp"
 
-bool App::shouldRun() const
-{
-    return args.isValid();
-}
+App::App(int argc, char** argv) : args(argc, argv) {}
 
-int App::exitCode() const
-{
-    return args.exitCode();
-}
+bool App::shouldRun() const { return args.isValid(); }
+
+int App::exitCode() const { return args.exitCode(); }
 
 void App::run()
 {

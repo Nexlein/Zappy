@@ -1,9 +1,10 @@
 #pragma once
 
-#include "Event.hpp"
-#include <queue>
 #include <mutex>
 #include <optional>
+#include <queue>
+
+#include "Event.hpp"
 
 /**
  * @brief Thread-safe queue for storing events received from the server.
@@ -11,7 +12,7 @@
  * Not strictly necessary, good to have, future proof.
  */
 class EventQueue {
-public:
+    public:
     /**
      * @brief Pushes an event to the queue.
      * Thread safe.
@@ -26,7 +27,7 @@ public:
      */
     std::optional<Event> pop();
 
-private:
+    private:
     std::queue<Event> _queue;
     std::mutex _mutex;
 };

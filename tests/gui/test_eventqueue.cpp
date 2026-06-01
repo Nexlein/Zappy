@@ -1,9 +1,12 @@
 #include <gtest/gtest.h>
-#include "core/EventQueue.hpp"
+
 #include <thread>
 #include <vector>
 
-TEST(EventQueueTest, PushPop) {
+#include "core/EventQueue.hpp"
+
+TEST(EventQueueTest, PushPop)
+{
     EventQueue queue;
     queue.push(MapSize{10, 20});
 
@@ -14,13 +17,15 @@ TEST(EventQueueTest, PushPop) {
     EXPECT_EQ(std::get<MapSize>(*event).height, 20);
 }
 
-TEST(EventQueueTest, PopEmpty) {
+TEST(EventQueueTest, PopEmpty)
+{
     EventQueue queue;
     auto event = queue.pop();
     EXPECT_FALSE(event.has_value());
 }
 
-TEST(EventQueueTest, FIFO) {
+TEST(EventQueueTest, FIFO)
+{
     EventQueue queue;
     queue.push(MapSize{1, 2});
     queue.push(TeamName{"TeamA"});
@@ -40,7 +45,8 @@ TEST(EventQueueTest, FIFO) {
     EXPECT_EQ(std::get<MapSize>(*e3).width, 3);
 }
 
-TEST(EventQueueTest, MultipleEvents) {
+TEST(EventQueueTest, MultipleEvents)
+{
     EventQueue queue;
 
     // Push various event types
@@ -61,7 +67,8 @@ TEST(EventQueueTest, MultipleEvents) {
     EXPECT_FALSE(queue.pop().has_value());
 }
 
-TEST(EventQueueTest, ConcurrentPushPop) {
+TEST(EventQueueTest, ConcurrentPushPop)
+{
     EventQueue queue;
     constexpr int NUM_EVENTS = 1000;
 
@@ -98,7 +105,8 @@ TEST(EventQueueTest, ConcurrentPushPop) {
     EXPECT_FALSE(queue.pop().has_value());
 }
 
-TEST(EventQueueTest, MultipleProducersOneConsumer) {
+TEST(EventQueueTest, MultipleProducersOneConsumer)
+{
     EventQueue queue;
     constexpr int NUM_THREADS = 4;
     constexpr int EVENTS_PER_THREAD = 250;
@@ -135,7 +143,8 @@ TEST(EventQueueTest, MultipleProducersOneConsumer) {
     EXPECT_FALSE(queue.pop().has_value());
 }
 
-TEST(EventQueueTest, OneProducerMultipleConsumers) {
+TEST(EventQueueTest, OneProducerMultipleConsumers)
+{
     EventQueue queue;
     constexpr int NUM_EVENTS = 1000;
     constexpr int NUM_CONSUMERS = 4;

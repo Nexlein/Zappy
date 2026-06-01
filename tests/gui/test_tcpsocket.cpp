@@ -1,32 +1,33 @@
 #include <gtest/gtest.h>
-#include "network/TcpSocket.hpp"
-#include <thread>
-#include <chrono>
-#include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
 #include <unistd.h>
+
+#include <chrono>
 #include <cstring>
+#include <thread>
+
+#include "network/TcpSocket.hpp"
 
 /**
  * Mock server for testing TcpSocket.
  * Binds to a port, accepts one connection, sends/receives data.
  */
 class MockServer {
-public:
+    public:
     MockServer(int port) : _port(port), _serverFd(-1), _clientFd(-1) {}
 
-    ~MockServer() {
-        stop();
-    }
+    ~MockServer() { stop(); }
 
-    void start() {
+    void start()
+    {
         _serverFd = socket(AF_INET, SOCK_STREAM, 0);
         ASSERT_NE(_serverFd, -1) << "Failed to create server socket";
 
         int opt = 1;
         setsockopt(_serverFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-        struct sockaddr_in addr{};
+        struct sockaddr_in addr {};
         addr.sin_family = AF_INET;
         addr.sin_addr.s_addr = INADDR_ANY;
         addr.sin_port = htons(_port);
@@ -36,20 +37,23 @@ public:
         ASSERT_NE(listen(_serverFd, 1), -1) << "Failed to listen";
     }
 
-    void acceptConnection() {
-        struct sockaddr_in clientAddr{};
+    void acceptConnection()
+    {
+        struct sockaddr_in clientAddr {};
         socklen_t clientLen = sizeof(clientAddr);
         _clientFd = accept(_serverFd, (struct sockaddr*)&clientAddr, &clientLen);
         ASSERT_NE(_clientFd, -1) << "Failed to accept connection";
     }
 
-    void send(const std::string& data) {
+    void send(const std::string& data)
+    {
         ASSERT_NE(_clientFd, -1) << "No client connected";
         ssize_t sent = ::send(_clientFd, data.c_str(), data.size(), 0);
         ASSERT_EQ(sent, static_cast<ssize_t>(data.size())) << "Failed to send";
     }
 
-    std::string recv(size_t maxLen = 1024) {
+    std::string recv(size_t maxLen = 1024)
+    {
         if (_clientFd == -1) {
             ADD_FAILURE() << "No client connected";
             return "";
@@ -63,7 +67,8 @@ public:
         return std::string(buffer, received);
     }
 
-    void stop() {
+    void stop()
+    {
         if (_clientFd != -1) {
             close(_clientFd);
             _clientFd = -1;
@@ -74,34 +79,29 @@ public:
         }
     }
 
-private:
+    private:
     int _port;
     int _serverFd;
     int _clientFd;
 };
 
 class TcpSocketTest : public ::testing::Test {
-protected:
+    protected:
     static constexpr int TEST_PORT = 44242;  // High port to avoid conflicts
 
-    void SetUp() override {
-        server = std::make_unique<MockServer>(TEST_PORT);
-    }
+    void SetUp() override { server = std::make_unique<MockServer>(TEST_PORT); }
 
-    void TearDown() override {
-        server.reset();
-    }
+    void TearDown() override { server.reset(); }
 
     std::unique_ptr<MockServer> server;
 };
 
-TEST_F(TcpSocketTest, ConnectToServer) {
+TEST_F(TcpSocketTest, ConnectToServer)
+{
     server->start();
 
     // Accept connection in background thread
-    std::thread acceptThread([this]() {
-        server->acceptConnection();
-    });
+    std::thread acceptThread([this]() { server->acceptConnection(); });
 
     TcpSocket socket;
     EXPECT_NO_THROW(socket.connect("localhost", TEST_PORT));
@@ -109,17 +109,17 @@ TEST_F(TcpSocketTest, ConnectToServer) {
     acceptThread.join();
 }
 
-TEST_F(TcpSocketTest, ConnectToNonexistentServer) {
+TEST_F(TcpSocketTest, ConnectToNonexistentServer)
+{
     TcpSocket socket;
     EXPECT_THROW(socket.connect("localhost", 44243), TcpException);  // Nothing listening
 }
 
-TEST_F(TcpSocketTest, SendData) {
+TEST_F(TcpSocketTest, SendData)
+{
     server->start();
 
-    std::thread acceptThread([this]() {
-        server->acceptConnection();
-    });
+    std::thread acceptThread([this]() { server->acceptConnection(); });
 
     TcpSocket socket;
     socket.connect("localhost", TEST_PORT);
@@ -131,12 +131,11 @@ TEST_F(TcpSocketTest, SendData) {
     EXPECT_EQ(received, "GRAPHIC\n");
 }
 
-TEST_F(TcpSocketTest, RecvLineCompleteLine) {
+TEST_F(TcpSocketTest, RecvLineCompleteLine)
+{
     server->start();
 
-    std::thread acceptThread([this]() {
-        server->acceptConnection();
-    });
+    std::thread acceptThread([this]() { server->acceptConnection(); });
 
     TcpSocket socket;
     socket.connect("localhost", TEST_PORT);
@@ -153,12 +152,11 @@ TEST_F(TcpSocketTest, RecvLineCompleteLine) {
     EXPECT_EQ(*line, "WELCOME\n");
 }
 
-TEST_F(TcpSocketTest, RecvLinePartialThenComplete) {
+TEST_F(TcpSocketTest, RecvLinePartialThenComplete)
+{
     server->start();
 
-    std::thread acceptThread([this]() {
-        server->acceptConnection();
-    });
+    std::thread acceptThread([this]() { server->acceptConnection(); });
 
     TcpSocket socket;
     socket.connect("localhost", TEST_PORT);
@@ -182,12 +180,11 @@ TEST_F(TcpSocketTest, RecvLinePartialThenComplete) {
     EXPECT_EQ(*line2, "WELCOME\n");
 }
 
-TEST_F(TcpSocketTest, RecvLineMultipleLinesInOnePacket) {
+TEST_F(TcpSocketTest, RecvLineMultipleLinesInOnePacket)
+{
     server->start();
 
-    std::thread acceptThread([this]() {
-        server->acceptConnection();
-    });
+    std::thread acceptThread([this]() { server->acceptConnection(); });
 
     TcpSocket socket;
     socket.connect("localhost", TEST_PORT);
@@ -208,12 +205,11 @@ TEST_F(TcpSocketTest, RecvLineMultipleLinesInOnePacket) {
     EXPECT_EQ(*line2, "msz 10 10\n");
 }
 
-TEST_F(TcpSocketTest, PollReturnsTrue) {
+TEST_F(TcpSocketTest, PollReturnsTrue)
+{
     server->start();
 
-    std::thread acceptThread([this]() {
-        server->acceptConnection();
-    });
+    std::thread acceptThread([this]() { server->acceptConnection(); });
 
     TcpSocket socket;
     socket.connect("localhost", TEST_PORT);
@@ -227,12 +223,11 @@ TEST_F(TcpSocketTest, PollReturnsTrue) {
     EXPECT_TRUE(socket.poll(100));
 }
 
-TEST_F(TcpSocketTest, PollReturnsFalseOnTimeout) {
+TEST_F(TcpSocketTest, PollReturnsFalseOnTimeout)
+{
     server->start();
 
-    std::thread acceptThread([this]() {
-        server->acceptConnection();
-    });
+    std::thread acceptThread([this]() { server->acceptConnection(); });
 
     TcpSocket socket;
     socket.connect("localhost", TEST_PORT);
@@ -242,12 +237,11 @@ TEST_F(TcpSocketTest, PollReturnsFalseOnTimeout) {
     EXPECT_FALSE(socket.poll(100));
 }
 
-TEST_F(TcpSocketTest, PollReturnsTrueWithBufferedLine) {
+TEST_F(TcpSocketTest, PollReturnsTrueWithBufferedLine)
+{
     server->start();
 
-    std::thread acceptThread([this]() {
-        server->acceptConnection();
-    });
+    std::thread acceptThread([this]() { server->acceptConnection(); });
 
     TcpSocket socket;
     socket.connect("localhost", TEST_PORT);
@@ -265,12 +259,11 @@ TEST_F(TcpSocketTest, PollReturnsTrueWithBufferedLine) {
     EXPECT_TRUE(socket.poll(0));  // 0 timeout, should still return true
 }
 
-TEST_F(TcpSocketTest, RecvLineNoDataAvailable) {
+TEST_F(TcpSocketTest, RecvLineNoDataAvailable)
+{
     server->start();
 
-    std::thread acceptThread([this]() {
-        server->acceptConnection();
-    });
+    std::thread acceptThread([this]() { server->acceptConnection(); });
 
     TcpSocket socket;
     socket.connect("localhost", TEST_PORT);
@@ -281,12 +274,11 @@ TEST_F(TcpSocketTest, RecvLineNoDataAvailable) {
     EXPECT_FALSE(line.has_value());
 }
 
-TEST_F(TcpSocketTest, ConnectionClosed) {
+TEST_F(TcpSocketTest, ConnectionClosed)
+{
     server->start();
 
-    std::thread acceptThread([this]() {
-        server->acceptConnection();
-    });
+    std::thread acceptThread([this]() { server->acceptConnection(); });
 
     TcpSocket socket;
     socket.connect("localhost", TEST_PORT);

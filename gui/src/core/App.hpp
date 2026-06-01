@@ -1,17 +1,17 @@
 #pragma once
 
-#include "GameState.hpp"
 #include "Args.hpp"
-#include "network/TcpSocket.hpp"
 #include "EventQueue.hpp"
+#include "GameState.hpp"
+#include "network/TcpSocket.hpp"
 
 /**
- * @brief The main application class that manages the game state, network communication, and rendering.
- * It parses command-line arguments, connects to the game server, receives events,
+ * @brief The main application class that manages the game state, network communication, and
+ * rendering. It parses command-line arguments, connects to the game server, receives events,
  * updates the game state, and renders the game using a renderer.
  */
 class App {
-public:
+    public:
     App(int argc, char** argv);
 
     /**
@@ -32,7 +32,7 @@ public:
      */
     void run();
 
-protected:  // <- Protected for testing purposes, acts as private in practice
+    protected:  // <- Protected for testing purposes, acts as private in practice
     Args args;
     GameState state;
 

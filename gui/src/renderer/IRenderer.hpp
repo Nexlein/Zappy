@@ -6,7 +6,7 @@
  * @brief Interface for rendering the game state.
  */
 class IRenderer {
-public:
+    public:
     virtual ~IRenderer() = default;
 
     virtual void init() = 0;

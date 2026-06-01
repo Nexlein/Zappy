@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
+
 #include "core/GameState.hpp"
 
 // Map initialization
-TEST(GameStateTest, ApplyMapSize) {
+TEST(GameStateTest, ApplyMapSize)
+{
     GameState gs;
     MapSize event{10, 20};
     gs.applyEvent(event);
@@ -12,7 +14,8 @@ TEST(GameStateTest, ApplyMapSize) {
     EXPECT_EQ(gs.world.tiles.size(), 200);
 }
 
-TEST(GameStateTest, ApplyTileContent) {
+TEST(GameStateTest, ApplyTileContent)
+{
     GameState gs;
     gs.world.width = 5;
     gs.world.height = 5;
@@ -31,7 +34,8 @@ TEST(GameStateTest, ApplyTileContent) {
     EXPECT_EQ(tile.thystame, 6);
 }
 
-TEST(GameStateTest, ApplyTeamName) {
+TEST(GameStateTest, ApplyTeamName)
+{
     GameState gs;
     TeamName event1{"TeamA"};
     TeamName event2{"TeamB"};
@@ -44,7 +48,8 @@ TEST(GameStateTest, ApplyTeamName) {
 }
 
 // Player management
-TEST(GameStateTest, ApplyPlayerNew) {
+TEST(GameStateTest, ApplyPlayerNew)
+{
     GameState gs;
     PlayerNew event{42, 5, 7, Orientation::E, 3, "TeamA"};
     gs.applyEvent(event);
@@ -60,7 +65,8 @@ TEST(GameStateTest, ApplyPlayerNew) {
     EXPECT_FALSE(p.incanting);
 }
 
-TEST(GameStateTest, ApplyPlayerPosition) {
+TEST(GameStateTest, ApplyPlayerPosition)
+{
     GameState gs;
     gs.world.players[42] = Player{42, 0, 0, Orientation::N, 1, "TeamA"};
 
@@ -73,14 +79,16 @@ TEST(GameStateTest, ApplyPlayerPosition) {
     EXPECT_EQ(p.orientation, Orientation::S);
 }
 
-TEST(GameStateTest, ApplyPlayerPositionNonExistent) {
+TEST(GameStateTest, ApplyPlayerPositionNonExistent)
+{
     GameState gs;
     PlayerPosition event{999, 10, 15, Orientation::S};
     gs.applyEvent(event);  // Should not crash
     EXPECT_FALSE(gs.world.players.contains(999));
 }
 
-TEST(GameStateTest, ApplyPlayerLevel) {
+TEST(GameStateTest, ApplyPlayerLevel)
+{
     GameState gs;
     gs.world.players[42] = Player{42, 0, 0, Orientation::N, 1, "TeamA"};
 
@@ -90,7 +98,8 @@ TEST(GameStateTest, ApplyPlayerLevel) {
     EXPECT_EQ(gs.world.players[42].level, 5);
 }
 
-TEST(GameStateTest, ApplyPlayerInventory) {
+TEST(GameStateTest, ApplyPlayerInventory)
+{
     GameState gs;
     gs.world.players[42] = Player{42, 0, 0, Orientation::N, 1, "TeamA"};
 
@@ -103,7 +112,8 @@ TEST(GameStateTest, ApplyPlayerInventory) {
     EXPECT_EQ(inv.thystame, 6);
 }
 
-TEST(GameStateTest, ApplyPlayerDeath) {
+TEST(GameStateTest, ApplyPlayerDeath)
+{
     GameState gs;
     gs.world.players[42] = Player{42, 0, 0, Orientation::N, 1, "TeamA"};
     gs.world.players[43] = Player{43, 1, 1, Orientation::E, 2, "TeamB"};
@@ -116,7 +126,8 @@ TEST(GameStateTest, ApplyPlayerDeath) {
 }
 
 // Resource drop/take
-TEST(GameStateTest, ApplyPlayerResourceDrop) {
+TEST(GameStateTest, ApplyPlayerResourceDrop)
+{
     GameState gs;
     gs.world.width = 10;
     gs.world.height = 10;
@@ -133,7 +144,8 @@ TEST(GameStateTest, ApplyPlayerResourceDrop) {
     EXPECT_EQ(gs.world.at(5, 7).linemate, 3);
 }
 
-TEST(GameStateTest, ApplyPlayerResourceTake) {
+TEST(GameStateTest, ApplyPlayerResourceTake)
+{
     GameState gs;
     gs.world.width = 10;
     gs.world.height = 10;
@@ -151,7 +163,8 @@ TEST(GameStateTest, ApplyPlayerResourceTake) {
 }
 
 // Incantation
-TEST(GameStateTest, ApplyIncantationStart) {
+TEST(GameStateTest, ApplyIncantationStart)
+{
     GameState gs;
     gs.world.players[42] = Player{42, 5, 7, Orientation::N, 2, "TeamA"};
     gs.world.players[43] = Player{43, 5, 7, Orientation::E, 2, "TeamA"};
@@ -165,7 +178,8 @@ TEST(GameStateTest, ApplyIncantationStart) {
     EXPECT_FALSE(gs.world.players[44].incanting);
 }
 
-TEST(GameStateTest, ApplyIncantationStartNonExistentPlayer) {
+TEST(GameStateTest, ApplyIncantationStartNonExistentPlayer)
+{
     GameState gs;
     gs.world.players[42] = Player{42, 5, 7, Orientation::N, 2, "TeamA"};
 
@@ -175,7 +189,8 @@ TEST(GameStateTest, ApplyIncantationStartNonExistentPlayer) {
     EXPECT_TRUE(gs.world.players[42].incanting);
 }
 
-TEST(GameStateTest, ApplyIncantationEnd) {
+TEST(GameStateTest, ApplyIncantationEnd)
+{
     GameState gs;
     gs.world.players[42] = Player{42, 5, 7, Orientation::N, 2, "TeamA"};
     gs.world.players[43] = Player{43, 5, 7, Orientation::E, 2, "TeamA"};
@@ -193,7 +208,8 @@ TEST(GameStateTest, ApplyIncantationEnd) {
 }
 
 // Eggs
-TEST(GameStateTest, ApplyEggNew) {
+TEST(GameStateTest, ApplyEggNew)
+{
     GameState gs;
     gs.world.players[42] = Player{42, 5, 7, Orientation::N, 3, "TeamA"};
 
@@ -208,7 +224,8 @@ TEST(GameStateTest, ApplyEggNew) {
     EXPECT_EQ(egg.team, "TeamA");
 }
 
-TEST(GameStateTest, ApplyEggNewNonExistentPlayer) {
+TEST(GameStateTest, ApplyEggNewNonExistentPlayer)
+{
     GameState gs;
     EggNew event{1, 999, 10, 15};
     gs.applyEvent(event);  // Should not crash
@@ -216,7 +233,8 @@ TEST(GameStateTest, ApplyEggNewNonExistentPlayer) {
     EXPECT_FALSE(gs.world.eggs.contains(1));
 }
 
-TEST(GameStateTest, ApplyEggHatch) {
+TEST(GameStateTest, ApplyEggHatch)
+{
     GameState gs;
     gs.world.eggs[1] = Egg{1, 5, 7, "TeamA"};
     gs.world.eggs[2] = Egg{2, 10, 15, "TeamB"};
@@ -228,7 +246,8 @@ TEST(GameStateTest, ApplyEggHatch) {
     EXPECT_TRUE(gs.world.eggs.contains(2));
 }
 
-TEST(GameStateTest, ApplyEggDeath) {
+TEST(GameStateTest, ApplyEggDeath)
+{
     GameState gs;
     gs.world.eggs[1] = Egg{1, 5, 7, "TeamA"};
     gs.world.eggs[2] = Egg{2, 10, 15, "TeamB"};
@@ -241,7 +260,8 @@ TEST(GameStateTest, ApplyEggDeath) {
 }
 
 // Time unit
-TEST(GameStateTest, ApplyTimeUnit) {
+TEST(GameStateTest, ApplyTimeUnit)
+{
     GameState gs;
     gs.timeUnit = 100;
 
@@ -251,7 +271,8 @@ TEST(GameStateTest, ApplyTimeUnit) {
     EXPECT_EQ(gs.timeUnit, 250);
 }
 
-TEST(GameStateTest, ApplyTimeUnitChange) {
+TEST(GameStateTest, ApplyTimeUnitChange)
+{
     GameState gs;
     gs.timeUnit = 100;
 
@@ -262,7 +283,8 @@ TEST(GameStateTest, ApplyTimeUnitChange) {
 }
 
 // Game end
-TEST(GameStateTest, ApplyGameEnd) {
+TEST(GameStateTest, ApplyGameEnd)
+{
     GameState gs;
     GameEnd event{"TeamA"};
     gs.applyEvent(event);
@@ -270,7 +292,8 @@ TEST(GameStateTest, ApplyGameEnd) {
     EXPECT_EQ(gs.winnerTeam, "TeamA");
 }
 
-TEST(GameStateTest, ApplyGameEndWithSpaces) {
+TEST(GameStateTest, ApplyGameEndWithSpaces)
+{
     GameState gs;
     GameEnd event{"team swag"};
     gs.applyEvent(event);
@@ -279,7 +302,8 @@ TEST(GameStateTest, ApplyGameEndWithSpaces) {
 }
 
 // Multiple events sequencing
-TEST(GameStateTest, MultipleEventsSequence) {
+TEST(GameStateTest, MultipleEventsSequence)
+{
     GameState gs;
 
     gs.applyEvent(MapSize{10, 10});
@@ -300,7 +324,8 @@ TEST(GameStateTest, MultipleEventsSequence) {
 }
 
 // Edge case: resource operations on non-existent player
-TEST(GameStateTest, ResourceOperationsNonExistentPlayer) {
+TEST(GameStateTest, ResourceOperationsNonExistentPlayer)
+{
     GameState gs;
     gs.world.width = 10;
     gs.world.height = 10;

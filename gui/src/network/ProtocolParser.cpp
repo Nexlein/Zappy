@@ -1,4 +1,5 @@
 #include "ProtocolParser.hpp"
+
 #include <unordered_map>
 
 std::optional<Event> ProtocolParser::parse(std::string_view input)
@@ -8,33 +9,14 @@ std::optional<Event> ProtocolParser::parse(std::string_view input)
     if (tokens.empty()) return std::nullopt;
 
     // Map command -> parser function
-    using ParserFunc = std::optional<Event>(*)(const std::vector<std::string_view>&);
+    using ParserFunc = std::optional<Event> (*)(const std::vector<std::string_view>&);
     static const std::unordered_map<std::string_view, ParserFunc> parsers = {
-        {"msz", _parseMSZ},
-        {"bct", _parseBCT},
-        {"tna", _parseTNA},
-        {"pnw", _parsePNW},
-        {"ppo", _parsePPO},
-        {"plv", _parsePLV},
-        {"pin", _parsePIN},
-        {"pex", _parsePEX},
-        {"pbc", _parsePBC},
-        {"pic", _parsePIC},
-        {"pie", _parsePIE},
-        {"pfk", _parsePFK},
-        {"pdr", _parsePDR},
-        {"pgt", _parsePGT},
-        {"pdi", _parsePDI},
-        {"enw", _parseENW},
-        {"ebo", _parseEBO},
-        {"edi", _parseEDI},
-        {"sgt", _parseSGT},
-        {"sst", _parseSST},
-        {"seg", _parseSEG},
-        {"smg", _parseSMG},
-        {"suc", _parseSUC},
-        {"sbp", _parseSBP}
-    };
+        {"msz", _parseMSZ}, {"bct", _parseBCT}, {"tna", _parseTNA}, {"pnw", _parsePNW},
+        {"ppo", _parsePPO}, {"plv", _parsePLV}, {"pin", _parsePIN}, {"pex", _parsePEX},
+        {"pbc", _parsePBC}, {"pic", _parsePIC}, {"pie", _parsePIE}, {"pfk", _parsePFK},
+        {"pdr", _parsePDR}, {"pgt", _parsePGT}, {"pdi", _parsePDI}, {"enw", _parseENW},
+        {"ebo", _parseEBO}, {"edi", _parseEDI}, {"sgt", _parseSGT}, {"sst", _parseSST},
+        {"seg", _parseSEG}, {"smg", _parseSMG}, {"suc", _parseSUC}, {"sbp", _parseSBP}};
 
     auto it = parsers.find(tokens[0]);
     if (it != parsers.end()) {
@@ -44,7 +26,8 @@ std::optional<Event> ProtocolParser::parse(std::string_view input)
     return std::nullopt;
 }
 
-std::vector<std::string_view> ProtocolParser::_split(std::string_view str, char delimiter, char stopAt)
+std::vector<std::string_view> ProtocolParser::_split(std::string_view str, char delimiter,
+                                                     char stopAt)
 {
     std::vector<std::string_view> tokens;
 
@@ -133,11 +116,12 @@ std::optional<Event> ProtocolParser::_parsePNW(const std::vector<std::string_vie
     if (tokens.size() != 7) return std::nullopt;
 
     try {
-        int id = std::stoi(std::string(tokens[1].substr(1))); // Skip '#'
+        int id = std::stoi(std::string(tokens[1].substr(1)));  // Skip '#'
         int x = std::stoi(std::string(tokens[2]));
         int y = std::stoi(std::string(tokens[3]));
 
-        // Orientation is 1-based in the protocol, and our enum is also 1-based, so we can directly cast
+        // Orientation is 1-based in the protocol, and our enum is also 1-based, so we can directly
+        // cast
         Orientation orientation = static_cast<Orientation>(std::stoi(std::string(tokens[4])));
         int level = std::stoi(std::string(tokens[5]));
         std::string team = std::string(tokens[6]);
@@ -155,11 +139,12 @@ std::optional<Event> ProtocolParser::_parsePPO(const std::vector<std::string_vie
     if (tokens.size() != 5) return std::nullopt;
 
     try {
-        int id = std::stoi(std::string(tokens[1].substr(1))); // Skip '#'
+        int id = std::stoi(std::string(tokens[1].substr(1)));  // Skip '#'
         int x = std::stoi(std::string(tokens[2]));
         int y = std::stoi(std::string(tokens[3]));
 
-        // Orientation is 1-based in the protocol, and our enum is also 1-based, so we can directly cast
+        // Orientation is 1-based in the protocol, and our enum is also 1-based, so we can directly
+        // cast
         Orientation orientation = static_cast<Orientation>(std::stoi(std::string(tokens[4])));
 
         return PlayerPosition{id, x, y, orientation};
@@ -175,7 +160,7 @@ std::optional<Event> ProtocolParser::_parsePLV(const std::vector<std::string_vie
     if (tokens.size() != 3) return std::nullopt;
 
     try {
-        int id = std::stoi(std::string(tokens[1].substr(1))); // Skip '#'
+        int id = std::stoi(std::string(tokens[1].substr(1)));  // Skip '#'
         int level = std::stoi(std::string(tokens[2]));
 
         return PlayerLevel{id, level};
@@ -191,7 +176,7 @@ std::optional<Event> ProtocolParser::_parsePIN(const std::vector<std::string_vie
     if (tokens.size() != 11) return std::nullopt;
 
     try {
-        int id = std::stoi(std::string(tokens[1].substr(1))); // Skip '#'
+        int id = std::stoi(std::string(tokens[1].substr(1)));  // Skip '#'
         int x = std::stoi(std::string(tokens[2]));
         int y = std::stoi(std::string(tokens[3]));
 
@@ -213,7 +198,7 @@ std::optional<Event> ProtocolParser::_parsePEX(const std::vector<std::string_vie
     if (tokens.size() != 2) return std::nullopt;
 
     try {
-        int id = std::stoi(std::string(tokens[1].substr(1))); // Skip '#'
+        int id = std::stoi(std::string(tokens[1].substr(1)));  // Skip '#'
         return PlayerExpulsion{id};
     } catch (...) {
         return std::nullopt;
@@ -227,7 +212,7 @@ std::optional<Event> ProtocolParser::_parsePBC(const std::vector<std::string_vie
     if (tokens.size() < 3) return std::nullopt;
 
     try {
-        int id = std::stoi(std::string(tokens[1].substr(1))); // Skip '#'
+        int id = std::stoi(std::string(tokens[1].substr(1)));  // Skip '#'
         return PlayerBroadcast{id, _joinTokens(tokens, 2)};
     } catch (...) {
         return std::nullopt;
@@ -247,7 +232,7 @@ std::optional<Event> ProtocolParser::_parsePIC(const std::vector<std::string_vie
 
         std::vector<int> playerIds;
         for (size_t i = 4; i < tokens.size(); ++i) {
-            playerIds.push_back(std::stoi(std::string(tokens[i].substr(1)))); // Skip '#'
+            playerIds.push_back(std::stoi(std::string(tokens[i].substr(1))));  // Skip '#'
         }
 
         return IncantationStart{x, y, level, playerIds};
@@ -282,7 +267,7 @@ std::optional<Event> ProtocolParser::_parsePFK(const std::vector<std::string_vie
     if (tokens.size() != 2) return std::nullopt;
 
     try {
-        int id = std::stoi(std::string(tokens[1].substr(1))); // Skip '#'
+        int id = std::stoi(std::string(tokens[1].substr(1)));  // Skip '#'
         return PlayerFork{id};
     } catch (...) {
         return std::nullopt;
@@ -296,7 +281,7 @@ std::optional<Event> ProtocolParser::_parsePDR(const std::vector<std::string_vie
     if (tokens.size() != 3) return std::nullopt;
 
     try {
-        int playerId = std::stoi(std::string(tokens[1].substr(1))); // Skip '#'
+        int playerId = std::stoi(std::string(tokens[1].substr(1)));  // Skip '#'
         int resourceId = std::stoi(std::string(tokens[2]));
         return PlayerResourceDrop{playerId, resourceId};
     } catch (...) {
@@ -311,7 +296,7 @@ std::optional<Event> ProtocolParser::_parsePGT(const std::vector<std::string_vie
     if (tokens.size() != 3) return std::nullopt;
 
     try {
-        int playerId = std::stoi(std::string(tokens[1].substr(1))); // Skip '#'
+        int playerId = std::stoi(std::string(tokens[1].substr(1)));  // Skip '#'
         int resourceId = std::stoi(std::string(tokens[2]));
         return PlayerResourceTake{playerId, resourceId};
     } catch (...) {
@@ -326,7 +311,7 @@ std::optional<Event> ProtocolParser::_parsePDI(const std::vector<std::string_vie
     if (tokens.size() != 2) return std::nullopt;
 
     try {
-        int id = std::stoi(std::string(tokens[1].substr(1))); // Skip '#'
+        int id = std::stoi(std::string(tokens[1].substr(1)));  // Skip '#'
         return PlayerDeath{id};
     } catch (...) {
         return std::nullopt;
@@ -340,8 +325,8 @@ std::optional<Event> ProtocolParser::_parseENW(const std::vector<std::string_vie
     if (tokens.size() != 5) return std::nullopt;
 
     try {
-        int eggId = std::stoi(std::string(tokens[1].substr(1))); // Skip '#'
-        int playerId = std::stoi(std::string(tokens[2].substr(1))); // Skip '#'
+        int eggId = std::stoi(std::string(tokens[1].substr(1)));     // Skip '#'
+        int playerId = std::stoi(std::string(tokens[2].substr(1)));  // Skip '#'
         int x = std::stoi(std::string(tokens[3]));
         int y = std::stoi(std::string(tokens[4]));
 
@@ -358,7 +343,7 @@ std::optional<Event> ProtocolParser::_parseEBO(const std::vector<std::string_vie
     if (tokens.size() != 2) return std::nullopt;
 
     try {
-        int id = std::stoi(std::string(tokens[1].substr(1))); // Skip '#'
+        int id = std::stoi(std::string(tokens[1].substr(1)));  // Skip '#'
         return EggHatch{id};
     } catch (...) {
         return std::nullopt;
@@ -372,7 +357,7 @@ std::optional<Event> ProtocolParser::_parseEDI(const std::vector<std::string_vie
     if (tokens.size() != 2) return std::nullopt;
 
     try {
-        int id = std::stoi(std::string(tokens[1].substr(1))); // Skip '#'
+        int id = std::stoi(std::string(tokens[1].substr(1)));  // Skip '#'
         return EggDeath{id};
     } catch (...) {
         return std::nullopt;
