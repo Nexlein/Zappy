@@ -11,6 +11,7 @@ class IRenderer {
 
     virtual void init() = 0;
     virtual void render(const GameState& state) = 0;
+    virtual void handleInput() = 0;
     virtual bool shouldClose() = 0;
     virtual void shutdown() = 0;
 };
