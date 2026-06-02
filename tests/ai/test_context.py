@@ -29,7 +29,7 @@ class TestContext(unittest.TestCase):
 
     def test_tile_defaults(self):
         tile = Tile()
-        self.assertEqual(tile.players, 0)
+        self.assertEqual(tile.player, 0)
         self.assertEqual(tile.food, 0)
         self.assertEqual(tile.linemate, 0)
         self.assertEqual(tile.deraumere, 0)
