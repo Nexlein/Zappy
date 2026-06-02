@@ -5,7 +5,8 @@
 ## tcpClient
 ##
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+import select
 import socket
 
 
@@ -37,6 +38,17 @@ class TcpClient:
         line, self._buffer = self._buffer.split("\n", 1)
         return line
 
+    def recv_chunk(self) -> str:
+        if self._socket is None:
+            raise RuntimeError("not connected")
+        readable, _, _ = select.select([self._socket], [], [], 0)
+        if not readable:
+            return ""
+        chunk = self._socket.recv(1024)
+        if not chunk:
+            raise ConnectionError("server closed connection")
+        return chunk.decode()
+
     def handshake(self, team_name: str):
         message = self.receive()
 
@@ -49,4 +61,6 @@ class TcpClient:
         dimensions = self.receive()
         x, y = dimensions.split()
         map_width, map_height = int(x), int(y)
+        if self._socket is not None:
+            self._socket.setblocking(False)
         return available_slots, (map_width, map_height)
