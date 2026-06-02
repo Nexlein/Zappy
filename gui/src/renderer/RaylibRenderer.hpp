@@ -1,16 +1,17 @@
 #pragma once
 
-#include "IRenderer.hpp"
-#include "raylib.h"
-#include <unordered_map>
 #include <string>
 #include <tuple>
+#include <unordered_map>
+
+#include "IRenderer.hpp"
+#include "raylib.h"
 
 /**
  * @brief A renderer that uses Raylib to display the game state graphically.
  */
 class RaylibRenderer : public IRenderer {
-public:
+    public:
     RaylibRenderer() = default;
     ~RaylibRenderer() override = default;
 
@@ -19,7 +20,7 @@ public:
     bool shouldClose() override;
     void shutdown() override;
 
-private:
+    private:
     Camera3D _camera;
     std::unordered_map<std::string, Color> _teamColors;
 
@@ -29,7 +30,8 @@ private:
         Vector3 position;
     };
     struct TupleHash {
-        size_t operator()(const std::tuple<int, int, int>& t) const {
+        size_t operator()(const std::tuple<int, int, int>& t) const
+        {
             auto h1 = std::hash<int>{}(std::get<0>(t));
             auto h2 = std::hash<int>{}(std::get<1>(t));
             auto h3 = std::hash<int>{}(std::get<2>(t));
@@ -73,7 +75,8 @@ private:
      * @param worldWidth The width of the world in tiles.
      * @param worldHeight The height of the world in tiles.
      */
-    void _drawResources(const Resources& resources, int tileX, int tileY, int worldWidth, int worldHeight);
+    void _drawResources(const Resources& resources, int tileX, int tileY, int worldWidth,
+                        int worldHeight);
 
     /**
      * @brief Renders an egg.

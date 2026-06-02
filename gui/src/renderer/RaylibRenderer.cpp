@@ -1,4 +1,5 @@
 #include "RaylibRenderer.hpp"
+
 #include <cmath>
 #include <iostream>
 
@@ -8,13 +9,11 @@ void RaylibRenderer::init()
     InitWindow(800, 600, "Zappy");
     SetTargetFPS(60);
 
-    _camera = {
-        .position = {0.0f, 10.0f, 10.0f},
-        .target = {0.0f, 0.0f, 0.0f},
-        .up = {0.0f, 1.0f, 0.0f},
-        .fovy = 45.0f,
-        .projection = CAMERA_PERSPECTIVE
-    };
+    _camera = {.position = {0.0f, 10.0f, 10.0f},
+               .target = {0.0f, 0.0f, 0.0f},
+               .up = {0.0f, 1.0f, 0.0f},
+               .fovy = 45.0f,
+               .projection = CAMERA_PERSPECTIVE};
 }
 
 void RaylibRenderer::render(const GameState& state)
@@ -65,15 +64,9 @@ void RaylibRenderer::render(const GameState& state)
     EndDrawing();
 }
 
-bool RaylibRenderer::shouldClose()
-{
-    return WindowShouldClose();
-}
+bool RaylibRenderer::shouldClose() { return WindowShouldClose(); }
 
-void RaylibRenderer::shutdown()
-{
-    CloseWindow();
-}
+void RaylibRenderer::shutdown() { CloseWindow(); }
 
 void RaylibRenderer::_drawCustomGrid(int width, int height, float spacing)
 {
@@ -81,19 +74,13 @@ void RaylibRenderer::_drawCustomGrid(int width, int height, float spacing)
     float offsetZ = (height * spacing) / 2.0f;
 
     for (int x = 0; x <= width; x++) {
-        DrawLine3D(
-            {x * spacing - offsetX, 0.0f, -offsetZ},
-            {x * spacing - offsetX, 0.0f, height * spacing - offsetZ},
-            GRAY
-        );
+        DrawLine3D({x * spacing - offsetX, 0.0f, -offsetZ},
+                   {x * spacing - offsetX, 0.0f, height * spacing - offsetZ}, GRAY);
     }
 
     for (int z = 0; z <= height; z++) {
-        DrawLine3D(
-            {-offsetX, 0.0f, z * spacing - offsetZ},
-            {width * spacing - offsetX, 0.0f, z * spacing - offsetZ},
-            GRAY
-        );
+        DrawLine3D({-offsetX, 0.0f, z * spacing - offsetZ},
+                   {width * spacing - offsetX, 0.0f, z * spacing - offsetZ}, GRAY);
     }
 }
 
@@ -102,7 +89,7 @@ void RaylibRenderer::_drawPlayer(const Player& player, int worldWidth, int world
     static const float playerSize = 0.8f;
 
     Vector3 worldPos = _tileToWorld(player.x, player.y, worldWidth, worldHeight);
-    worldPos.y = playerSize / 2.0f; // Make player be on top of grid
+    worldPos.y = playerSize / 2.0f;  // Make player be on top of grid
     Color teamColor = _getTeamColor(player.team);
 
     DrawCube(worldPos, playerSize, playerSize, playerSize, teamColor);
@@ -123,16 +110,17 @@ void RaylibRenderer::_drawPlayerNametag(const Player& player, int worldWidth, in
     DrawText(label.c_str(), screenPos.x - textWidth / 2, screenPos.y, fontSize, BLACK);
 }
 
-void RaylibRenderer::_drawResources(const Resources& resources, int tileX, int tileY, int worldWidth, int worldHeight)
+void RaylibRenderer::_drawResources(const Resources& resources, int tileX, int tileY,
+                                    int worldWidth, int worldHeight)
 {
     static const Color resourceColors[] = {
-        BROWN,      // food
-        DARKGRAY,   // linemate
-        GREEN,      // deraumere
-        BLUE,       // sibur
-        YELLOW,     // mendiane
-        ORANGE,     // phiras
-        PURPLE      // thystame
+        BROWN,     // food
+        DARKGRAY,  // linemate
+        GREEN,     // deraumere
+        BLUE,      // sibur
+        YELLOW,    // mendiane
+        ORANGE,    // phiras
+        PURPLE     // thystame
     };
 
     static const float baseSize = 0.15f;
@@ -172,7 +160,7 @@ void RaylibRenderer::_drawEgg(const Egg& egg, int worldWidth, int worldHeight)
     static const float eggSize = 0.4f;
 
     Vector3 worldPos = _tileToWorld(egg.x, egg.y, worldWidth, worldHeight);
-    worldPos.y = eggSize / 2.0f; // Make egg be on top of grid
+    worldPos.y = eggSize / 2.0f;  // Make egg be on top of grid
     Color teamColor = _getTeamColor(egg.team);
 
     DrawCube(worldPos, eggSize, eggSize, eggSize, teamColor);
@@ -199,9 +187,8 @@ Color RaylibRenderer::_getTeamColor(const std::string& teamName)
         return _teamColors[teamName];
     }
 
-    static const Color palette[] = {
-        RED, GREEN, BLUE, YELLOW, ORANGE, PURPLE, PINK, LIME, SKYBLUE, MAGENTA
-    };
+    static const Color palette[] = {RED,    GREEN, BLUE, YELLOW,  ORANGE,
+                                    PURPLE, PINK,  LIME, SKYBLUE, MAGENTA};
     static constexpr int paletteSize = sizeof(palette) / sizeof(palette[0]);
 
     int colorIndex = _teamColors.size() % paletteSize;
@@ -216,9 +203,6 @@ Vector3 RaylibRenderer::_tileToWorld(int tileX, int tileY, int worldWidth, int w
     float offsetX = (worldWidth * TILE_SIZE) / 2.0f;
     float offsetZ = (worldHeight * TILE_SIZE) / 2.0f;
 
-    return {
-        tileX * TILE_SIZE - offsetX + TILE_SIZE / 2.0f,
-        0.0f,
-        tileY * TILE_SIZE - offsetZ + TILE_SIZE / 2.0f
-    };
+    return {tileX * TILE_SIZE - offsetX + TILE_SIZE / 2.0f, 0.0f,
+            tileY * TILE_SIZE - offsetZ + TILE_SIZE / 2.0f};
 }
