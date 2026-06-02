@@ -5,6 +5,8 @@ if(NOT DEFINED CMAKE_PROJECT_NAME)
     project(ZappyServer)
 endif()
 
+enable_testing()
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
