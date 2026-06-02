@@ -29,6 +29,7 @@ void RaylibRenderer::render(const GameState& state)
     mock.world.eggs[20] = {20, 4, 4, "TeamA"};
     mock.world.eggs[21] = {21, 1, 6, "TeamB"};
 
+    _updateCamera(mock.world.width, mock.world.height);
     BeginDrawing();
     ClearBackground(RAYWHITE);
 
@@ -67,10 +68,8 @@ void RaylibRenderer::render(const GameState& state)
 void RaylibRenderer::handleInput()
 {
     // KEY_A maps to 'Q' on AZERTY
-    if (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_LEFT))
-        std::cout << "Left\n";
-    if (IsKeyPressed(KEY_D) || IsKeyPressed(KEY_RIGHT))
-        std::cout << "Right\n";
+    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) _cameraAngle += MOVE_SPEED * GetFrameTime();
+    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) _cameraAngle -= MOVE_SPEED * GetFrameTime();
 }
 
 bool RaylibRenderer::shouldClose() { return WindowShouldClose(); }
@@ -214,4 +213,27 @@ Vector3 RaylibRenderer::_tileToWorld(int tileX, int tileY, int worldWidth, int w
 
     return {tileX * TILE_SIZE - offsetX + TILE_SIZE / 2.0f, 0.0f,
             tileY * TILE_SIZE - offsetZ + TILE_SIZE / 2.0f};
+}
+
+void RaylibRenderer::_updateCamera(float worldWidth, float worldHeight)
+{
+    float maxDim = std::max(worldWidth, worldHeight);
+    float adaptiveRadius = maxDim * 1.25f;
+
+    float rawAspectX = worldWidth / maxDim;
+    float rawAspectZ = worldHeight / maxDim;
+
+    // Lerp toward circle (50% blend)
+    float aspectX = 0.5f * (1.0f + rawAspectX);
+    float aspectZ = 0.5f * (1.0f + rawAspectZ);
+
+    _camera.position.x = cos(_cameraAngle) * adaptiveRadius * aspectX;
+    _camera.position.z = sin(_cameraAngle) * adaptiveRadius * aspectZ;
+
+    float currentRadius = sqrt(pow(_camera.position.x, 2) + pow(_camera.position.z, 2));
+
+    float heightScale = currentRadius / adaptiveRadius;
+    _camera.position.y = _cameraHeight * heightScale;
+
+    _camera.target = {0.0f, 0.0f, 0.0f};
 }
