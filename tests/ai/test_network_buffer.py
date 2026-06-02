@@ -76,7 +76,9 @@ class TestNetworkBuffer(unittest.TestCase):
         buf = NetworkBuffer(FakeClient([stream]))
         buf.poll()
         self.assertEqual(list(buf.response_queue), ["ok", "ko", "[player, food]"])
-        self.assertEqual(list(buf.event_queue), ["message 2, salut", "eject: 4", "dead"])
+        self.assertEqual(
+            list(buf.event_queue), ["message 2, salut", "eject: 4", "dead"]
+        )
 
     def test_fifo_order_preserved(self):
         buf = NetworkBuffer(FakeClient(["ok\nko\n"]))
