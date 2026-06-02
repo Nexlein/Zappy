@@ -18,7 +18,7 @@ EVENT_PREFIXES = ("message", "eject", "dead")
 class NetworkBuffer:
     _client: TcpClient
     _buffer: str = ""
-    reponse_queue: deque[str] = field(default_factory=deque)
+    response_queue: deque[str] = field(default_factory=deque)
     event_queue: deque[str] = field(default_factory=deque)
 
     def poll(self) -> None:
@@ -33,8 +33,8 @@ class NetworkBuffer:
         return None
 
     def next_response(self) -> str | None:
-        if self.reponse_queue:
-            return self.reponse_queue.popleft()
+        if self.response_queue:
+            return self.response_queue.popleft()
         return None
 
     def _drain(self) -> None:
@@ -46,4 +46,4 @@ class NetworkBuffer:
         if line.startswith(EVENT_PREFIXES):
             self.event_queue.append(line)
         else:
-            self.reponse_queue.append(line)
+            self.response_queue.append(line)

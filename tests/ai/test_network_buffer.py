@@ -13,13 +13,15 @@ from collections import deque
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../ai/src"))
 
 from NetworkBuffer import NetworkBuffer
+from tcpClient import TcpClient
 
 
-class FakeClient:
+class FakeClient(TcpClient):
     """Faux TcpClient: recv_chunk() débite les chunks pré-programmés un par un,
     puis renvoie "" (socket vide, non-bloquant)."""
 
     def __init__(self, chunks):
+        super().__init__(host="localhost", port=0)
         self._chunks = deque(chunks)
 
     def recv_chunk(self) -> str:
@@ -59,12 +61,13 @@ class TestNetworkBuffer(unittest.TestCase):
 
     def test_trailing_fragment_not_emitted(self):
         # un fragment sans \n final reste en attente, rien n'est émis
-        buf = NetworkBuffer(FakeClient(["ok\npartial"]))
+        client = FakeClient(["ok\npartial"])
+        buf = NetworkBuffer(client)
         buf.poll()
         self.assertEqual(buf.next_response(), "ok")
         self.assertIsNone(buf.next_response())
         # le fragment se complète au chunk suivant
-        buf._client._chunks.append(" done\n")
+        client._chunks.append(" done\n")
         buf.poll()
         self.assertEqual(buf.next_response(), "partial done")
 
@@ -72,8 +75,8 @@ class TestNetworkBuffer(unittest.TestCase):
         stream = "ok\nmessage 2, salut\neject: 4\nko\ndead\n[player, food]\n"
         buf = NetworkBuffer(FakeClient([stream]))
         buf.poll()
-        self.assertEqual(list(buf.ResponseQueue), ["ok", "ko", "[player, food]"])
-        self.assertEqual(list(buf.EventQueue), ["message 2, salut", "eject: 4", "dead"])
+        self.assertEqual(list(buf.response_queue), ["ok", "ko", "[player, food]"])
+        self.assertEqual(list(buf.event_queue), ["message 2, salut", "eject: 4", "dead"])
 
     def test_fifo_order_preserved(self):
         buf = NetworkBuffer(FakeClient(["ok\nko\n"]))
@@ -94,8 +97,8 @@ class TestNetworkBuffer(unittest.TestCase):
         full = "ok\nmessage 1, x\nko\n"
         buf = NetworkBuffer(FakeClient(list(full)))
         drain_all(buf)
-        self.assertEqual(list(buf.ResponseQueue), ["ok", "ko"])
-        self.assertEqual(list(buf.EventQueue), ["message 1, x"])
+        self.assertEqual(list(buf.response_queue), ["ok", "ko"])
+        self.assertEqual(list(buf.event_queue), ["message 1, x"])
 
 
 if __name__ == "__main__":
