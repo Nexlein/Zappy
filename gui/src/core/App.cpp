@@ -39,6 +39,7 @@ void App::run()
             state.applyEvent(*event);
         }
 
+        renderer->handleInput();
         renderer->render(state);
     }
 

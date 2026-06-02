@@ -37,6 +37,8 @@ void HeadlessRenderer::render(const GameState& state)
     state.clearDirty();
 }
 
+void HeadlessRenderer::handleInput() {}
+
 bool HeadlessRenderer::shouldClose()
 {
     return false;  // Does not matter

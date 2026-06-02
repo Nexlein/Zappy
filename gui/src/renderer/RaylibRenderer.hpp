@@ -17,12 +17,17 @@ class RaylibRenderer : public IRenderer {
 
     void init() override;
     void render(const GameState& state) override;
+    void handleInput() override;
     bool shouldClose() override;
     void shutdown() override;
 
     private:
     Camera3D _camera;
     std::unordered_map<std::string, Color> _teamColors;
+
+    static constexpr float MOVE_SPEED = 2.0f;
+    float _cameraAngle = 0.0f;
+    float _cameraHeight = 10.0f;
 
     // Resource position cache: {tileX, tileY, resourceIndex} -> {count, position}
     struct ResourceCacheEntry {
@@ -110,4 +115,11 @@ class RaylibRenderer : public IRenderer {
      * @return World position (centered grid at origin).
      */
     Vector3 _tileToWorld(int tileX, int tileY, int worldWidth, int worldHeight) const;
+
+    /**
+     * @brief Updates the camera position based on the current angle and height.
+     * @param worldWidth The width of the world in tiles.
+     * @param worldHeight The height of the world in tiles.
+     */
+    void _updateCamera(float worldWidth, float worldHeight);
 };
