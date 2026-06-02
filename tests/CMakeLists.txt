@@ -32,9 +32,6 @@ set(GUI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/EventQueue.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/GameState.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/Args.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/App.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/renderer/HeadlessRenderer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/renderer/RaylibRenderer.cpp
 )
 
 set(TEST_SOURCES
@@ -44,7 +41,6 @@ set(TEST_SOURCES
     gui/test_protocolparser.cpp
     gui/test_gamestate.cpp
     gui/test_args.cpp
-    gui/test_app.cpp
 )
 
 add_executable(zappy_tests ${TEST_SOURCES} ${GUI_SOURCES})
