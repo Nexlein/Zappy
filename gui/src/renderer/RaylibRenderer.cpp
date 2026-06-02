@@ -16,11 +16,11 @@ void RaylibRenderer::init()
                .projection = CAMERA_PERSPECTIVE};
 }
 
-void RaylibRenderer::render(const GameState& state)
+void RaylibRenderer::render()
 {
     // Mock is used to add some fake players and eggs for testing purposes
     // TODO remove mock and use state directly once rendering is implemented and tested
-    GameState mock = state;
+    GameState mock = *_state;
 
     mock.world.players[10] = {10, 2, 3, Orientation::N, 1, "TeamA"};
     mock.world.players[11] = {11, 5, 1, Orientation::E, 2, "TeamA"};
@@ -70,6 +70,12 @@ void RaylibRenderer::handleInput()
     // KEY_A maps to 'Q' on AZERTY
     if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) _cameraAngle += MOVE_SPEED * GetFrameTime();
     if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) _cameraAngle -= MOVE_SPEED * GetFrameTime();
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        Vector2 mousePos = GetMousePosition();
+        Ray ray = GetMouseRay(mousePos, _camera);
+        
+    }
 }
 
 bool RaylibRenderer::shouldClose() { return WindowShouldClose(); }

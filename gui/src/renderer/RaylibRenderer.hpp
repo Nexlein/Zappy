@@ -4,19 +4,19 @@
 #include <tuple>
 #include <unordered_map>
 
-#include "IRenderer.hpp"
+#include "ARenderer.hpp"
 #include "raylib.h"
 
 /**
  * @brief A renderer that uses Raylib to display the game state graphically.
  */
-class RaylibRenderer : public IRenderer {
+class RaylibRenderer : public ARenderer {
     public:
     RaylibRenderer() = default;
     ~RaylibRenderer() override = default;
 
     void init() override;
-    void render(const GameState& state) override;
+    void render() override;
     void handleInput() override;
     bool shouldClose() override;
     void shutdown() override;
