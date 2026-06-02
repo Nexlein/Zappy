@@ -19,7 +19,7 @@ class Config:
 
 def parseArgs() -> Config:
     if "--help" in sys.argv:
-        print("USAGE: ./zappy_ai -p port -n name -h machine")
+        print("USAGE: ./zappy_ai -p PORT -n NAME [-h HOST]")
         print("")
         print("option\t\tdescription")
         print("-p port\t\tport number")
