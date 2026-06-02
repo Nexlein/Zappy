@@ -11,6 +11,7 @@ from tcpClient import TcpClient
 
 EVENT_PREFIXES = ("message", "eject", "dead")
 
+
 # REP: soit réponse ok/ko ou alors réponse de cmd (Look -> [...])
 # il faudrait pouvoir distinger les réponses d'une action non ?
 @dataclass
