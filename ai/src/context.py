@@ -26,7 +26,7 @@ class Inventory:
 class Tile:
     """Represents a single tile parsed from the Look command."""
 
-    players: int = 0
+    player: int = 0
     food: int = 0
     linemate: int = 0
     deraumere: int = 0
