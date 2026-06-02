@@ -37,6 +37,28 @@ class Resources {
                 throw std::out_of_range("Invalid resource index");
         }
     }
+
+    const int& operator[](size_t index) const
+    {
+        switch (index) {
+            case 0:
+                return food;
+            case 1:
+                return linemate;
+            case 2:
+                return deraumere;
+            case 3:
+                return sibur;
+            case 4:
+                return mendiane;
+            case 5:
+                return phiras;
+            case 6:
+                return thystame;
+            default:
+                throw std::out_of_range("Invalid resource index");
+        }
+    }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Resources& res)

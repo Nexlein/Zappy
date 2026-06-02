@@ -5,6 +5,7 @@
 #include "network/ProtocolParser.hpp"
 #include "renderer/HeadlessRenderer.hpp"
 #include "renderer/IRenderer.hpp"
+#include "renderer/RaylibRenderer.hpp"
 
 App::App(int argc, char** argv) : args(argc, argv) {}
 
@@ -27,11 +28,10 @@ void App::run()
         std::cout << "[INFO] Running in headless mode\n";
         renderer = new HeadlessRenderer(std::cout);
     } else {
-        // TODO: When we have a graphic renderer, use it instead of headless
-        std::cout << "[INFO] Graphical renderer not yet implemented, using headless\n";
-        renderer = new HeadlessRenderer(std::cout);
+        renderer = new RaylibRenderer();
     }
 
+    renderer->init();
     while (!renderer->shouldClose()) {
         pollAndEnqueue(socket, eventQueue);
 
@@ -42,6 +42,7 @@ void App::run()
         renderer->render(state);
     }
 
+    renderer->shutdown();
     delete renderer;
 }
 
