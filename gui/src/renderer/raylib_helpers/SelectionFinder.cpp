@@ -14,9 +14,13 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
     for (const auto& [id, player] : state.world.players) {
         Vector3 pos =
             tileToWorld(player.x, player.y, state.world.width, state.world.height, tileSize);
-        pos.y = playerHeight;
+        pos.y = playerHeight / 2.0f;  // Center of cube
 
-        RayCollision collision = GetRayCollisionSphere(ray, pos, 0.5f);
+        BoundingBox bbox = {
+            {pos.x - playerHeight / 2.0f, pos.y - playerHeight / 2.0f, pos.z - playerHeight / 2.0f},
+            {pos.x + playerHeight / 2.0f, pos.y + playerHeight / 2.0f, pos.z + playerHeight / 2.0f}};
+        
+        RayCollision collision = GetRayCollisionBox(ray, bbox);
         if (collision.hit && collision.distance < closestDist) {
             closestDist = collision.distance;
             newSelection.type = EntityType::Player;
@@ -28,9 +32,13 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
     // Check eggs
     for (const auto& [id, egg] : state.world.eggs) {
         Vector3 pos = tileToWorld(egg.x, egg.y, state.world.width, state.world.height, tileSize);
-        pos.y = eggHeight;
+        pos.y = eggHeight / 2.0f;  // Center of cube
 
-        RayCollision collision = GetRayCollisionSphere(ray, pos, 0.3f);
+        BoundingBox bbox = {
+            {pos.x - eggHeight / 2.0f, pos.y - eggHeight / 2.0f, pos.z - eggHeight / 2.0f},
+            {pos.x + eggHeight / 2.0f, pos.y + eggHeight / 2.0f, pos.z + eggHeight / 2.0f}};
+        
+        RayCollision collision = GetRayCollisionBox(ray, bbox);
         if (collision.hit && collision.distance < closestDist) {
             closestDist = collision.distance;
             newSelection.type = EntityType::Egg;
