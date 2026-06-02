@@ -122,34 +122,35 @@ void RaylibRenderer::_drawSelectionHighlight()
     if (_selection.type == SelectionFinder::EntityType::None) return;
 
     switch (_selection.type) {
-    case SelectionFinder::EntityType::Tile:
-        GridRenderer::drawTileHighlight(_selection.tileX, _selection.tileY, _state->world.width,
-                                        _state->world.height, TILE_SIZE, SELECTION_COLOR,
-                                        SELECTION_LINE_THICKNESS);
-        break;
+        case SelectionFinder::EntityType::Tile:
+            GridRenderer::drawTileHighlight(_selection.tileX, _selection.tileY, _state->world.width,
+                                            _state->world.height, TILE_SIZE, SELECTION_COLOR,
+                                            SELECTION_LINE_THICKNESS);
+            break;
 
-    case SelectionFinder::EntityType::Player:
-        if (_state->world.players.find(_selection.id) != _state->world.players.end()) {
-            const Player& player = _state->world.players.at(_selection.id);
-            Vector3 worldPos =
-                _tileToWorld(player.x, player.y, _state->world.width, _state->world.height);
-            worldPos.y = PLAYER_CUBE_SIZE / 2.0f;
-            EntityRenderer::drawPlayerHighlight(worldPos, PLAYER_CUBE_SIZE, SELECTION_COLOR,
-                                                SELECTION_WIREFRAME_THICKNESS);
-        }
-        break;
+        case SelectionFinder::EntityType::Player:
+            if (_state->world.players.find(_selection.id) != _state->world.players.end()) {
+                const Player& player = _state->world.players.at(_selection.id);
+                Vector3 worldPos =
+                    _tileToWorld(player.x, player.y, _state->world.width, _state->world.height);
+                worldPos.y = PLAYER_CUBE_SIZE / 2.0f;
+                EntityRenderer::drawPlayerHighlight(worldPos, PLAYER_CUBE_SIZE, SELECTION_COLOR,
+                                                    SELECTION_WIREFRAME_THICKNESS);
+            }
+            break;
 
-    case SelectionFinder::EntityType::Egg:
-        if (_state->world.eggs.find(_selection.id) != _state->world.eggs.end()) {
-            const Egg& egg = _state->world.eggs.at(_selection.id);
-            Vector3 worldPos = _tileToWorld(egg.x, egg.y, _state->world.width, _state->world.height);
-            worldPos.y = EGG_CUBE_SIZE / 2.0f;
-            EntityRenderer::drawEggHighlight(worldPos, EGG_CUBE_SIZE, SELECTION_COLOR,
-                                             SELECTION_WIREFRAME_THICKNESS);
-        }
-        break;
-    default:
-        return;
+        case SelectionFinder::EntityType::Egg:
+            if (_state->world.eggs.find(_selection.id) != _state->world.eggs.end()) {
+                const Egg& egg = _state->world.eggs.at(_selection.id);
+                Vector3 worldPos =
+                    _tileToWorld(egg.x, egg.y, _state->world.width, _state->world.height);
+                worldPos.y = EGG_CUBE_SIZE / 2.0f;
+                EntityRenderer::drawEggHighlight(worldPos, EGG_CUBE_SIZE, SELECTION_COLOR,
+                                                 SELECTION_WIREFRAME_THICKNESS);
+            }
+            break;
+        default:
+            return;
     }
 }
 

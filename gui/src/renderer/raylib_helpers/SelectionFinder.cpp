@@ -18,8 +18,9 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
 
         BoundingBox bbox = {
             {pos.x - playerHeight / 2.0f, pos.y - playerHeight / 2.0f, pos.z - playerHeight / 2.0f},
-            {pos.x + playerHeight / 2.0f, pos.y + playerHeight / 2.0f, pos.z + playerHeight / 2.0f}};
-        
+            {pos.x + playerHeight / 2.0f, pos.y + playerHeight / 2.0f,
+             pos.z + playerHeight / 2.0f}};
+
         RayCollision collision = GetRayCollisionBox(ray, bbox);
         if (collision.hit && collision.distance < closestDist) {
             closestDist = collision.distance;
@@ -37,7 +38,7 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
         BoundingBox bbox = {
             {pos.x - eggHeight / 2.0f, pos.y - eggHeight / 2.0f, pos.z - eggHeight / 2.0f},
             {pos.x + eggHeight / 2.0f, pos.y + eggHeight / 2.0f, pos.z + eggHeight / 2.0f}};
-        
+
         RayCollision collision = GetRayCollisionBox(ray, bbox);
         if (collision.hit && collision.distance < closestDist) {
             closestDist = collision.distance;
