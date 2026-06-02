@@ -16,6 +16,43 @@ void EntityRenderer::drawEgg(const Vector3& worldPos, Color teamColor, float siz
     DrawCube(worldPos, size, size, size, teamColor);
 }
 
+void EntityRenderer::drawPlayerHighlight(const Vector3& worldPos, float size, Color color,
+                                         float lineThickness)
+{
+    drawCubeWireframeThick(worldPos, size, color, lineThickness * 0.01f);
+}
+
+void EntityRenderer::drawEggHighlight(const Vector3& worldPos, float size, Color color,
+                                      float lineThickness)
+{
+    drawCubeWireframeThick(worldPos, size, color, lineThickness * 0.01f);
+}
+
+void EntityRenderer::drawCubeWireframeThick(const Vector3& worldPos, float size, Color color,
+                                            float thickness)
+{
+    float halfSize = size / 2.0f;
+
+    // Draw 12 edges of cube as thin rectangles
+    // Bottom square (y = -halfSize)
+    DrawCube({worldPos.x, worldPos.y - halfSize, worldPos.z - halfSize}, size, thickness, thickness, color);
+    DrawCube({worldPos.x, worldPos.y - halfSize, worldPos.z + halfSize}, size, thickness, thickness, color);
+    DrawCube({worldPos.x - halfSize, worldPos.y - halfSize, worldPos.z}, thickness, thickness, size, color);
+    DrawCube({worldPos.x + halfSize, worldPos.y - halfSize, worldPos.z}, thickness, thickness, size, color);
+
+    // Top square (y = +halfSize)
+    DrawCube({worldPos.x, worldPos.y + halfSize, worldPos.z - halfSize}, size, thickness, thickness, color);
+    DrawCube({worldPos.x, worldPos.y + halfSize, worldPos.z + halfSize}, size, thickness, thickness, color);
+    DrawCube({worldPos.x - halfSize, worldPos.y + halfSize, worldPos.z}, thickness, thickness, size, color);
+    DrawCube({worldPos.x + halfSize, worldPos.y + halfSize, worldPos.z}, thickness, thickness, size, color);
+
+    // Vertical edges
+    DrawCube({worldPos.x - halfSize, worldPos.y, worldPos.z - halfSize}, thickness, size, thickness, color);
+    DrawCube({worldPos.x + halfSize, worldPos.y, worldPos.z - halfSize}, thickness, size, thickness, color);
+    DrawCube({worldPos.x - halfSize, worldPos.y, worldPos.z + halfSize}, thickness, size, thickness, color);
+    DrawCube({worldPos.x + halfSize, worldPos.y, worldPos.z + halfSize}, thickness, size, thickness, color);
+}
+
 void EntityRenderer::drawResources(const Resources& resources, int tileX, int tileY,
                                    const Vector3& tileCenter, float tileSize, float baseSize)
 {
