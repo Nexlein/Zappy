@@ -17,6 +17,7 @@ class RaylibRenderer : public IRenderer {
 
     void init() override;
     void render(const GameState& state) override;
+    void handleInput() override;
     bool shouldClose() override;
     void shutdown() override;
 

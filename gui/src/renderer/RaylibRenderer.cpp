@@ -64,6 +64,15 @@ void RaylibRenderer::render(const GameState& state)
     EndDrawing();
 }
 
+void RaylibRenderer::handleInput()
+{
+    // KEY_A maps to 'Q' on AZERTY
+    if (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_LEFT))
+        std::cout << "Left\n";
+    if (IsKeyPressed(KEY_D) || IsKeyPressed(KEY_RIGHT))
+        std::cout << "Right\n";
+}
+
 bool RaylibRenderer::shouldClose() { return WindowShouldClose(); }
 
 void RaylibRenderer::shutdown() { CloseWindow(); }
