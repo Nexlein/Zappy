@@ -3,7 +3,8 @@
 #include <string>
 
 /**
- * @brief Represents the configuration for the application, including the port, machine, and headless mode.
+ * @brief Represents the configuration for the application, including the port, machine, and
+ * headless mode.
  */
 struct AppConfig {
     int port;
@@ -13,10 +14,11 @@ struct AppConfig {
 
 /**
  * @brief Parses and validates command-line arguments for the application.
- * Provides methods to check if the arguments are valid, if help was requested, and to retrieve the application configuration and exit code.
+ * Provides methods to check if the arguments are valid, if help was requested, and to retrieve the
+ * application configuration and exit code.
  */
 class Args {
-public:
+    public:
     Args(int argc, char** argv);
 
     /**
@@ -43,12 +45,8 @@ public:
      */
     AppConfig getConfig() const;
 
-private:
-    enum class ParseResult {
-        Success,
-        HelpRequested,
-        Error
-    };
+    private:
+    enum class ParseResult { Success, HelpRequested, Error };
 
     int SUCCESS = 0;
     int ERROR = 84;

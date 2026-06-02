@@ -1,24 +1,18 @@
 #include "App.hpp"
+
+#include <iostream>
+
 #include "network/ProtocolParser.hpp"
 #include "renderer/IRenderer.hpp"
 #include "renderer/HeadlessRenderer.hpp"
 #include "renderer/RaylibRenderer.hpp"
 #include <iostream>
 
-App::App(int argc, char** argv)
-    : args(argc, argv)
-{
-}
+App::App(int argc, char** argv) : args(argc, argv) {}
 
-bool App::shouldRun() const
-{
-    return args.isValid();
-}
+bool App::shouldRun() const { return args.isValid(); }
 
-int App::exitCode() const
-{
-    return args.exitCode();
-}
+int App::exitCode() const { return args.exitCode(); }
 
 void App::run()
 {

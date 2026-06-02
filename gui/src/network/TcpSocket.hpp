@@ -1,18 +1,18 @@
 #pragma once
 
+#include <exception>
 #include <optional>
 #include <string>
-#include <exception>
 
 /**
  * @brief Exception class for TCP errors.
  */
 class TcpException : public std::exception {
-public:
+    public:
     TcpException(const std::string& message) : _message(message) {}
     const char* what() const noexcept override { return _message.c_str(); }
 
-private:
+    private:
     std::string _message;
 };
 
@@ -20,7 +20,7 @@ private:
  * @brief Simple TCP socket wrapper.
  */
 class TcpSocket {
-public:
+    public:
     /**
      * @brief Wraps close().
      */
@@ -56,7 +56,7 @@ public:
      */
     bool poll(int timeout_ms);
 
-private:
+    private:
     int _fd = -1;
     std::string _recvBuffer;
 };

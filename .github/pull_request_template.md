@@ -1,3 +1,5 @@
+# PR Title: [Feature] Short description of the feature
+
 ## Changes
 <!-- What changed -->
 
@@ -5,4 +7,5 @@
 <!-- Closes #X -->
 
 ## Tests
+
 - [ ] Tests pass locally

@@ -1,17 +1,19 @@
 #include <gtest/gtest.h>
+
 #include "core/App.hpp"
 #include "core/EventQueue.hpp"
 
 // TestableApp exposes App internals without modifying App.hpp
 class TestableApp : public App {
-public:
+    public:
     using App::App;
 
     GameState& getState() { return state; }
 };
 
 // Test state updates through event processing
-TEST(AppTest, StateUpdatesFromEvents) {
+TEST(AppTest, StateUpdatesFromEvents)
+{
     const char* argv[] = {"prog", "-p", "4242"};
     TestableApp app(3, const_cast<char**>(argv));
 
@@ -37,7 +39,8 @@ TEST(AppTest, StateUpdatesFromEvents) {
 }
 
 // Test event ordering
-TEST(AppTest, EventOrderPreserved) {
+TEST(AppTest, EventOrderPreserved)
+{
     const char* argv[] = {"prog", "-p", "4242"};
     TestableApp app(3, const_cast<char**>(argv));
 

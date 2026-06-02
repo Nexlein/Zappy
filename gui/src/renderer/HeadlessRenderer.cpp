@@ -1,13 +1,8 @@
 #include "HeadlessRenderer.hpp"
 
-HeadlessRenderer::HeadlessRenderer(std::ostream& out)
-    : _out(out)
-{
-}
+HeadlessRenderer::HeadlessRenderer(std::ostream& out) : _out(out) {}
 
-void HeadlessRenderer::init()
-{
-}
+void HeadlessRenderer::init() {}
 
 void HeadlessRenderer::render(const GameState& state)
 {
@@ -44,9 +39,7 @@ void HeadlessRenderer::render(const GameState& state)
 
 bool HeadlessRenderer::shouldClose()
 {
-    return false; // Does not matter
+    return false;  // Does not matter
 }
 
-void HeadlessRenderer::shutdown()
-{
-}
+void HeadlessRenderer::shutdown() {}
