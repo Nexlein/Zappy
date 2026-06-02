@@ -39,8 +39,9 @@ void App::run()
             state.applyEvent(*event);
         }
 
+        renderer->setState(state);
         renderer->handleInput();
-        renderer->render(state);
+        renderer->render();
     }
 
     renderer->shutdown();
