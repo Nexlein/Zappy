@@ -1,5 +1,6 @@
 #include "RaylibRenderer.hpp"
 #include "raylib_helpers/RenderingHelper.hpp"
+#include "raylib_helpers/TextRenderer.hpp"
 
 #include <cfloat>
 #include <cmath>
@@ -82,40 +83,20 @@ void RaylibRenderer::_render3D()
 void RaylibRenderer::_render2D()
 {
     for (const auto& [id, player] : _state->world.players) {
-        _drawPlayerNametag(player, _state->world.width, _state->world.height);
+        Vector3 worldPos = RenderingHelper::tileToWorld(player.x, player.y, _state->world.width, _state->world.height, TILE_SIZE);
+        worldPos.y = PLAYER_CUBE_SIZE * 1.5f;  // Above cube
+        TextRenderer::drawTextAt3DPosition(
+            worldPos,
+            _camera, "Player #" + std::to_string(player.id), 20, BLACK);
     }
 
     for (const auto& [id, egg] : _state->world.eggs) {
-        _drawEggNametag(egg, _state->world.width, _state->world.height);
+        Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width, _state->world.height, TILE_SIZE);
+        worldPos.y = EGG_CUBE_SIZE * 1.5f;  // Above cube
+        TextRenderer::drawTextAt3DPosition(
+            worldPos,
+            _camera, "Egg #" + std::to_string(egg.id), 20, BLACK);
     }
-}
-
-void RaylibRenderer::_drawPlayerNametag(const Player& player, int worldWidth, int worldHeight)
-{
-    Vector3 worldPos = RenderingHelper::tileToWorld(player.x, player.y, worldWidth, worldHeight, TILE_SIZE);
-    worldPos.y = PLAYER_CUBE_SIZE * 1.5f;  // Above cube
-
-    Vector2 screenPos = GetWorldToScreen(worldPos, _camera);
-
-    std::string label = "Player #" + std::to_string(player.id);
-    int fontSize = 20;
-    int textWidth = MeasureText(label.c_str(), fontSize);
-
-    DrawText(label.c_str(), screenPos.x - textWidth / 2, screenPos.y, fontSize, BLACK);
-}
-
-void RaylibRenderer::_drawEggNametag(const Egg& egg, int worldWidth, int worldHeight)
-{
-    Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, worldWidth, worldHeight, TILE_SIZE);
-    worldPos.y = EGG_CUBE_SIZE * 1.5f;  // Above cube
-
-    Vector2 screenPos = GetWorldToScreen(worldPos, _camera);
-
-    std::string label = "Egg #" + std::to_string(egg.id);
-    int fontSize = 20;
-    int textWidth = MeasureText(label.c_str(), fontSize);
-
-    DrawText(label.c_str(), screenPos.x - textWidth / 2, screenPos.y, fontSize, BLACK);
 }
 
 void RaylibRenderer::_drawSelectionHighlight()
