@@ -51,8 +51,6 @@ class RaylibRenderer : public ARenderer {
 
     Color _getTeamColor(const std::string& teamName);
 
-    Vector3 _tileToWorld(int tileX, int tileY, int worldWidth, int worldHeight) const;
-
     void _updateCamera(float worldWidth, float worldHeight);
     void _updateSelection(float deltaTime);
 
