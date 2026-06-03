@@ -14,5 +14,6 @@ class RenderingHelper {
      * @return World position at center of tile (y=0).
      * @note This assumes the world is centered at (0,0) in world space.
      */
-    static Vector3 tileToWorld(int tileX, int tileY, int worldWidth, int worldHeight, float tileSize);
+    static Vector3 tileToWorld(int tileX, int tileY, int worldWidth, int worldHeight,
+                               float tileSize);
 };

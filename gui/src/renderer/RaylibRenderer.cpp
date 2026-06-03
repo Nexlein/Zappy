@@ -1,10 +1,11 @@
 #include "RaylibRenderer.hpp"
-#include "raylib_helpers/RenderingHelper.hpp"
-#include "raylib_helpers/TextRenderer.hpp"
 
 #include <cfloat>
 #include <cmath>
 #include <iostream>
+
+#include "raylib_helpers/RenderingHelper.hpp"
+#include "raylib_helpers/TextRenderer.hpp"
 
 void RaylibRenderer::init()
 {
@@ -57,14 +58,15 @@ void RaylibRenderer::_render3D()
     GridRenderer::drawGrid(_state->world.width, _state->world.height, TILE_SIZE);
 
     for (const auto& [id, player] : _state->world.players) {
-        Vector3 worldPos =
-            RenderingHelper::tileToWorld(player.x, player.y, _state->world.width, _state->world.height, TILE_SIZE);
+        Vector3 worldPos = RenderingHelper::tileToWorld(player.x, player.y, _state->world.width,
+                                                        _state->world.height, TILE_SIZE);
         worldPos.y = PLAYER_CUBE_SIZE / 2.0f;  // Sit on ground
         EntityRenderer::drawPlayer(worldPos, _getTeamColor(player.team), PLAYER_CUBE_SIZE);
     }
 
     for (const auto& [id, egg] : _state->world.eggs) {
-        Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width, _state->world.height, TILE_SIZE);
+        Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
+                                                        _state->world.height, TILE_SIZE);
         worldPos.y = EGG_CUBE_SIZE / 2.0f;  // Sit on ground
         EntityRenderer::drawEgg(worldPos, _getTeamColor(egg.team), EGG_CUBE_SIZE);
     }
@@ -73,7 +75,9 @@ void RaylibRenderer::_render3D()
         for (int y = 0; y < _state->world.height; y++) {
             EntityRenderer::drawResources(
                 _state->world.at(x, y), x, y,
-                RenderingHelper::tileToWorld(x, y, _state->world.width, _state->world.height, TILE_SIZE), TILE_SIZE);
+                RenderingHelper::tileToWorld(x, y, _state->world.width, _state->world.height,
+                                             TILE_SIZE),
+                TILE_SIZE);
         }
     }
 
@@ -83,19 +87,19 @@ void RaylibRenderer::_render3D()
 void RaylibRenderer::_render2D()
 {
     for (const auto& [id, player] : _state->world.players) {
-        Vector3 worldPos = RenderingHelper::tileToWorld(player.x, player.y, _state->world.width, _state->world.height, TILE_SIZE);
+        Vector3 worldPos = RenderingHelper::tileToWorld(player.x, player.y, _state->world.width,
+                                                        _state->world.height, TILE_SIZE);
         worldPos.y = PLAYER_CUBE_SIZE * 1.5f;  // Above cube
-        TextRenderer::drawTextAt3DPosition(
-            worldPos,
-            _camera, "Player #" + std::to_string(player.id), 20, BLACK);
+        TextRenderer::drawTextAt3DPosition(worldPos, _camera,
+                                           "Player #" + std::to_string(player.id), 20, BLACK);
     }
 
     for (const auto& [id, egg] : _state->world.eggs) {
-        Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width, _state->world.height, TILE_SIZE);
+        Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
+                                                        _state->world.height, TILE_SIZE);
         worldPos.y = EGG_CUBE_SIZE * 1.5f;  // Above cube
-        TextRenderer::drawTextAt3DPosition(
-            worldPos,
-            _camera, "Egg #" + std::to_string(egg.id), 20, BLACK);
+        TextRenderer::drawTextAt3DPosition(worldPos, _camera, "Egg #" + std::to_string(egg.id), 20,
+                                           BLACK);
     }
 }
 
@@ -113,8 +117,8 @@ void RaylibRenderer::_drawSelectionHighlight()
         case SelectionFinder::EntityType::Player:
             if (_state->world.players.find(_selection.id) != _state->world.players.end()) {
                 const Player& player = _state->world.players.at(_selection.id);
-                Vector3 worldPos =
-                    RenderingHelper::tileToWorld(player.x, player.y, _state->world.width, _state->world.height, TILE_SIZE);
+                Vector3 worldPos = RenderingHelper::tileToWorld(
+                    player.x, player.y, _state->world.width, _state->world.height, TILE_SIZE);
                 worldPos.y = PLAYER_CUBE_SIZE / 2.0f;
                 EntityRenderer::drawPlayerHighlight(worldPos, PLAYER_CUBE_SIZE, SELECTION_COLOR,
                                                     SELECTION_WIREFRAME_THICKNESS);
@@ -124,8 +128,8 @@ void RaylibRenderer::_drawSelectionHighlight()
         case SelectionFinder::EntityType::Egg:
             if (_state->world.eggs.find(_selection.id) != _state->world.eggs.end()) {
                 const Egg& egg = _state->world.eggs.at(_selection.id);
-                Vector3 worldPos =
-                    RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width, _state->world.height, TILE_SIZE);
+                Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
+                                                                _state->world.height, TILE_SIZE);
                 worldPos.y = EGG_CUBE_SIZE / 2.0f;
                 EntityRenderer::drawEggHighlight(worldPos, EGG_CUBE_SIZE, SELECTION_COLOR,
                                                  SELECTION_WIREFRAME_THICKNESS);

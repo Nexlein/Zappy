@@ -1,8 +1,9 @@
 #include "SelectionFinder.hpp"
-#include "RenderingHelper.hpp"
 
 #include <cfloat>
 #include <cmath>
+
+#include "RenderingHelper.hpp"
 
 SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const GameState& state,
                                                         float tileSize, float playerHeight,
@@ -13,8 +14,8 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
 
     // Check players
     for (const auto& [id, player] : state.world.players) {
-        Vector3 pos =
-            RenderingHelper::tileToWorld(player.x, player.y, state.world.width, state.world.height, tileSize);
+        Vector3 pos = RenderingHelper::tileToWorld(player.x, player.y, state.world.width,
+                                                   state.world.height, tileSize);
         pos.y = playerHeight / 2.0f;  // Center of cube
 
         BoundingBox bbox = {
@@ -33,7 +34,8 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
 
     // Check eggs
     for (const auto& [id, egg] : state.world.eggs) {
-        Vector3 pos = RenderingHelper::tileToWorld(egg.x, egg.y, state.world.width, state.world.height, tileSize);
+        Vector3 pos = RenderingHelper::tileToWorld(egg.x, egg.y, state.world.width,
+                                                   state.world.height, tileSize);
         pos.y = eggHeight / 2.0f;  // Center of cube
 
         BoundingBox bbox = {

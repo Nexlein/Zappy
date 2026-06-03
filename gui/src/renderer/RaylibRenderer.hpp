@@ -43,7 +43,7 @@ class RaylibRenderer : public ARenderer {
 
     void _render3D();
     void _render2D();
-    
+
     void _drawSelectionHighlight();
 
     Color _getTeamColor(const std::string& teamName);

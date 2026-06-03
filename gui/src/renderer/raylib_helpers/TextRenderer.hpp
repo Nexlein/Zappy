@@ -1,11 +1,11 @@
 #pragma once
 
-#include "raylib.h"
-
 #include <string>
 
+#include "raylib.h"
+
 class TextRenderer {
-public:
+    public:
     /**
      * @brief Draws centered text at a 3D world position.
      * @param worldPos 3D position in world space.
