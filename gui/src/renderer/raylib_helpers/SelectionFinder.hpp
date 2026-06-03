@@ -38,10 +38,6 @@ class SelectionFinder {
      * @return Selection with type None and default values.
      */
     static Selection getEmptySelection();
-
-    private:
-    static Vector3 tileToWorld(int tileX, int tileY, int worldWidth, int worldHeight,
-                               float tileSize);
 };
 
 std::ostream& operator<<(std::ostream& os, const SelectionFinder::Selection& sel);

@@ -3,6 +3,8 @@
 #include <cfloat>
 #include <cmath>
 
+#include "RenderingHelper.hpp"
+
 SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const GameState& state,
                                                         float tileSize, float playerHeight,
                                                         float eggHeight, float selectionDuration)
@@ -12,8 +14,8 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
 
     // Check players
     for (const auto& [id, player] : state.world.players) {
-        Vector3 pos =
-            tileToWorld(player.x, player.y, state.world.width, state.world.height, tileSize);
+        Vector3 pos = RenderingHelper::tileToWorld(player.x, player.y, state.world.width,
+                                                   state.world.height, tileSize);
         pos.y = playerHeight / 2.0f;  // Center of cube
 
         BoundingBox bbox = {
@@ -32,7 +34,8 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
 
     // Check eggs
     for (const auto& [id, egg] : state.world.eggs) {
-        Vector3 pos = tileToWorld(egg.x, egg.y, state.world.width, state.world.height, tileSize);
+        Vector3 pos = RenderingHelper::tileToWorld(egg.x, egg.y, state.world.width,
+                                                   state.world.height, tileSize);
         pos.y = eggHeight / 2.0f;  // Center of cube
 
         BoundingBox bbox = {
@@ -79,16 +82,6 @@ SelectionFinder::Selection SelectionFinder::getEmptySelection()
         .type = EntityType::None,
         .timer = 0.0f,
     };
-}
-
-Vector3 SelectionFinder::tileToWorld(int tileX, int tileY, int worldWidth, int worldHeight,
-                                     float tileSize)
-{
-    float offsetX = (worldWidth * tileSize) / 2.0f;
-    float offsetZ = (worldHeight * tileSize) / 2.0f;
-
-    return {tileX * tileSize - offsetX + tileSize / 2.0f, 0.0f,
-            tileY * tileSize - offsetZ + tileSize / 2.0f};
 }
 
 std::ostream& operator<<(std::ostream& os, const SelectionFinder::EntityType& type)
