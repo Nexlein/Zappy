@@ -7,69 +7,11 @@
 
 from states.AStates import State
 from context import DroneContext
+from elevations import ELEVATION_REQUIREMENTS
 
 
 class SearchStone(State):
-    """Evolution state: Focuses on gathering stones required to level up."""
-
-    ELEVATION_REQUIREMENTS = {
-        1: {
-            "linemate": 1,
-            "deraumere": 0,
-            "sibur": 0,
-            "mendiane": 0,
-            "phiras": 0,
-            "thystame": 0,
-        },
-        2: {
-            "linemate": 1,
-            "deraumere": 1,
-            "sibur": 1,
-            "mendiane": 0,
-            "phiras": 0,
-            "thystame": 0,
-        },
-        3: {
-            "linemate": 2,
-            "deraumere": 0,
-            "sibur": 1,
-            "mendiane": 0,
-            "phiras": 2,
-            "thystame": 0,
-        },
-        4: {
-            "linemate": 1,
-            "deraumere": 1,
-            "sibur": 2,
-            "mendiane": 0,
-            "phiras": 1,
-            "thystame": 0,
-        },
-        5: {
-            "linemate": 1,
-            "deraumere": 2,
-            "sibur": 1,
-            "mendiane": 3,
-            "phiras": 0,
-            "thystame": 0,
-        },
-        6: {
-            "linemate": 1,
-            "deraumere": 2,
-            "sibur": 3,
-            "mendiane": 0,
-            "phiras": 1,
-            "thystame": 0,
-        },
-        7: {
-            "linemate": 2,
-            "deraumere": 2,
-            "sibur": 2,
-            "mendiane": 2,
-            "phiras": 2,
-            "thystame": 1,
-        },
-    }
+    """Evolution state: Priority 2 - Focuses on gathering stones required to level up."""
 
     def enter(self, context: DroneContext) -> str | None:
         print(f"[SearchStone] Hunting for stones to reach level {context.level + 1}.")
@@ -77,7 +19,7 @@ class SearchStone(State):
 
     def _get_missing_stones(self, context: DroneContext) -> dict[str, int]:
         """Compares current inventory to the target requirements."""
-        requirements = self.ELEVATION_REQUIREMENTS.get(context.level, {})
+        requirements = ELEVATION_REQUIREMENTS.get(context.level, {})
         missing = {}
 
         for stone, required_amount in requirements.items():
