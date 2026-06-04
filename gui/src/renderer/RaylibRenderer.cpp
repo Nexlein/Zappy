@@ -12,6 +12,7 @@
 void RaylibRenderer::init()
 {
     SetTraceLogLevel(LOG_WARNING);
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(800, 600, "Zappy");
     SetTargetFPS(60);
 
@@ -145,8 +146,7 @@ void RaylibRenderer::_drawHUD()
 {
     Color bgColor = {20, 25, 35, 220};
     Color borderColor = {60, 70, 90, 200};
-    Color textColor = {220, 225, 235, 255};
-    Color dimTextColor = {150, 160, 180, 255};
+    Color textColor = {150, 160, 180, 255};
 
     int fps = GetFPS();
     Color fpsColor = fps >= 55 ? GREEN : (fps >= 30 ? YELLOW : RED);
@@ -168,8 +168,8 @@ void RaylibRenderer::_drawHUD()
 
     auto builder = TooltipRenderer::create()
                        .addLine(fpsText, fpsColor)
-                       .addLine(mapText, dimTextColor)
-                       .addLine(timeText, dimTextColor);
+                       .addLine(mapText, textColor)
+                       .addLine(timeText, textColor);
 
     // Add top 5 teams by population
     for (size_t i = 0; i < std::min(sortedTeams.size(), size_t(5)); i++) {
@@ -183,7 +183,7 @@ void RaylibRenderer::_drawHUD()
         .setBorderColor(borderColor)
         .setBorderThickness(2)
         .setPadding(10)
-        .setFontSize(18)
+        .setFontSize(_getScaledFontSize(18))
         .setAnchor(TooltipRenderer::Anchor::TopLeft)
         .draw({10.0f, 10.0f});
 }
@@ -199,6 +199,17 @@ Color RaylibRenderer::_getTeamColor(const std::string& teamName)
     _teamColors[teamName] = newColor;
 
     return newColor;
+}
+
+int RaylibRenderer::_getScaledFontSize(int baseFontSize) const
+{
+    // Scale based on height: 600px = 1.0x, 1200px = 2.0x
+    // Clamp between 0.5x and 2.5x
+    
+    int screenHeight = GetScreenHeight();
+    float scale = screenHeight / 600.0f;
+    scale = std::max(0.5f, std::min(scale, 2.5f));
+    return static_cast<int>(baseFontSize * scale);
 }
 
 void RaylibRenderer::_updateCamera(float worldWidth, float worldHeight)

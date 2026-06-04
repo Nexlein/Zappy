@@ -51,6 +51,7 @@ class RaylibRenderer : public ARenderer {
     void _drawHUD();
 
     Color _getTeamColor(const std::string& teamName);
+    int _getScaledFontSize(int baseFontSize) const;
 
     void _updateCamera(float worldWidth, float worldHeight);
     void _updateSelection(float deltaTime);
