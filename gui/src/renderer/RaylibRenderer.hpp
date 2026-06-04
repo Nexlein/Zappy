@@ -38,6 +38,9 @@ class RaylibRenderer : public ARenderer {
     float _cameraHeight = 10.0f;
 
     std::unordered_map<std::string, Color> _teamColors;
+    static constexpr Color _colorPalette[] = {RED,    GREEN, BLUE, YELLOW,  ORANGE,
+                                              PURPLE, PINK,  LIME, SKYBLUE, MAGENTA};
+    static constexpr int _paletteSize = sizeof(_colorPalette) / sizeof(_colorPalette[0]);
 
     SelectionFinder::Selection _selection;
 
@@ -45,6 +48,7 @@ class RaylibRenderer : public ARenderer {
     void _render2D();
 
     void _drawSelectionHighlight();
+    void _drawHUD();
 
     Color _getTeamColor(const std::string& teamName);
 

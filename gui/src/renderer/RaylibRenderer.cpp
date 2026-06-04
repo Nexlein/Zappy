@@ -1,11 +1,13 @@
 #include "RaylibRenderer.hpp"
 
+#include <algorithm>
 #include <cfloat>
 #include <cmath>
 #include <iostream>
 
 #include "raylib_helpers/RenderingHelper.hpp"
 #include "raylib_helpers/TextRenderer.hpp"
+#include "raylib_helpers/TooltipRenderer.hpp"
 
 void RaylibRenderer::init()
 {
@@ -35,8 +37,7 @@ void RaylibRenderer::render()
     EndMode3D();
 
     _render2D();
-
-    DrawFPS(10, 10);
+    _drawHUD();
     EndDrawing();
 }
 
@@ -140,18 +141,63 @@ void RaylibRenderer::_drawSelectionHighlight()
     }
 }
 
+void RaylibRenderer::_drawHUD()
+{
+    Color bgColor = {20, 25, 35, 220};
+    Color borderColor = {60, 70, 90, 200};
+    Color textColor = {220, 225, 235, 255};
+    Color dimTextColor = {150, 160, 180, 255};
+
+    int fps = GetFPS();
+    Color fpsColor = fps >= 55 ? GREEN : (fps >= 30 ? YELLOW : RED);
+    std::string fpsText = "FPS: " + std::to_string(fps);
+
+    std::string mapText =
+        "Map: " + std::to_string(_state->world.width) + "x" + std::to_string(_state->world.height);
+    std::string timeText = "Time unit: " + std::to_string(_state->timeUnit);
+
+    std::unordered_map<std::string, int> teamPlayerCounts;
+    for (const auto& teamName : _state->world.teams)
+        teamPlayerCounts[teamName] = 0;
+    for (const auto& [id, player] : _state->world.players)
+        teamPlayerCounts[player.team]++;
+
+    // Sort teams by player count (descending)
+    std::vector<std::pair<std::string, int>> sortedTeams(teamPlayerCounts.begin(),
+                                                          teamPlayerCounts.end());
+    std::sort(sortedTeams.begin(), sortedTeams.end(),
+              [](const auto& a, const auto& b) { return a.second > b.second; });
+
+    auto builder = TooltipRenderer::create()
+                       .addLine(fpsText, fpsColor)
+                       .addLine(mapText, dimTextColor)
+                       .addLine(timeText, dimTextColor);
+
+    // Add top 5 teams by population
+    for (size_t i = 0; i < std::min(sortedTeams.size(), size_t(5)); i++) {
+        const auto& [teamName, playerCount] = sortedTeams[i];
+        std::string teamLine = teamName + ": " + std::to_string(playerCount);
+        builder.addLine(teamLine, _getTeamColor(teamName));
+    }
+
+    builder.setBackgroundColor(bgColor)
+        .setBackgroundAlpha(180)
+        .setBorderColor(borderColor)
+        .setBorderThickness(2)
+        .setPadding(10)
+        .setFontSize(18)
+        .setAnchor(TooltipRenderer::Anchor::TopLeft)
+        .draw({10.0f, 10.0f});
+}
+
 Color RaylibRenderer::_getTeamColor(const std::string& teamName)
 {
     if (_teamColors.find(teamName) != _teamColors.end()) {
         return _teamColors[teamName];
     }
 
-    static const Color palette[] = {RED,    GREEN, BLUE, YELLOW,  ORANGE,
-                                    PURPLE, PINK,  LIME, SKYBLUE, MAGENTA};
-    static constexpr int paletteSize = sizeof(palette) / sizeof(palette[0]);
-
-    int colorIndex = _teamColors.size() % paletteSize;
-    Color newColor = palette[colorIndex];
+    int colorIndex = _teamColors.size() % _paletteSize;
+    Color newColor = _colorPalette[colorIndex];
     _teamColors[teamName] = newColor;
 
     return newColor;
