@@ -9,7 +9,7 @@ from states.AStates import State
 from context import DroneContext
 from elevations import is_incantation_ready, ELEVATION_REQUIREMENTS
 from config import SURVIVAL_THRESHOLD, RALLY_TIMEOUT, BCAST_INTERVAL
-from BroadcastProtocol import BroadcastProtocol, MessageType, DecodedBroadcast
+from BroadcastProtocol import BroadcastProtocol, MessageType
 
 # Contextual Priority
 
@@ -20,7 +20,10 @@ from BroadcastProtocol import BroadcastProtocol, MessageType, DecodedBroadcast
 def _next_stone_to_drop(context: DroneContext) -> str | None:
     tile = context.vision[0]
     for stone, required in ELEVATION_REQUIREMENTS.get(context.level, {}).items():
-        if getattr(tile, stone, 0) < required and getattr(context.inventory, stone, 0) > 0:
+        if (
+            getattr(tile, stone, 0) < required
+            and getattr(context.inventory, stone, 0) > 0
+        ):
             return stone
     return None
 
@@ -28,6 +31,7 @@ def _next_stone_to_drop(context: DroneContext) -> str | None:
 # BroadcastHelp: Yelling across the map for teammates.
 class BroadcastHelp(State):
     """The BroadcastHelp state: Priority 4 - Handles calling teammates for assistance when evolving."""
+
     def enter(self, context: DroneContext) -> str | None:
         self.ticks_waited = 0
         self.dropped = False
@@ -60,7 +64,9 @@ class BroadcastHelp(State):
 
         if self.tick_since_bcast >= BCAST_INTERVAL:
             self.tick_since_bcast = 0
-            payload = BroadcastProtocol.encode(context.team_name, MessageType.RALLY, context.level)
+            payload = BroadcastProtocol.encode(
+                context.team_name, MessageType.RALLY, context.level
+            )
             return f"Broadcast {payload}"
 
         self.tick_since_bcast += 1
@@ -75,6 +81,7 @@ class BroadcastHelp(State):
 # MapsToAlly: Following a broadcast direction (K) to group up on the same tile.
 class MapsToAlly(State):
     """The MapsToAlly state: Priority 3 - Handles following broadcast directions to group up."""
+
     def enter(self, context: DroneContext) -> str | None:
         print("[MapsToAlly] Entering state. Following broadcast direction.")
         self.level = context.level
@@ -105,7 +112,11 @@ class MapsToAlly(State):
         # Still travelling: follow the latest matching RALLY direction.
         for bcst in context.broadcasts:
             decoded = BroadcastProtocol.decode(bcst.text)
-            if decoded and decoded.msg_type == MessageType.RALLY and decoded.level == self.level:
+            if (
+                decoded
+                and decoded.msg_type == MessageType.RALLY
+                and decoded.level == self.level
+            ):
                 direction = bcst.direction
                 if direction == 0:
                     self.arrived = True
@@ -123,4 +134,3 @@ class MapsToAlly(State):
     def exit(self, context: DroneContext) -> str | None:
         print("[MapsToAlly] Leaving group-up.")
         return None
-
