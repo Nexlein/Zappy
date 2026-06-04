@@ -28,6 +28,7 @@ set(GUI_SOURCES
     src/renderer/raylib_helpers/EntityRenderer.cpp
     src/renderer/raylib_helpers/RenderingHelper.cpp
     src/renderer/raylib_helpers/TextRenderer.cpp
+    src/renderer/raylib_helpers/TooltipRenderer.cpp
     src/network/TcpSocket.cpp
     src/network/ProtocolParser.cpp
     src/core/EventQueue.cpp
