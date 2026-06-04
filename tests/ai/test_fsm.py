@@ -15,6 +15,7 @@ from states.AStates import State
 class TestAIController(unittest.TestCase):
     def setUp(self):
         self.context = DroneContext()
+        self.context.ticks_since_inventory = 0
         self.controller = AIController(self.context)
 
     def test_initialization(self):
@@ -68,3 +69,11 @@ class TestAIController(unittest.TestCase):
         # Verify get_action was called on next state
         next_state_mock.get_action.assert_called_once_with(self.context)
         self.assertEqual(action, "MockAction")
+
+    def test_tick_triggers_inventory_refresh(self):
+        # Set ticks to threshold limit (15)
+        self.context.ticks_since_inventory = 15
+        action = self.controller.tick()
+        self.assertEqual(action, "Inventory")
+        self.assertEqual(self.context.ticks_since_inventory, 0)
+

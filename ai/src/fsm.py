@@ -40,8 +40,18 @@ class AIController:
         if next_state_name and next_state_name != self.current_state_name:
             self._transition_to(next_state_name)
 
-        # 2. Get the action for the current state
-        return self.current_state.get_action(self.context)
+        # 2. Check if we need to refresh inventory
+        if self.context.ticks_since_inventory >= 15:
+            self.context.ticks_since_inventory = 0
+            return "Inventory"
+
+        # 3. Get the action for the current state
+        action = self.current_state.get_action(self.context)
+        if action != "Inventory":
+            self.context.ticks_since_inventory += 1
+        else:
+            self.context.ticks_since_inventory = 0
+        return action
 
     def _transition_to(self, new_state_name: str):
         """Safely tears down the old state and sets up the new one."""

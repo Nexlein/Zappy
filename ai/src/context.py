@@ -61,6 +61,7 @@ class DroneContext:
     # Dynamic drone state
     level: int = 1
     inventory: Inventory = field(default_factory=Inventory)
+    ticks_since_inventory: int = 999
 
     # Vision is a 1D list where index corresponds to the tile number (0 is current tile)
     vision: List[Tile] = field(default_factory=list)
