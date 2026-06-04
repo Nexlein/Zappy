@@ -205,7 +205,7 @@ int RaylibRenderer::_getScaledFontSize(int baseFontSize) const
 {
     // Scale based on height: 600px = 1.0x, 1200px = 2.0x
     // Clamp between 0.5x and 2.5x
-    
+
     int screenHeight = GetScreenHeight();
     float scale = screenHeight / 600.0f;
     scale = std::max(0.5f, std::min(scale, 2.5f));
