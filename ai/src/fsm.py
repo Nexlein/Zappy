@@ -9,6 +9,7 @@ from context import DroneContext
 from states.AStates import State
 from states.survival import ForageFood
 from states.evolution import SearchStone
+from states.swarm import BroadcastHelp, MapsToAlly
 
 
 class AIController:
@@ -19,6 +20,8 @@ class AIController:
         self.states: dict[str, State] = {
             "ForageFood": ForageFood(),
             "SearchStone": SearchStone(),
+            "BroadcastHelp": BroadcastHelp(),
+            "MapsToAlly": MapsToAlly(),
         }
 
         self.current_state_name = "ForageFood"
