@@ -30,6 +30,9 @@ class FakeSocket:
     def connect(self, _addr):
         pass
 
+    def setblocking(self, _blocking):
+        pass
+
 
 def make_client(chunks=None):
     client = TcpClient("localhost", 4242)
