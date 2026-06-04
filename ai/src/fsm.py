@@ -8,7 +8,7 @@
 from context import DroneContext
 from states.AStates import State
 from states.survival import ForageFood
-from states.evolution import SearchStone
+from states.evolution import SearchStone, IncantationState
 from states.swarm import BroadcastHelp, MapsToAlly
 
 
@@ -22,6 +22,7 @@ class AIController:
             "SearchStone": SearchStone(),
             "BroadcastHelp": BroadcastHelp(),
             "MapsToAlly": MapsToAlly(),
+            "Incantation": IncantationState(),
         }
 
         self.current_state_name = "ForageFood"
