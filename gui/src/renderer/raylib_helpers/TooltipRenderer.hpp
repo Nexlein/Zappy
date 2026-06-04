@@ -7,7 +7,7 @@
 
 /**
  * @brief Builder-pattern renderer for multiline tooltips with flexible styling.
- * 
+ *
  * Design pattern: BUILDER
  */
 class TooltipRenderer {
