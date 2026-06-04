@@ -32,7 +32,10 @@ class BroadcastProtocol:
     @staticmethod
     def decode(raw_message: str) -> DecodedBroadcast:
         try:
-            team_name, msg_type, level = raw_message.split("|")
+            parts = raw_message.split("|")
+            if len(parts) != 3:
+                raise ValueError("Invalid number of fields in broadcast message")
+            team_name, msg_type, level = parts
             msg_type_enum = MessageType(msg_type)
             return DecodedBroadcast(team_name, msg_type_enum, int(level))
         except ValueError as e:
