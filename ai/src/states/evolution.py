@@ -8,6 +8,7 @@
 from states.AStates import State
 from context import DroneContext
 from elevations import ELEVATION_REQUIREMENTS
+from BroadcastProtocol import BroadcastProtocol, MessageType
 
 
 class SearchStone(State):
@@ -34,10 +35,27 @@ class SearchStone(State):
             print("[SearchStone] Emergency! Low food. Switching back to ForageFood.")
             return "ForageFood"
 
+        if context.level > 1:
+            for bcst in context.broadcasts:
+                try:
+                    decoded = BroadcastProtocol.decode(bcst.text)
+                    if (
+                        decoded
+                        and decoded.team_name == context.team_name
+                        and decoded.msg_type == MessageType.RALLY
+                        and decoded.level == context.level
+                    ):
+                        print(
+                            f"[SearchStone] Heard RALLY from teammate of level {context.level}. Transitioning to MapsToAlly."
+                        )
+                        return "MapsToAlly"
+                except ValueError:
+                    continue
+
         missing = self._get_missing_stones(context)
         if not missing:
             print("[SearchStone] All required stones collected!")
-            return "IncantationState" if context.level == 1 else "BroadcastHelp"
+            return "Incantation" if context.level == 1 else "BroadcastHelp"
 
         return None
 
@@ -62,7 +80,29 @@ class SearchStone(State):
         return None
 
 
-# The Evolution Layer (Medium Priority)
-# Once the drone knows it has enough food to survive the next few hundred ticks, it can focus on the actual objective of the game: leveling up.
+class IncantationState(State):
+    """Evolution state: Handles the actual incantation ritual."""
 
-# Incantation: The actual act of triggering the ritual
+    def enter(self, context: DroneContext) -> str | None:
+        print("[Incantation] Initiating elevation ritual...")
+        self.initiated = False
+        return None
+
+    def update(self, context: DroneContext) -> str | None:
+        if self.initiated:
+            # We got the result (since sent_commands became empty)
+            if context.last_command_successful:
+                print(f"[Incantation] Elevation succeeded! Now level {context.level}.")
+            else:
+                print("[Incantation] Elevation failed.")
+            return "SearchStone"
+        return None
+
+    def get_action(self, context: DroneContext) -> str | None:
+        if not self.initiated:
+            self.initiated = True
+            return "Incantation"
+        return None
+
+    def exit(self, context: DroneContext) -> str | None:
+        return None
