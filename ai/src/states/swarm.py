@@ -111,22 +111,26 @@ class MapsToAlly(State):
 
         # Still travelling: follow the latest matching RALLY direction.
         for bcst in context.broadcasts:
-            decoded = BroadcastProtocol.decode(bcst.text)
-            if (
-                decoded
-                and decoded.msg_type == MessageType.RALLY
-                and decoded.level == self.level
-            ):
-                direction = bcst.direction
-                if direction == 0:
-                    self.arrived = True
-                    return "Look"
-                elif direction in (1, 2, 8):
-                    return "Forward"
-                elif direction in (5, 6, 7):
-                    return "Right"
-                elif direction in (3, 4):
-                    return "Left"
+            try:
+                decoded = BroadcastProtocol.decode(bcst.text)
+                if (
+                    decoded
+                    and decoded.team_name == context.team_name
+                    and decoded.msg_type == MessageType.RALLY
+                    and decoded.level == self.level
+                ):
+                    direction = bcst.direction
+                    if direction == 0:
+                        self.arrived = True
+                        return "Look"
+                    elif direction in (1, 2, 8):
+                        return "Forward"
+                    elif direction in (5, 6, 7):
+                        return "Right"
+                    elif direction in (3, 4):
+                        return "Left"
+            except ValueError:
+                continue
 
         # No RALLY heard this tick: stay put rather than returning None.
         return "Look"
