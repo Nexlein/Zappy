@@ -76,4 +76,3 @@ class TestAIController(unittest.TestCase):
         action = self.controller.tick()
         self.assertEqual(action, "Inventory")
         self.assertEqual(self.context.ticks_since_inventory, 0)
-
