@@ -16,52 +16,47 @@ from BroadcastProtocol import BroadcastProtocol, DecodedBroadcast, MessageType
 
 class TestEncode(unittest.TestCase):
     def test_format(self):
-        # encode assemble team|id|type|level avec la valeur texte de l'enum
+        # encode assemble team|type|level avec la valeur texte de l'enum
         self.assertEqual(
-            BroadcastProtocol.encode("team5", 4815, MessageType.RALLY, 3),
-            "team5|4815|RALLY|3",
+            BroadcastProtocol.encode("team5", MessageType.RALLY, 3),
+            "team5|RALLY|3",
         )
 
     def test_uses_enum_value(self):
         self.assertEqual(
-            BroadcastProtocol.encode("team5", 42, MessageType.INCANT, 1),
-            "team5|42|INCANT|1",
+            BroadcastProtocol.encode("team5", MessageType.INCANT, 1),
+            "team5|INCANT|1",
         )
 
 
 class TestDecode(unittest.TestCase):
     def test_valid(self):
-        decoded = BroadcastProtocol.decode("team5|4815|RALLY|3")
+        decoded = BroadcastProtocol.decode("team5|RALLY|3")
         self.assertEqual(decoded.team_name, "team5")
-        self.assertEqual(decoded.sender_id, 4815)
         self.assertIs(decoded.msg_type, MessageType.RALLY)
         self.assertEqual(decoded.level, 3)
 
     def test_returns_dataclass(self):
         self.assertIsInstance(
-            BroadcastProtocol.decode("team5|7|ABORT|2"), DecodedBroadcast
+            BroadcastProtocol.decode("team5|ABORT|2"), DecodedBroadcast
         )
 
     def test_unknown_type_raises(self):
         # un type hors enum (autre équipe / corrompu) est rejeté
         with self.assertRaises(ValueError):
-            BroadcastProtocol.decode("team5|7|XXX|3")
-
-    def test_non_int_id_raises(self):
-        with self.assertRaises(ValueError):
-            BroadcastProtocol.decode("team5|abc|RALLY|3")
+            BroadcastProtocol.decode("team5|XXX|3")
 
     def test_non_int_level_raises(self):
         with self.assertRaises(ValueError):
-            BroadcastProtocol.decode("team5|7|RALLY|abc")
+            BroadcastProtocol.decode("team5|RALLY|abc")
 
     def test_too_few_fields_raises(self):
         with self.assertRaises(ValueError):
-            BroadcastProtocol.decode("team5|RALLY|3")
+            BroadcastProtocol.decode("team5|RALLY")
 
     def test_too_many_fields_raises(self):
         with self.assertRaises(ValueError):
-            BroadcastProtocol.decode("team5|7|RALLY|3|extra")
+            BroadcastProtocol.decode("team5|RALLY|3|extra")
 
     def test_empty_raises(self):
         with self.assertRaises(ValueError):
@@ -73,10 +68,9 @@ class TestRoundTrip(unittest.TestCase):
         # symétrie: decode(encode(x)) == x, pour chaque type connu
         for msg_type in MessageType:
             decoded = BroadcastProtocol.decode(
-                BroadcastProtocol.encode("team5", 4815, msg_type, 7)
+                BroadcastProtocol.encode("team5", msg_type, 7)
             )
             self.assertEqual(decoded.team_name, "team5")
-            self.assertEqual(decoded.sender_id, 4815)
             self.assertIs(decoded.msg_type, msg_type)
             self.assertEqual(decoded.level, 7)
 
