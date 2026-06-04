@@ -1,11 +1,8 @@
-# PR Title: [Feature] Short description of the feature
-
-## Changes
+# Changes
 <!-- What changed -->
 
-## Related
+# Related
 <!-- Closes #X -->
 
-## Tests
-
+# Tests
 - [ ] Tests pass locally
