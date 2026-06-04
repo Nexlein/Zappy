@@ -71,7 +71,7 @@ ELEVATION_REQUIREMENTS = {
 
 def is_incantation_ready(level, tile) -> bool:
     """True if `tile` holds enough players and stones to start the elevation."""
-    if tile.players < PLAYERS_REQUIRED.get(level, 0):
+    if tile.player < PLAYERS_REQUIRED.get(level, 0):
         return False
     for stone, amount in ELEVATION_REQUIREMENTS.get(level, {}).items():
         if getattr(tile, stone, 0) < amount:
