@@ -157,14 +157,12 @@ void RaylibRenderer::_drawHUD()
     std::string timeText = "Time unit: " + std::to_string(_state->timeUnit);
 
     std::unordered_map<std::string, int> teamPlayerCounts;
-    for (const auto& teamName : _state->world.teams)
-        teamPlayerCounts[teamName] = 0;
-    for (const auto& [id, player] : _state->world.players)
-        teamPlayerCounts[player.team]++;
+    for (const auto& teamName : _state->world.teams) teamPlayerCounts[teamName] = 0;
+    for (const auto& [id, player] : _state->world.players) teamPlayerCounts[player.team]++;
 
     // Sort teams by player count (descending)
     std::vector<std::pair<std::string, int>> sortedTeams(teamPlayerCounts.begin(),
-                                                          teamPlayerCounts.end());
+                                                         teamPlayerCounts.end());
     std::sort(sortedTeams.begin(), sortedTeams.end(),
               [](const auto& a, const auto& b) { return a.second > b.second; });
 
