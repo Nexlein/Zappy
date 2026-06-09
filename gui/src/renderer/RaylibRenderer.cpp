@@ -44,11 +44,18 @@ void RaylibRenderer::render()
 
 void RaylibRenderer::handleInput()
 {
+    static double  lastLeftClickTime = -1.0;
     // KEY_A maps to 'Q' on AZERTY
     if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) _cameraAngle += MOVE_SPEED * GetFrameTime();
     if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) _cameraAngle -= MOVE_SPEED * GetFrameTime();
 
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) _performRaycast();
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        _performRaycast();
+        if (GetTime() - lastLeftClickTime < SELECTION_DOUBLE_CLICK &&
+            _selection.type != SelectionFinder::EntityType::None)
+            _selection.permanent = true;
+        lastLeftClickTime = GetTime();
+    }
 }
 
 bool RaylibRenderer::shouldClose() { return WindowShouldClose(); }
@@ -318,6 +325,7 @@ void RaylibRenderer::_performRaycast()
 void RaylibRenderer::_updateSelection(float deltaTime)
 {
     if (_selection.type == SelectionFinder::EntityType::None) return;
+    if (_selection.permanent) return;
 
     _selection.timer -= deltaTime;
     if (_selection.timer <= 0.0f) {
