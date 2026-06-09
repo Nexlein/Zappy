@@ -19,8 +19,8 @@ class SelectionFinder {
         int id = -1;     // player/egg ID
         int tileX = -1;  // tile coords (if type == Tile)
         int tileY = -1;
-        float timer = 0.0f;  // Auto-deselect countdown
-        bool permanent = false; // Whether to bypass timer
+        float timer = 0.0f;      // Auto-deselect countdown
+        bool permanent = false;  // Whether to bypass timer
     };
 
     /**

@@ -78,14 +78,12 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
 
 SelectionFinder::Selection SelectionFinder::getEmptySelection()
 {
-    return {
-        .type = EntityType::None,
-        .id = -1,
-        .tileX = -1,
-        .tileY = -1,
-        .timer = 0.0f,
-        .permanent = false
-    };
+    return {.type = EntityType::None,
+            .id = -1,
+            .tileX = -1,
+            .tileY = -1,
+            .timer = 0.0f,
+            .permanent = false};
 }
 
 std::ostream& operator<<(std::ostream& os, const SelectionFinder::EntityType& type)

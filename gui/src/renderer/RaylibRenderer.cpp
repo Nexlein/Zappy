@@ -44,7 +44,7 @@ void RaylibRenderer::render()
 
 void RaylibRenderer::handleInput()
 {
-    static double  lastLeftClickTime = -1.0;
+    static double lastLeftClickTime = -1.0;
     // KEY_A maps to 'Q' on AZERTY
     if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) _cameraAngle += MOVE_SPEED * GetFrameTime();
     if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) _cameraAngle -= MOVE_SPEED * GetFrameTime();
