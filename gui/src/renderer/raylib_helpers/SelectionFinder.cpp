@@ -84,6 +84,7 @@ SelectionFinder::Selection SelectionFinder::getEmptySelection()
         .tileX = -1,
         .tileY = -1,
         .timer = 0.0f,
+        .permanent = false
     };
 }
 
@@ -111,6 +112,6 @@ std::ostream& operator<<(std::ostream& os, const SelectionFinder::Selection& sel
     } else if (sel.type == SelectionFinder::EntityType::Tile) {
         os << ", tile=(" << sel.tileX << "," << sel.tileY << ")";
     }
-    os << ", timer=" << sel.timer << "}";
+    os << ", timer=" << sel.timer << ", permanent=" << sel.permanent << "}";
     return os;
 }

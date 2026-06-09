@@ -20,6 +20,7 @@ class SelectionFinder {
         int tileX = -1;  // tile coords (if type == Tile)
         int tileY = -1;
         float timer = 0.0f;  // Auto-deselect countdown
+        bool permanent = false; // Whether to bypass timer
     };
 
     /**
