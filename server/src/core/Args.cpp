@@ -27,6 +27,7 @@ Args::Args(int argc, char** argv) {
 
     auto names = teams.get();
     if (std::find(names.begin(), names.end(), "GRAPHIC") != names.end()) {
+        std::cerr << "Team name 'GRAPHIC' is reserved and cannot be used.\n";
         result = ParseResult::Error;
         return;
     }
@@ -45,5 +46,5 @@ bool Args::isHelpRequested() const { return result == ParseResult::HelpRequested
 ServerConfig Args::getConfig() const { return config; }
 
 int Args::exitCode() const {
-    return result == ParseResult::Success ? SUCCESS : ERROR;
+    return result == ParseResult::Error ? ERROR : SUCCESS;
 }
