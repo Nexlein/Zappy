@@ -48,6 +48,7 @@ class RaylibRenderer : public ARenderer {
     void _render2D();
 
     void _drawSelectionHighlight();
+    void _drawSelectedToolip();
     void _drawHUD();
 
     Color _getTeamColor(const std::string& teamName);

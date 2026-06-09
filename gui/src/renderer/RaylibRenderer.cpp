@@ -4,6 +4,7 @@
 #include <cfloat>
 #include <cmath>
 #include <iostream>
+#include <sstream>
 
 #include "raylib_helpers/RenderingHelper.hpp"
 #include "raylib_helpers/TextRenderer.hpp"
@@ -104,6 +105,8 @@ void RaylibRenderer::_render2D()
         TextRenderer::drawTextAt3DPosition(worldPos, _camera, "Egg #" + std::to_string(egg.id),
                                            _getScaledFontSize(18), BLACK);
     }
+
+    _drawSelectedToolip();
 }
 
 void RaylibRenderer::_drawSelectionHighlight()
@@ -141,6 +144,30 @@ void RaylibRenderer::_drawSelectionHighlight()
         default:
             return;
     }
+}
+
+void RaylibRenderer::_drawSelectedToolip()
+{
+    if (_selection.type == SelectionFinder::EntityType::None) return;
+
+    Color bgColor = {255, 0, 0, 200};
+    Color borderColor = {0, 255, 0, 200};
+    Color textColor = {0, 0, 255, 200};
+
+    std::ostringstream oss;
+    oss << "Type: " << _selection.type;
+
+    TooltipRenderer::create()
+        .setAnchor(TooltipRenderer::Anchor::TopRight)
+        .setBackgroundColor(bgColor)
+        .setBackgroundAlpha(200)
+        .setBorderColor(borderColor)
+        .setBorderThickness(2)
+        .setPadding(10)
+        .setFontSize(_getScaledFontSize(16))
+        .addLine("Selected Entity:", textColor)
+        .addLine(oss.str())
+        .draw({GetScreenWidth() - 10.0f, 10.0f});
 }
 
 void RaylibRenderer::_drawHUD()
@@ -244,11 +271,8 @@ void RaylibRenderer::_performRaycast()
     _selection = SelectionFinder::findFromRay(ray, *_state, TILE_SIZE, PLAYER_CUBE_SIZE,
                                               EGG_CUBE_SIZE, SELECTION_TIMER);
 
-    if (_selection.type != SelectionFinder::EntityType::None) {
-        std::cout << _selection << std::endl;
-    } else {
+    if (_selection.type == SelectionFinder::EntityType::None) {
         _selection = SelectionFinder::getEmptySelection();
-        std::cout << "Selection cleared (clicked on empty space)" << std::endl;
     }
 }
 
@@ -259,6 +283,5 @@ void RaylibRenderer::_updateSelection(float deltaTime)
     _selection.timer -= deltaTime;
     if (_selection.timer <= 0.0f) {
         _selection = SelectionFinder::getEmptySelection();
-        std::cout << "Selection cleared (timer ran out)" << std::endl;
     }
 }
