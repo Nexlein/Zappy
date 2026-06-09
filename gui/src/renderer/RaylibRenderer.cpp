@@ -152,6 +152,9 @@ void RaylibRenderer::_drawSelectedToolip()
     Color bgColor = {20, 25, 35, 220};
     Color borderColor = {60, 70, 90, 200};
     Color textColor = {255, 255, 255, 255};
+    Color tileColor = {100, 200, 255, 255};
+    Color playerColor = {100, 255, 150, 255};
+    Color eggColor = {255, 200, 80, 255};
 
     auto builder = TooltipRenderer::create()
                        .setAnchor(TooltipRenderer::Anchor::TopRight)
@@ -166,9 +169,9 @@ void RaylibRenderer::_drawSelectedToolip()
         case SelectionFinder::EntityType::Tile: {
             const Resources& resources = _state->world.at(_selection.tileX, _selection.tileY);
             if (resources.isEmpty()) {
-                builder.addLine("Tile is empty", textColor);
+                builder.addColoredText({"Tile", " is empty"}, {tileColor, textColor});
             } else {
-                builder.addLine("Tile:", textColor);
+                builder.addLine("Tile:", tileColor);
                 _addResourceLines(builder, resources, "  ", textColor);
             }
             break;
@@ -177,8 +180,10 @@ void RaylibRenderer::_drawSelectedToolip()
         case SelectionFinder::EntityType::Player: {
             if (!_state->world.playerExists(_selection.id)) return;
             const Player& player = _state->world.players.at(_selection.id);
-            builder.addLine("Player #" + std::to_string(player.id) + ":", textColor);
-            builder.addLine("  From team " + player.team, textColor);
+            builder.addColoredText({"Player ", "#" + std::to_string(player.id)},
+                                   {playerColor, textColor});
+            builder.addColoredText({"  Team ", player.team},
+                                   {textColor, _getTeamColor(player.team)});
             builder.addLine("  Level " + std::to_string(player.level), textColor);
             if (player.inventory.isEmpty()) {
                 builder.addLine("  Inventory is empty", textColor);
@@ -191,11 +196,9 @@ void RaylibRenderer::_drawSelectedToolip()
 
         case SelectionFinder::EntityType::Egg: {
             if (!_state->world.eggExists(_selection.id)) return;
-
             const Egg& egg = _state->world.eggs.at(_selection.id);
-
-            builder.addLine("Egg #" + std::to_string(egg.id) + ":", textColor);
-            builder.addLine("  From team " + egg.team, textColor);
+            builder.addColoredText({"Egg ", "#" + std::to_string(egg.id)}, {eggColor, textColor});
+            builder.addColoredText({"  Team ", egg.team}, {textColor, _getTeamColor(egg.team)});
             break;
         }
 
