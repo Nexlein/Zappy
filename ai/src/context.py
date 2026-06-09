@@ -47,9 +47,7 @@ class BroadcastMessage:
 @dataclass
 class DroneContext:
     """
-    The shared state modified by the network and read by the FSM.
-    Dev A (Network) updates this object.
-    Dev B (FSM) reads this object to make decisions.
+    The shared state object modified by the network loop and read by the FSM.
     """
 
     # Static server info (populated at handshake)
@@ -61,13 +59,12 @@ class DroneContext:
     # Dynamic drone state
     level: int = 1
     inventory: Inventory = field(default_factory=Inventory)
-    ticks_since_inventory: int = 999
 
-    # Vision is a 1D list where index corresponds to the tile number (0 is current tile)
+    # Vision snapshot from the last Look command.
     vision: List[Tile] = field(default_factory=list)
 
-    # Event queues populated by the network loop
+    # Incoming broadcast messages
     broadcasts: List[BroadcastMessage] = field(default_factory=list)
 
-    # Track the success/failure of the last command sent ('ok' / 'ko')
+    # Reflects whether the LAST command the FSM issued succeeded.
     last_command_successful: Optional[bool] = None

@@ -77,3 +77,22 @@ def is_incantation_ready(level, tile) -> bool:
         if getattr(tile, stone, 0) < amount:
             return False
     return True
+
+
+# ── Broadcast direction routing tables ---
+# The server encodes the direction K of an incoming sound relative to the
+# receiving player's current facing direction using the following grid:
+#
+#   8  1  2
+#   7  0  3
+#   6  5  4
+#
+# K=0: same tile (arrived).  K=1..8: compass directions relative to facing.
+#
+# These frozensets map K values to the movement action needed to approach the
+# broadcaster. They are fixed protocol constants, not tunable parameters.
+
+BROADCAST_DIRECTION_ARRIVED = frozenset({0})
+BROADCAST_DIRECTION_FORWARD = frozenset({1, 2, 8})  # roughly ahead
+BROADCAST_DIRECTION_RIGHT = frozenset({3, 4, 5})  # right side / behind-right
+BROADCAST_DIRECTION_LEFT = frozenset({6, 7})  # left side / behind-left

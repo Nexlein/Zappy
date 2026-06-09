@@ -5,36 +5,42 @@
 ## The Survival Layer (Highest Priority)
 ##
 
+import random
 from states.AStates import State
 from context import DroneContext
+from config import FOOD_TARGET, EXPLORE_TURN_EVERY
 
 
 class ForageFood(State):
-    """Survival state: Priority 1 is keeping the food buffer high."""
+    """
+    Survival state — Priority 1: Keep the food buffer above the safety threshold.
+    """
 
-    def enter(self, context: DroneContext) -> str | None:
-        print("[ForageFood] Entering state. Scanning environment.")
-        return "Look"
+    def enter(self, context: DroneContext) -> None:
+        print("[ForageFood] Entering state.")
+        self._forward_streak = 0
 
     def update(self, context: DroneContext) -> str | None:
-        if context.inventory.food >= 15:
+        if context.inventory.food >= FOOD_TARGET:
             print("[ForageFood] Buffer secure. Switching to SearchStone.")
             return "SearchStone"
-
         return None
 
     def get_action(self, context: DroneContext) -> str | None:
-        if context.vision and len(context.vision) > 0:
-            if context.vision[0].food > 0:
-                context.vision = []
-                return "Take food"
-
         if not context.vision:
             return "Look"
 
-        context.vision = []
+        # Food on the current tile — take it immediately.
+        if context.vision[0].food > 0:
+            self._forward_streak = 0
+            return "Take food"
+
+        # No food here — explore.
+        # Rotate every 5 steps to avoid getting stuck in a straight line.
+        self._forward_streak += 1
+        if self._forward_streak % EXPLORE_TURN_EVERY == 0:
+            return random.choice(["Right", "Left"])
         return "Forward"
 
-    def exit(self, context: DroneContext) -> str | None:
+    def exit(self, context: DroneContext) -> None:
         print("[ForageFood] Exiting state.")
-        return None

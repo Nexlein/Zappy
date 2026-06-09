@@ -13,10 +13,17 @@ from states.swarm import BroadcastHelp, MapsToAlly
 
 
 class AIController:
+    """
+    The Finite State Machine controller for the Zappy AI drone.
+
+    Tick contract (called once per main-loop iteration):
+      1. update()     — evaluates transition conditions and switches state if needed.
+      2. get_action() — returns the next server command string, or None to idle.
+    """
+
     def __init__(self, initial_context: DroneContext):
         self.context = initial_context
 
-        # We will register our states here as we build them
         self.states: dict[str, State] = {
             "ForageFood": ForageFood(),
             "SearchStone": SearchStone(),
@@ -30,36 +37,23 @@ class AIController:
         self.current_state.enter(self.context)
 
     def tick(self) -> str | None:
-        """Evaluates logic and returns the next command to send."""
+        """Evaluate state logic and return the next command to send, or None."""
         if not self.current_state:
             return None
 
-        # 1. Check for transitions
+        # 1. Check for a state transition
         next_state_name = self.current_state.update(self.context)
-
         if next_state_name and next_state_name != self.current_state_name:
             self._transition_to(next_state_name)
 
-        # 2. Check if we need to refresh inventory
-        if self.context.ticks_since_inventory >= 15:
-            self.context.ticks_since_inventory = 0
-            return "Inventory"
+        # 2. Ask the (possibly new) state for the next action
+        return self.current_state.get_action(self.context)
 
-        # 3. Get the action for the current state
-        action = self.current_state.get_action(self.context)
-        if action != "Inventory":
-            self.context.ticks_since_inventory += 1
-        else:
-            self.context.ticks_since_inventory = 0
-        return action
+    def _transition_to(self, new_state_name: str) -> None:
+        """Tear down the current state and set up the new one."""
+        print(f"[FSM] {self.current_state_name} -> {new_state_name}")
 
-    def _transition_to(self, new_state_name: str):
-        """Safely tears down the old state and sets up the new one."""
-        print(f"[FSM] Transitioning: {self.current_state_name} -> {new_state_name}")
-
-        if self.current_state:
-            self.current_state.exit(self.context)
-
+        self.current_state.exit(self.context)
         self.current_state_name = new_state_name
-        self.current_state = self.states[self.current_state_name]
+        self.current_state = self.states[new_state_name]
         self.current_state.enter(self.context)
