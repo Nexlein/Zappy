@@ -78,13 +78,12 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
 
 SelectionFinder::Selection SelectionFinder::getEmptySelection()
 {
-    return {
-        .type = EntityType::None,
-        .id = -1,
-        .tileX = -1,
-        .tileY = -1,
-        .timer = 0.0f,
-    };
+    return {.type = EntityType::None,
+            .id = -1,
+            .tileX = -1,
+            .tileY = -1,
+            .timer = 0.0f,
+            .permanent = false};
 }
 
 std::ostream& operator<<(std::ostream& os, const SelectionFinder::EntityType& type)
@@ -111,6 +110,6 @@ std::ostream& operator<<(std::ostream& os, const SelectionFinder::Selection& sel
     } else if (sel.type == SelectionFinder::EntityType::Tile) {
         os << ", tile=(" << sel.tileX << "," << sel.tileY << ")";
     }
-    os << ", timer=" << sel.timer << "}";
+    os << ", timer=" << sel.timer << ", permanent=" << sel.permanent << "}";
     return os;
 }

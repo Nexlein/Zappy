@@ -29,7 +29,8 @@ class RaylibRenderer : public ARenderer {
     static constexpr float PLAYER_CUBE_SIZE = 0.8f;
     static constexpr float EGG_CUBE_SIZE = 0.4f;
     static constexpr float TILE_SIZE = 1.0f;
-    static constexpr float SELECTION_TIMER = 5.0f;  // seconds
+    static constexpr float SELECTION_TIMER = 5.0f;         // seconds
+    static constexpr double SELECTION_DOUBLE_CLICK = 0.3;  // seconds
     static constexpr float SELECTION_LINE_THICKNESS = 8.0f;
     static constexpr float SELECTION_WIREFRAME_THICKNESS = 5.0f;
     static constexpr Color SELECTION_COLOR = {128, 0, 128, 255};  // purple
