@@ -1,5 +1,6 @@
-#include "core/Args.hpp"
 #include <iostream>
+
+#include "core/Args.hpp"
 
 int main(int argc, char **argv)
 {
