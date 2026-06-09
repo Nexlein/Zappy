@@ -165,48 +165,26 @@ void RaylibRenderer::_drawSelectedToolip()
     switch (_selection.type) {
         case SelectionFinder::EntityType::Tile: {
             const Resources& resources = _state->world.at(_selection.tileX, _selection.tileY);
-
             if (resources.isEmpty()) {
                 builder.addLine("Tile is empty", textColor);
-                break;
-            }
-
-            builder.addLine(to_string(_selection.type) + ":", textColor);
-
-            for (int i = 0; i < 7; i++) {
-                std::string resourceName = resources.get_name(i);
-                int quantity = resources[i];
-
-                if (quantity <= 0) continue;
-
-                builder.addLine("  " + resourceName + ": " + std::to_string(quantity), textColor);
+            } else {
+                builder.addLine("Tile:", textColor);
+                _addResourceLines(builder, resources, "  ", textColor);
             }
             break;
         }
 
         case SelectionFinder::EntityType::Player: {
             if (!_state->world.playerExists(_selection.id)) return;
-            
             const Player& player = _state->world.players.at(_selection.id);
-
-            builder.addLine(to_string(_selection.type) + " #" + std::to_string(player.id) + ":", textColor);
+            builder.addLine("Player #" + std::to_string(player.id) + ":", textColor);
             builder.addLine("  From team " + player.team, textColor);
             builder.addLine("  Level " + std::to_string(player.level), textColor);
-
             if (player.inventory.isEmpty()) {
                 builder.addLine("  Inventory is empty", textColor);
-                break;
             } else {
                 builder.addLine("  Inventory:", textColor);
-
-                for (int i = 0; i < 7; i++) {
-                    std::string resourceName = player.inventory.get_name(i);
-                    int quantity = player.inventory[i];
-
-                    if (quantity <= 0) continue;
-
-                    builder.addLine("    " + resourceName + ": " + std::to_string(quantity), textColor);
-                }
+                _addResourceLines(builder, player.inventory, "    ", textColor);
             }
             break;
         }
@@ -216,7 +194,7 @@ void RaylibRenderer::_drawSelectedToolip()
 
             const Egg& egg = _state->world.eggs.at(_selection.id);
 
-            builder.addLine(to_string(_selection.type) + " #" + std::to_string(egg.id) + ":", textColor);
+            builder.addLine("Egg #" + std::to_string(egg.id) + ":", textColor);
             builder.addLine("  From team " + egg.team, textColor);
             break;
         }
@@ -340,5 +318,15 @@ void RaylibRenderer::_updateSelection(float deltaTime)
     _selection.timer -= deltaTime;
     if (_selection.timer <= 0.0f) {
         _selection = SelectionFinder::getEmptySelection();
+    }
+}
+
+void RaylibRenderer::_addResourceLines(TooltipRenderer::Builder& builder, const Resources& res,
+                                       const std::string& indent, Color color)
+{
+    for (int i = 0; i < 7; i++) {
+        int qty = res[i];
+        if (qty <= 0) continue;
+        builder.addLine(indent + res.get_name(i) + ": " + std::to_string(qty), color);
     }
 }
