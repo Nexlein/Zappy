@@ -1,8 +1,8 @@
 #pragma once
 
-#include <string>
 #include <ostream>
 #include <stdexcept>
+#include <string>
 
 /**
  * @brief Represents the resources available in the game, including food and various minerals.

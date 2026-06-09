@@ -154,14 +154,14 @@ void RaylibRenderer::_drawSelectedToolip()
     Color textColor = {255, 255, 255, 255};
 
     auto builder = TooltipRenderer::create()
-        .setAnchor(TooltipRenderer::Anchor::TopRight)
-        .setBackgroundColor(bgColor)
-        .setBackgroundAlpha(180)
-        .setBorderColor(borderColor)
-        .setBorderThickness(2)
-        .setPadding(10)
-        .setFontSize(_getScaledFontSize(18));
-        
+                       .setAnchor(TooltipRenderer::Anchor::TopRight)
+                       .setBackgroundColor(bgColor)
+                       .setBackgroundAlpha(180)
+                       .setBorderColor(borderColor)
+                       .setBorderThickness(2)
+                       .setPadding(10)
+                       .setFontSize(_getScaledFontSize(18));
+
     switch (_selection.type) {
         case SelectionFinder::EntityType::Tile: {
             const Resources& resources = _state->world.at(_selection.tileX, _selection.tileY);
@@ -199,7 +199,8 @@ void RaylibRenderer::_drawSelectedToolip()
             break;
         }
 
-        default: return;
+        default:
+            return;
     }
 
     builder.draw({GetScreenWidth() - 10.0f, 10.0f});
