@@ -17,6 +17,12 @@ class Resources {
     int phiras = 0;
     int thystame = 0;
 
+    bool isEmpty() const
+    {
+        return food == 0 && linemate == 0 && deraumere == 0 && sibur == 0 && mendiane == 0 &&
+               phiras == 0 && thystame == 0;
+    }
+
     std::string get_name(int index) const
     {
         switch (index) {
