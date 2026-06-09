@@ -80,6 +80,9 @@ SelectionFinder::Selection SelectionFinder::getEmptySelection()
 {
     return {
         .type = EntityType::None,
+        .id = -1,
+        .tileX = -1,
+        .tileY = -1,
         .timer = 0.0f,
     };
 }

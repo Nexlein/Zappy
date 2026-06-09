@@ -8,6 +8,7 @@
 #include "raylib_helpers/EntityRenderer.hpp"
 #include "raylib_helpers/GridRenderer.hpp"
 #include "raylib_helpers/SelectionFinder.hpp"
+#include "raylib_helpers/TooltipRenderer.hpp"
 
 /**
  * @brief A renderer that uses Raylib to display the game state graphically.
@@ -48,6 +49,7 @@ class RaylibRenderer : public ARenderer {
     void _render2D();
 
     void _drawSelectionHighlight();
+    void _drawSelectedToolip();
     void _drawHUD();
 
     Color _getTeamColor(const std::string& teamName);
@@ -57,4 +59,7 @@ class RaylibRenderer : public ARenderer {
     void _updateSelection(float deltaTime);
 
     void _performRaycast();
+
+    void _addResourceLines(TooltipRenderer::Builder& builder, const Resources& res,
+                           const std::string& indent, Color color);
 };

@@ -27,8 +27,8 @@ void RaylibRenderer::init()
 
 void RaylibRenderer::render()
 {
-    _updateCamera(_state->world.width, _state->world.height);
     _updateSelection(GetFrameTime());
+    _updateCamera(_state->world.width, _state->world.height);
 
     BeginDrawing();
     ClearBackground(RAYWHITE);
@@ -104,6 +104,8 @@ void RaylibRenderer::_render2D()
         TextRenderer::drawTextAt3DPosition(worldPos, _camera, "Egg #" + std::to_string(egg.id),
                                            _getScaledFontSize(18), BLACK);
     }
+
+    _drawSelectedToolip();
 }
 
 void RaylibRenderer::_drawSelectionHighlight()
@@ -141,6 +143,70 @@ void RaylibRenderer::_drawSelectionHighlight()
         default:
             return;
     }
+}
+
+void RaylibRenderer::_drawSelectedToolip()
+{
+    if (_selection.type == SelectionFinder::EntityType::None) return;
+
+    Color bgColor = {20, 25, 35, 220};
+    Color borderColor = {60, 70, 90, 200};
+    Color textColor = {255, 255, 255, 255};
+    Color tileColor = {100, 200, 255, 255};
+    Color playerColor = {100, 255, 150, 255};
+    Color eggColor = {255, 200, 80, 255};
+
+    auto builder = TooltipRenderer::create()
+                       .setAnchor(TooltipRenderer::Anchor::TopRight)
+                       .setBackgroundColor(bgColor)
+                       .setBackgroundAlpha(180)
+                       .setBorderColor(borderColor)
+                       .setBorderThickness(2)
+                       .setPadding(10)
+                       .setFontSize(_getScaledFontSize(18));
+
+    switch (_selection.type) {
+        case SelectionFinder::EntityType::Tile: {
+            const Resources& resources = _state->world.at(_selection.tileX, _selection.tileY);
+            if (resources.isEmpty()) {
+                builder.addColoredText({"Tile", " is empty"}, {tileColor, textColor});
+            } else {
+                builder.addLine("Tile:", tileColor);
+                _addResourceLines(builder, resources, "  ", textColor);
+            }
+            break;
+        }
+
+        case SelectionFinder::EntityType::Player: {
+            if (!_state->world.playerExists(_selection.id)) return;
+            const Player& player = _state->world.players.at(_selection.id);
+            builder.addColoredText({"Player ", "#" + std::to_string(player.id)},
+                                   {playerColor, textColor});
+            builder.addColoredText({"  Team ", player.team},
+                                   {textColor, _getTeamColor(player.team)});
+            builder.addLine("  Level " + std::to_string(player.level), textColor);
+            if (player.inventory.isEmpty()) {
+                builder.addLine("  Inventory is empty", textColor);
+            } else {
+                builder.addLine("  Inventory:", textColor);
+                _addResourceLines(builder, player.inventory, "    ", textColor);
+            }
+            break;
+        }
+
+        case SelectionFinder::EntityType::Egg: {
+            if (!_state->world.eggExists(_selection.id)) return;
+            const Egg& egg = _state->world.eggs.at(_selection.id);
+            builder.addColoredText({"Egg ", "#" + std::to_string(egg.id)}, {eggColor, textColor});
+            builder.addColoredText({"  Team ", egg.team}, {textColor, _getTeamColor(egg.team)});
+            break;
+        }
+
+        default:
+            return;
+    }
+
+    builder.draw({GetScreenWidth() - 10.0f, 10.0f});
 }
 
 void RaylibRenderer::_drawHUD()
@@ -244,11 +310,8 @@ void RaylibRenderer::_performRaycast()
     _selection = SelectionFinder::findFromRay(ray, *_state, TILE_SIZE, PLAYER_CUBE_SIZE,
                                               EGG_CUBE_SIZE, SELECTION_TIMER);
 
-    if (_selection.type != SelectionFinder::EntityType::None) {
-        std::cout << _selection << std::endl;
-    } else {
+    if (_selection.type == SelectionFinder::EntityType::None) {
         _selection = SelectionFinder::getEmptySelection();
-        std::cout << "Selection cleared (clicked on empty space)" << std::endl;
     }
 }
 
@@ -259,6 +322,15 @@ void RaylibRenderer::_updateSelection(float deltaTime)
     _selection.timer -= deltaTime;
     if (_selection.timer <= 0.0f) {
         _selection = SelectionFinder::getEmptySelection();
-        std::cout << "Selection cleared (timer ran out)" << std::endl;
+    }
+}
+
+void RaylibRenderer::_addResourceLines(TooltipRenderer::Builder& builder, const Resources& res,
+                                       const std::string& indent, Color color)
+{
+    for (int i = 0; i < 7; i++) {
+        int qty = res[i];
+        if (qty <= 0) continue;
+        builder.addLine(indent + res.get_name(i) + ": " + std::to_string(qty), color);
     }
 }

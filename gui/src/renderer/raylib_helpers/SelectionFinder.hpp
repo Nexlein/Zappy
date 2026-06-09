@@ -1,6 +1,8 @@
 #pragma once
 
 #include <ostream>
+#include <sstream>
+#include <string>
 
 #include "core/GameState.hpp"
 #include "raylib.h"
@@ -42,3 +44,10 @@ class SelectionFinder {
 
 std::ostream& operator<<(std::ostream& os, const SelectionFinder::Selection& sel);
 std::ostream& operator<<(std::ostream& os, const SelectionFinder::EntityType& type);
+
+inline std::string to_string(SelectionFinder::EntityType type)
+{
+    std::ostringstream oss;
+    oss << type;
+    return oss.str();
+}
