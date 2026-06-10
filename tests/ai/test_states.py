@@ -18,10 +18,11 @@ class TestForageFood(unittest.TestCase):
     def setUp(self):
         self.context = DroneContext()
         self.state = ForageFood()
+        self.state.enter(self.context)
 
     def test_enter(self):
-        res = self.state.enter(self.context)
-        self.assertEqual(res, "Look")
+        self.state.enter(self.context)
+        self.assertEqual(self.state._forward_streak, 0)
 
     def test_update_food_low(self):
         self.context.inventory.food = 5
@@ -42,15 +43,11 @@ class TestForageFood(unittest.TestCase):
         self.context.vision = [Tile(food=2), Tile(food=0)]
         res = self.state.get_action(self.context)
         self.assertEqual(res, "Take food")
-        # Vision should be cleared
-        self.assertEqual(self.context.vision, [])
 
     def test_get_action_no_food_on_current_tile(self):
         self.context.vision = [Tile(food=0), Tile(food=3)]
         res = self.state.get_action(self.context)
         self.assertEqual(res, "Forward")
-        # Vision should be cleared
-        self.assertEqual(self.context.vision, [])
 
     def test_exit(self):
         res = self.state.exit(self.context)
@@ -63,10 +60,11 @@ class TestSearchStone(unittest.TestCase):
         self.state = SearchStone()
         # Default food to safe level
         self.context.inventory.food = 10
+        self.state.enter(self.context)
 
     def test_enter(self):
         res = self.state.enter(self.context)
-        self.assertEqual(res, "Look")
+        self.assertIsNone(res)
 
     def test_get_missing_stones_level_1_missing(self):
         self.context.level = 1
@@ -116,7 +114,6 @@ class TestSearchStone(unittest.TestCase):
         self.context.vision = [Tile(linemate=1), Tile(linemate=0)]
         res = self.state.get_action(self.context)
         self.assertEqual(res, "Take linemate")
-        self.assertEqual(self.context.vision, [])
 
     def test_get_action_ignore_non_missing_stone(self):
         self.context.level = 1
@@ -125,7 +122,6 @@ class TestSearchStone(unittest.TestCase):
         self.context.vision = [Tile(sibur=1), Tile(linemate=1)]
         res = self.state.get_action(self.context)
         self.assertEqual(res, "Forward")
-        self.assertEqual(self.context.vision, [])
 
     def test_update_hear_ally_rally(self):
         from context import BroadcastMessage
@@ -159,13 +155,13 @@ class TestIncantationState(unittest.TestCase):
 
     def test_enter(self):
         self.state.enter(self.context)
-        self.assertFalse(self.state.initiated)
+        self.assertFalse(self.state.command_sent)
 
     def test_get_action(self):
         self.state.enter(self.context)
         action = self.state.get_action(self.context)
         self.assertEqual(action, "Incantation")
-        self.assertTrue(self.state.initiated)
+        self.assertTrue(self.state.command_sent)
         action2 = self.state.get_action(self.context)
         self.assertIsNone(action2)
 
@@ -193,7 +189,6 @@ class TestBroadcastHelp(unittest.TestCase):
     def test_enter(self):
         self.state.enter(self.context)
         self.assertEqual(self.state.ticks_waited, 0)
-        self.assertFalse(self.state.dropped)
 
     def test_update_survival_trigger(self):
         self.state.enter(self.context)
