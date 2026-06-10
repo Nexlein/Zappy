@@ -1,0 +1,27 @@
+name: Epitech Mirror
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  mirror_to_epitech:
+    if: github.repository == 'Nexlein/Zappy'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.10.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Push to Epitech Mirror
+        run: |
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git remote add epitechZappy git@github.com:EpitechPGE2-2025/G-YEP-400-MPL-4-1-zappy-1.git
+          git push epitechZappy HEAD:main

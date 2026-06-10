@@ -72,4 +72,14 @@ class WorldState {
      * @brief Accesses the resources at a specific tile coordinate (x, y).
      */
     const Resources& at(int x, int y) const { return tiles[y * width + x]; }
+
+    /**
+     * @brief Checks if a player with the given ID exists in the world.
+     */
+    bool playerExists(int id) const { return players.find(id) != players.end(); }
+
+    /**
+     * @brief Checks if an egg with the given ID exists in the world.
+     */
+    bool eggExists(int id) const { return eggs.find(id) != eggs.end(); }
 };

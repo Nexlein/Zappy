@@ -1,11 +1,18 @@
 #include "RaylibRenderer.hpp"
 
+#include <algorithm>
+#include <cfloat>
 #include <cmath>
 #include <iostream>
+
+#include "raylib_helpers/RenderingHelper.hpp"
+#include "raylib_helpers/TextRenderer.hpp"
+#include "raylib_helpers/TooltipRenderer.hpp"
 
 void RaylibRenderer::init()
 {
     SetTraceLogLevel(LOG_WARNING);
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(800, 600, "Zappy");
     SetTargetFPS(60);
 
@@ -14,179 +21,245 @@ void RaylibRenderer::init()
                .up = {0.0f, 1.0f, 0.0f},
                .fovy = 45.0f,
                .projection = CAMERA_PERSPECTIVE};
+
+    _selection = SelectionFinder::getEmptySelection();
 }
 
-void RaylibRenderer::render(const GameState& state)
+void RaylibRenderer::render()
 {
-    // Mock is used to add some fake players and eggs for testing purposes
-    // TODO remove mock and use state directly once rendering is implemented and tested
-    GameState mock = state;
+    _updateSelection(GetFrameTime());
+    _updateCamera(_state->world.width, _state->world.height);
 
-    mock.world.players[10] = {10, 2, 3, Orientation::N, 1, "TeamA"};
-    mock.world.players[11] = {11, 5, 1, Orientation::E, 2, "TeamA"};
-    mock.world.players[12] = {12, 6, 7, Orientation::S, 3, "TeamB"};
-
-    mock.world.eggs[20] = {20, 4, 4, "TeamA"};
-    mock.world.eggs[21] = {21, 1, 6, "TeamB"};
-
-    _updateCamera(mock.world.width, mock.world.height);
     BeginDrawing();
     ClearBackground(RAYWHITE);
 
     BeginMode3D(_camera);
-
-    _drawCustomGrid(mock.world.width, mock.world.height, TILE_SIZE);
-
-    for (const auto& [id, player] : mock.world.players) {
-        _drawPlayer(player, mock.world.width, mock.world.height);
-    }
-
-    for (const auto& [id, egg] : mock.world.eggs) {
-        _drawEgg(egg, mock.world.width, mock.world.height);
-    }
-
-    for (int x = 0; x < mock.world.width; x++) {
-        for (int y = 0; y < mock.world.height; y++) {
-            _drawResources(mock.world.at(x, y), x, y, mock.world.width, mock.world.height);
-        }
-    }
-
+    _render3D();
     EndMode3D();
 
-    for (const auto& [id, player] : mock.world.players) {
-        _drawPlayerNametag(player, mock.world.width, mock.world.height);
-    }
-
-    for (const auto& [id, egg] : mock.world.eggs) {
-        _drawEggNametag(egg, mock.world.width, mock.world.height);
-    }
-
-    DrawFPS(10, 10);
+    _render2D();
+    _drawHUD();
     EndDrawing();
 }
 
 void RaylibRenderer::handleInput()
 {
+    static double lastLeftClickTime = -1.0;
     // KEY_A maps to 'Q' on AZERTY
     if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) _cameraAngle += MOVE_SPEED * GetFrameTime();
     if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) _cameraAngle -= MOVE_SPEED * GetFrameTime();
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        _performRaycast();
+        if (GetTime() - lastLeftClickTime < SELECTION_DOUBLE_CLICK &&
+            _selection.type != SelectionFinder::EntityType::None)
+            _selection.permanent = true;
+        lastLeftClickTime = GetTime();
+    }
 }
 
 bool RaylibRenderer::shouldClose() { return WindowShouldClose(); }
 
 void RaylibRenderer::shutdown() { CloseWindow(); }
 
-void RaylibRenderer::_drawCustomGrid(int width, int height, float spacing)
+void RaylibRenderer::_render3D()
 {
-    float offsetX = (width * spacing) / 2.0f;
-    float offsetZ = (height * spacing) / 2.0f;
+    GridRenderer::drawGrid(_state->world.width, _state->world.height, TILE_SIZE);
 
-    for (int x = 0; x <= width; x++) {
-        DrawLine3D({x * spacing - offsetX, 0.0f, -offsetZ},
-                   {x * spacing - offsetX, 0.0f, height * spacing - offsetZ}, GRAY);
+    for (const auto& [id, player] : _state->world.players) {
+        Vector3 worldPos = RenderingHelper::tileToWorld(player.x, player.y, _state->world.width,
+                                                        _state->world.height, TILE_SIZE);
+        worldPos.y = PLAYER_CUBE_SIZE / 2.0f;  // Sit on ground
+        EntityRenderer::drawPlayer(worldPos, _getTeamColor(player.team), PLAYER_CUBE_SIZE);
     }
 
-    for (int z = 0; z <= height; z++) {
-        DrawLine3D({-offsetX, 0.0f, z * spacing - offsetZ},
-                   {width * spacing - offsetX, 0.0f, z * spacing - offsetZ}, GRAY);
+    for (const auto& [id, egg] : _state->world.eggs) {
+        Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
+                                                        _state->world.height, TILE_SIZE);
+        worldPos.y = EGG_CUBE_SIZE / 2.0f;  // Sit on ground
+        EntityRenderer::drawEgg(worldPos, _getTeamColor(egg.team), EGG_CUBE_SIZE);
+    }
+
+    for (int x = 0; x < _state->world.width; x++) {
+        for (int y = 0; y < _state->world.height; y++) {
+            EntityRenderer::drawResources(
+                _state->world.at(x, y), x, y,
+                RenderingHelper::tileToWorld(x, y, _state->world.width, _state->world.height,
+                                             TILE_SIZE),
+                TILE_SIZE);
+        }
+    }
+
+    _drawSelectionHighlight();
+}
+
+void RaylibRenderer::_render2D()
+{
+    for (const auto& [id, player] : _state->world.players) {
+        Vector3 worldPos = RenderingHelper::tileToWorld(player.x, player.y, _state->world.width,
+                                                        _state->world.height, TILE_SIZE);
+        worldPos.y = PLAYER_CUBE_SIZE * 1.5f;  // Above cube
+        TextRenderer::drawTextAt3DPosition(worldPos, _camera,
+                                           "Player #" + std::to_string(player.id),
+                                           _getScaledFontSize(18), BLACK);
+    }
+
+    for (const auto& [id, egg] : _state->world.eggs) {
+        Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
+                                                        _state->world.height, TILE_SIZE);
+        worldPos.y = EGG_CUBE_SIZE * 1.5f;  // Above cube
+        TextRenderer::drawTextAt3DPosition(worldPos, _camera, "Egg #" + std::to_string(egg.id),
+                                           _getScaledFontSize(18), BLACK);
+    }
+
+    _drawSelectedToolip();
+}
+
+void RaylibRenderer::_drawSelectionHighlight()
+{
+    if (_selection.type == SelectionFinder::EntityType::None) return;
+
+    switch (_selection.type) {
+        case SelectionFinder::EntityType::Tile:
+            GridRenderer::drawTileHighlight(_selection.tileX, _selection.tileY, _state->world.width,
+                                            _state->world.height, TILE_SIZE, SELECTION_COLOR,
+                                            SELECTION_LINE_THICKNESS);
+            break;
+
+        case SelectionFinder::EntityType::Player:
+            if (_state->world.players.find(_selection.id) != _state->world.players.end()) {
+                const Player& player = _state->world.players.at(_selection.id);
+                Vector3 worldPos = RenderingHelper::tileToWorld(
+                    player.x, player.y, _state->world.width, _state->world.height, TILE_SIZE);
+                worldPos.y = PLAYER_CUBE_SIZE / 2.0f;
+                EntityRenderer::drawPlayerHighlight(worldPos, PLAYER_CUBE_SIZE, SELECTION_COLOR,
+                                                    SELECTION_WIREFRAME_THICKNESS);
+            }
+            break;
+
+        case SelectionFinder::EntityType::Egg:
+            if (_state->world.eggs.find(_selection.id) != _state->world.eggs.end()) {
+                const Egg& egg = _state->world.eggs.at(_selection.id);
+                Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
+                                                                _state->world.height, TILE_SIZE);
+                worldPos.y = EGG_CUBE_SIZE / 2.0f;
+                EntityRenderer::drawEggHighlight(worldPos, EGG_CUBE_SIZE, SELECTION_COLOR,
+                                                 SELECTION_WIREFRAME_THICKNESS);
+            }
+            break;
+        default:
+            return;
     }
 }
 
-void RaylibRenderer::_drawPlayer(const Player& player, int worldWidth, int worldHeight)
+void RaylibRenderer::_drawSelectedToolip()
 {
-    static const float playerSize = 0.8f;
+    if (_selection.type == SelectionFinder::EntityType::None) return;
 
-    Vector3 worldPos = _tileToWorld(player.x, player.y, worldWidth, worldHeight);
-    worldPos.y = playerSize / 2.0f;  // Make player be on top of grid
-    Color teamColor = _getTeamColor(player.team);
+    Color bgColor = {20, 25, 35, 220};
+    Color borderColor = {60, 70, 90, 200};
+    Color textColor = {255, 255, 255, 255};
+    Color tileColor = {100, 200, 255, 255};
+    Color playerColor = {100, 255, 150, 255};
+    Color eggColor = {255, 200, 80, 255};
 
-    DrawCube(worldPos, playerSize, playerSize, playerSize, teamColor);
-}
+    auto builder = TooltipRenderer::create()
+                       .setAnchor(TooltipRenderer::Anchor::TopRight)
+                       .setBackgroundColor(bgColor)
+                       .setBackgroundAlpha(180)
+                       .setBorderColor(borderColor)
+                       .setBorderThickness(2)
+                       .setPadding(10)
+                       .setFontSize(_getScaledFontSize(18));
 
-void RaylibRenderer::_drawPlayerNametag(const Player& player, int worldWidth, int worldHeight)
-{
-    static const float playerSize = 0.8f;
-    Vector3 worldPos = _tileToWorld(player.x, player.y, worldWidth, worldHeight);
-    worldPos.y = playerSize * 1.5f;  // Above cube
-
-    Vector2 screenPos = GetWorldToScreen(worldPos, _camera);
-
-    std::string label = "Player #" + std::to_string(player.id);
-    int fontSize = 20;
-    int textWidth = MeasureText(label.c_str(), fontSize);
-
-    DrawText(label.c_str(), screenPos.x - textWidth / 2, screenPos.y, fontSize, BLACK);
-}
-
-void RaylibRenderer::_drawResources(const Resources& resources, int tileX, int tileY,
-                                    int worldWidth, int worldHeight)
-{
-    static const Color resourceColors[] = {
-        BROWN,     // food
-        DARKGRAY,  // linemate
-        GREEN,     // deraumere
-        BLUE,      // sibur
-        YELLOW,    // mendiane
-        ORANGE,    // phiras
-        PURPLE     // thystame
-    };
-
-    static const float baseSize = 0.15f;
-
-    for (int i = 0; i < 7; i++) {
-        int count = resources[i];
-        if (count <= 0) continue;
-
-        auto key = std::make_tuple(tileX, tileY, i);
-        auto& cache = _resourcePositions[key];
-
-        // Regenerate position only if resource appeared (was 0, now >0)
-        if (cache.lastCount == 0) {
-            Vector3 tileCenter = _tileToWorld(tileX, tileY, worldWidth, worldHeight);
-
-            float offsetRange = TILE_SIZE / 2.0f - baseSize;
-            float offsetX = (static_cast<float>(rand()) / RAND_MAX) * offsetRange * 2 - offsetRange;
-            float offsetZ = (static_cast<float>(rand()) / RAND_MAX) * offsetRange * 2 - offsetRange;
-
-            cache.position = {tileCenter.x + offsetX, 0.0f, tileCenter.z + offsetZ};
+    switch (_selection.type) {
+        case SelectionFinder::EntityType::Tile: {
+            const Resources& resources = _state->world.at(_selection.tileX, _selection.tileY);
+            if (resources.isEmpty()) {
+                builder.addColoredText({"Tile", " is empty"}, {tileColor, textColor});
+            } else {
+                builder.addLine("Tile:", tileColor);
+                _addResourceLines(builder, resources, "  ", textColor);
+            }
+            break;
         }
 
-        cache.lastCount = count;
+        case SelectionFinder::EntityType::Player: {
+            if (!_state->world.playerExists(_selection.id)) return;
+            const Player& player = _state->world.players.at(_selection.id);
+            builder.addColoredText({"Player ", "#" + std::to_string(player.id)},
+                                   {playerColor, textColor});
+            builder.addColoredText({"  Team ", player.team},
+                                   {textColor, _getTeamColor(player.team)});
+            builder.addLine("  Level " + std::to_string(player.level), textColor);
+            if (player.inventory.isEmpty()) {
+                builder.addLine("  Inventory is empty", textColor);
+            } else {
+                builder.addLine("  Inventory:", textColor);
+                _addResourceLines(builder, player.inventory, "    ", textColor);
+            }
+            break;
+        }
 
-        // Size grows logarithmically with count, with a minimum size
-        float size = baseSize * (1.0f + std::log(count + 1) * 0.3f);
+        case SelectionFinder::EntityType::Egg: {
+            if (!_state->world.eggExists(_selection.id)) return;
+            const Egg& egg = _state->world.eggs.at(_selection.id);
+            builder.addColoredText({"Egg ", "#" + std::to_string(egg.id)}, {eggColor, textColor});
+            builder.addColoredText({"  Team ", egg.team}, {textColor, _getTeamColor(egg.team)});
+            break;
+        }
 
-        Vector3 drawPos = cache.position;
-        drawPos.y = size / 2.0f;  // Sit on ground
-
-        DrawSphere(drawPos, size, resourceColors[i]);
+        default:
+            return;
     }
+
+    builder.draw({GetScreenWidth() - 10.0f, 10.0f});
 }
 
-void RaylibRenderer::_drawEgg(const Egg& egg, int worldWidth, int worldHeight)
+void RaylibRenderer::_drawHUD()
 {
-    static const float eggSize = 0.4f;
+    Color bgColor = {20, 25, 35, 220};
+    Color borderColor = {60, 70, 90, 200};
+    Color textColor = {150, 160, 180, 255};
 
-    Vector3 worldPos = _tileToWorld(egg.x, egg.y, worldWidth, worldHeight);
-    worldPos.y = eggSize / 2.0f;  // Make egg be on top of grid
-    Color teamColor = _getTeamColor(egg.team);
+    int fps = GetFPS();
+    Color fpsColor = fps >= 55 ? GREEN : (fps >= 30 ? YELLOW : RED);
+    std::string fpsText = "FPS: " + std::to_string(fps);
 
-    DrawCube(worldPos, eggSize, eggSize, eggSize, teamColor);
-}
+    std::string mapText =
+        "Map: " + std::to_string(_state->world.width) + "x" + std::to_string(_state->world.height);
+    std::string timeText = "Time unit: " + std::to_string(_state->timeUnit);
 
-void RaylibRenderer::_drawEggNametag(const Egg& egg, int worldWidth, int worldHeight)
-{
-    static const float eggSize = 0.4f;
-    Vector3 worldPos = _tileToWorld(egg.x, egg.y, worldWidth, worldHeight);
-    worldPos.y = eggSize * 1.5f;  // Above cube
+    std::unordered_map<std::string, int> teamPlayerCounts;
+    for (const auto& teamName : _state->world.teams) teamPlayerCounts[teamName] = 0;
+    for (const auto& [id, player] : _state->world.players) teamPlayerCounts[player.team]++;
 
-    Vector2 screenPos = GetWorldToScreen(worldPos, _camera);
+    // Sort teams by player count (descending)
+    std::vector<std::pair<std::string, int>> sortedTeams(teamPlayerCounts.begin(),
+                                                         teamPlayerCounts.end());
+    std::sort(sortedTeams.begin(), sortedTeams.end(),
+              [](const auto& a, const auto& b) { return a.second > b.second; });
 
-    std::string label = "Egg #" + std::to_string(egg.id);
-    int fontSize = 20;
-    int textWidth = MeasureText(label.c_str(), fontSize);
+    auto builder = TooltipRenderer::create()
+                       .addLine(fpsText, fpsColor)
+                       .addLine(mapText, textColor)
+                       .addLine(timeText, textColor);
 
-    DrawText(label.c_str(), screenPos.x - textWidth / 2, screenPos.y, fontSize, BLACK);
+    // Add top 5 teams by population
+    for (size_t i = 0; i < std::min(sortedTeams.size(), size_t(5)); i++) {
+        const auto& [teamName, playerCount] = sortedTeams[i];
+        std::string teamLine = teamName + ": " + std::to_string(playerCount);
+        builder.addLine(teamLine, _getTeamColor(teamName));
+    }
+
+    builder.setBackgroundColor(bgColor)
+        .setBackgroundAlpha(180)
+        .setBorderColor(borderColor)
+        .setBorderThickness(2)
+        .setPadding(10)
+        .setFontSize(_getScaledFontSize(18))
+        .setAnchor(TooltipRenderer::Anchor::TopLeft)
+        .draw({10.0f, 10.0f});
 }
 
 Color RaylibRenderer::_getTeamColor(const std::string& teamName)
@@ -195,24 +268,22 @@ Color RaylibRenderer::_getTeamColor(const std::string& teamName)
         return _teamColors[teamName];
     }
 
-    static const Color palette[] = {RED,    GREEN, BLUE, YELLOW,  ORANGE,
-                                    PURPLE, PINK,  LIME, SKYBLUE, MAGENTA};
-    static constexpr int paletteSize = sizeof(palette) / sizeof(palette[0]);
-
-    int colorIndex = _teamColors.size() % paletteSize;
-    Color newColor = palette[colorIndex];
+    int colorIndex = _teamColors.size() % _paletteSize;
+    Color newColor = _colorPalette[colorIndex];
     _teamColors[teamName] = newColor;
 
     return newColor;
 }
 
-Vector3 RaylibRenderer::_tileToWorld(int tileX, int tileY, int worldWidth, int worldHeight) const
+int RaylibRenderer::_getScaledFontSize(int baseFontSize) const
 {
-    float offsetX = (worldWidth * TILE_SIZE) / 2.0f;
-    float offsetZ = (worldHeight * TILE_SIZE) / 2.0f;
+    // Scale based on height: 600px = 1.0x, 1200px = 2.0x
+    // Clamp between 0.5x and 2.5x
 
-    return {tileX * TILE_SIZE - offsetX + TILE_SIZE / 2.0f, 0.0f,
-            tileY * TILE_SIZE - offsetZ + TILE_SIZE / 2.0f};
+    int screenHeight = GetScreenHeight();
+    float scale = screenHeight / 600.0f;
+    scale = std::max(0.5f, std::min(scale, 2.5f));
+    return static_cast<int>(baseFontSize * scale);
 }
 
 void RaylibRenderer::_updateCamera(float worldWidth, float worldHeight)
@@ -236,4 +307,38 @@ void RaylibRenderer::_updateCamera(float worldWidth, float worldHeight)
     _camera.position.y = _cameraHeight * heightScale;
 
     _camera.target = {0.0f, 0.0f, 0.0f};
+}
+
+void RaylibRenderer::_performRaycast()
+{
+    if (!_state) return;
+
+    Ray ray = GetMouseRay(GetMousePosition(), _camera);
+    _selection = SelectionFinder::findFromRay(ray, *_state, TILE_SIZE, PLAYER_CUBE_SIZE,
+                                              EGG_CUBE_SIZE, SELECTION_TIMER);
+
+    if (_selection.type == SelectionFinder::EntityType::None) {
+        _selection = SelectionFinder::getEmptySelection();
+    }
+}
+
+void RaylibRenderer::_updateSelection(float deltaTime)
+{
+    if (_selection.type == SelectionFinder::EntityType::None) return;
+    if (_selection.permanent) return;
+
+    _selection.timer -= deltaTime;
+    if (_selection.timer <= 0.0f) {
+        _selection = SelectionFinder::getEmptySelection();
+    }
+}
+
+void RaylibRenderer::_addResourceLines(TooltipRenderer::Builder& builder, const Resources& res,
+                                       const std::string& indent, Color color)
+{
+    for (int i = 0; i < 7; i++) {
+        int qty = res[i];
+        if (qty <= 0) continue;
+        builder.addLine(indent + res.get_name(i) + ": " + std::to_string(qty), color);
+    }
 }

@@ -1,0 +1,288 @@
+name: Project Automation
+
+on:
+  pull_request:
+    types: [opened, closed]
+    branches:
+      - dev
+      - main
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  repository-projects: write
+
+jobs:
+  move-to-in-progress:
+    name: Move to In Progress when PR opened
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    steps:
+      - name: Extract issue numbers from PR
+        id: extract
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+
+          # Get linked issues
+          ISSUES=$(gh pr view $PR_NUMBER --json closingIssuesReferences --jq '.closingIssuesReferences[].number' | tr '\n' ' ')
+
+          # Remove duplicates
+          ISSUES=$(echo "$ISSUES" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+
+          echo "issue_numbers=$ISSUES" >> $GITHUB_OUTPUT
+          echo "Found issues: $ISSUES"
+
+      - name: Move issues to In Progress
+        if: steps.extract.outputs.issue_numbers != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_ID: "PVT_kwHOCu25Yc4BYuKw"
+          STATUS_FIELD_ID: "PVTSSF_lAHOCu25Yc4BYuKwzhTx55I"
+          IN_PROGRESS_ID: "47fc9ee4"
+        run: |
+          for ISSUE_NUM in ${{ steps.extract.outputs.issue_numbers }}; do
+            echo "Processing issue #$ISSUE_NUM"
+
+            # Get issue node ID
+            ISSUE_ID=$(gh api graphql -f query='
+              query {
+                repository(owner: "${{ github.repository_owner }}", name: "${{ github.event.repository.name }}") {
+                  issue(number: '$ISSUE_NUM') {
+                    id
+                  }
+                }
+              }
+            ' --jq '.data.repository.issue.id')
+
+            if [ -z "$ISSUE_ID" ] || [ "$ISSUE_ID" = "null" ]; then
+              echo "Issue #$ISSUE_NUM not found, skipping"
+              continue
+            fi
+
+            # Get project item ID
+            ITEM_ID=$(gh api graphql -f query='
+              query {
+                node(id: "'$ISSUE_ID'") {
+                  ... on Issue {
+                    projectItems(first: 10) {
+                      nodes {
+                        id
+                        project {
+                          id
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ' --jq '.data.node.projectItems.nodes[] | select(.project.id == "'$PROJECT_ID'") | .id')
+
+            if [ -z "$ITEM_ID" ] || [ "$ITEM_ID" = "null" ]; then
+              echo "Issue #$ISSUE_NUM not in project, skipping"
+              continue
+            fi
+
+            # Update status to In Progress
+            gh api graphql -f query='
+              mutation {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: "'$PROJECT_ID'"
+                  itemId: "'$ITEM_ID'"
+                  fieldId: "'$STATUS_FIELD_ID'"
+                  value: {singleSelectOptionId: "'$IN_PROGRESS_ID'"}
+                }) {
+                  projectV2Item {
+                    id
+                  }
+                }
+              }
+            '
+
+            echo "Moved issue #$ISSUE_NUM to In Progress"
+          done
+
+  move-to-on-dev:
+    name: Move to On Dev when merged to dev
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'dev'
+    steps:
+      - name: Extract issue numbers from PR
+        id: extract
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+
+          # Get linked issues
+          ISSUES=$(gh pr view $PR_NUMBER --json closingIssuesReferences --jq '.closingIssuesReferences[].number' | tr '\n' ' ')
+
+          # Remove duplicates
+          ISSUES=$(echo "$ISSUES" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+
+          echo "issue_numbers=$ISSUES" >> $GITHUB_OUTPUT
+          echo "Found issues: $ISSUES"
+
+      - name: Move issues to On Dev
+        if: steps.extract.outputs.issue_numbers != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_ID: "PVT_kwHOCu25Yc4BYuKw"
+          STATUS_FIELD_ID: "PVTSSF_lAHOCu25Yc4BYuKwzhTx55I"
+          ON_DEV_ID: "b8356016"
+        run: |
+          for ISSUE_NUM in ${{ steps.extract.outputs.issue_numbers }}; do
+            echo "Processing issue #$ISSUE_NUM"
+
+            # Get issue node ID
+            ISSUE_ID=$(gh api graphql -f query='
+              query {
+                repository(owner: "${{ github.repository_owner }}", name: "${{ github.event.repository.name }}") {
+                  issue(number: '$ISSUE_NUM') {
+                    id
+                  }
+                }
+              }
+            ' --jq '.data.repository.issue.id')
+
+            if [ -z "$ISSUE_ID" ] || [ "$ISSUE_ID" = "null" ]; then
+              echo "Issue #$ISSUE_NUM not found, skipping"
+              continue
+            fi
+
+            # Get project item ID
+            ITEM_ID=$(gh api graphql -f query='
+              query {
+                node(id: "'$ISSUE_ID'") {
+                  ... on Issue {
+                    projectItems(first: 10) {
+                      nodes {
+                        id
+                        project {
+                          id
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ' --jq '.data.node.projectItems.nodes[] | select(.project.id == "'$PROJECT_ID'") | .id')
+
+            if [ -z "$ITEM_ID" ] || [ "$ITEM_ID" = "null" ]; then
+              echo "Issue #$ISSUE_NUM not in project, skipping"
+              continue
+            fi
+
+            # Update status to On Dev
+            gh api graphql -f query='
+              mutation {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: "'$PROJECT_ID'"
+                  itemId: "'$ITEM_ID'"
+                  fieldId: "'$STATUS_FIELD_ID'"
+                  value: {singleSelectOptionId: "'$ON_DEV_ID'"}
+                }) {
+                  projectV2Item {
+                    id
+                  }
+                }
+              }
+            '
+
+            echo "Moved issue #$ISSUE_NUM to On Dev"
+          done
+
+  move-to-done:
+    name: Move to Done and close when merged to main
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
+    steps:
+      - name: Extract issue numbers from PR
+        id: extract
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+
+          # Get linked issues
+          ISSUES=$(gh pr view $PR_NUMBER --json closingIssuesReferences --jq '.closingIssuesReferences[].number' | tr '\n' ' ')
+
+          # Remove duplicates
+          ISSUES=$(echo "$ISSUES" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+
+          echo "issue_numbers=$ISSUES" >> $GITHUB_OUTPUT
+          echo "Found issues: $ISSUES"
+
+      - name: Close issues and move to Done
+        if: steps.extract.outputs.issue_numbers != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_ID: "PVT_kwHOCu25Yc4BYuKw"
+          STATUS_FIELD_ID: "PVTSSF_lAHOCu25Yc4BYuKwzhTx55I"
+          DONE_ID: "98236657"
+        run: |
+          for ISSUE_NUM in ${{ steps.extract.outputs.issue_numbers }}; do
+            echo "Processing issue #$ISSUE_NUM"
+
+            # Close the issue
+            gh issue close $ISSUE_NUM --comment "Automatically closed - merged to main"
+
+            # Get issue node ID
+            ISSUE_ID=$(gh api graphql -f query='
+              query {
+                repository(owner: "${{ github.repository_owner }}", name: "${{ github.event.repository.name }}") {
+                  issue(number: '$ISSUE_NUM') {
+                    id
+                  }
+                }
+              }
+            ' --jq '.data.repository.issue.id')
+
+            if [ -z "$ISSUE_ID" ] || [ "$ISSUE_ID" = "null" ]; then
+              echo "Issue #$ISSUE_NUM not found, skipping"
+              continue
+            fi
+
+            # Get project item ID
+            ITEM_ID=$(gh api graphql -f query='
+              query {
+                node(id: "'$ISSUE_ID'") {
+                  ... on Issue {
+                    projectItems(first: 10) {
+                      nodes {
+                        id
+                        project {
+                          id
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ' --jq '.data.node.projectItems.nodes[] | select(.project.id == "'$PROJECT_ID'") | .id')
+
+            if [ -z "$ITEM_ID" ] || [ "$ITEM_ID" = "null" ]; then
+              echo "Issue #$ISSUE_NUM not in project, skipping"
+              continue
+            fi
+
+            # Update status to Done
+            gh api graphql -f query='
+              mutation {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: "'$PROJECT_ID'"
+                  itemId: "'$ITEM_ID'"
+                  fieldId: "'$STATUS_FIELD_ID'"
+                  value: {singleSelectOptionId: "'$DONE_ID'"}
+                }) {
+                  projectV2Item {
+                    id
+                  }
+                }
+              }
+            '
+
+            echo "Closed issue #$ISSUE_NUM and moved to Done"
+          done

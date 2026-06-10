@@ -1,0 +1,43 @@
+name: AI CI Suite
+
+on:
+  push:
+    branches: ["main", "dev"]
+  pull_request:
+    branches: ["main", "dev"]
+
+jobs:
+  lint-python:
+    if: github.repository == 'Nexlein/Zappy'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install ruff
+        run: python3 -m pip install --user ruff
+
+      - name: Check ruff formatting
+        run: |
+          python3 -m ruff format --check .
+          python3 -m ruff check --select F --show-source .
+
+  test-ai:
+    if: github.repository == 'Nexlein/Zappy'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Run AI tests
+        run: PYTHONPATH=ai/src python3 -m unittest discover -s tests/ai -p "test_*.py"
