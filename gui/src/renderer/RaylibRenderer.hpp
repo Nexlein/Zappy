@@ -1,0 +1,66 @@
+#pragma once
+
+#include <string>
+#include <unordered_map>
+
+#include "ARenderer.hpp"
+#include "raylib.h"
+#include "raylib_helpers/EntityRenderer.hpp"
+#include "raylib_helpers/GridRenderer.hpp"
+#include "raylib_helpers/SelectionFinder.hpp"
+#include "raylib_helpers/TooltipRenderer.hpp"
+
+/**
+ * @brief A renderer that uses Raylib to display the game state graphically.
+ */
+class RaylibRenderer : public ARenderer {
+    public:
+    RaylibRenderer() = default;
+    ~RaylibRenderer() override = default;
+
+    void init() override;
+    void render() override;
+    void handleInput() override;
+    bool shouldClose() override;
+    void shutdown() override;
+
+    private:
+    static constexpr float MOVE_SPEED = 2.0f;
+    static constexpr float PLAYER_CUBE_SIZE = 0.8f;
+    static constexpr float EGG_CUBE_SIZE = 0.4f;
+    static constexpr float TILE_SIZE = 1.0f;
+    static constexpr float SELECTION_TIMER = 5.0f;         // seconds
+    static constexpr double SELECTION_DOUBLE_CLICK = 0.3;  // seconds
+    static constexpr float SELECTION_LINE_THICKNESS = 8.0f;
+    static constexpr float SELECTION_WIREFRAME_THICKNESS = 5.0f;
+    static constexpr Color SELECTION_COLOR = {128, 0, 128, 255};  // purple
+
+    Camera3D _camera;
+    float _cameraAngle = 0.0f;
+    float _cameraHeight = 10.0f;
+
+    std::unordered_map<std::string, Color> _teamColors;
+    static constexpr Color _colorPalette[] = {RED,    GREEN, BLUE, YELLOW,  ORANGE,
+                                              PURPLE, PINK,  LIME, SKYBLUE, MAGENTA};
+    static constexpr int _paletteSize = sizeof(_colorPalette) / sizeof(_colorPalette[0]);
+
+    SelectionFinder::Selection _selection;
+
+    void _render3D();
+    void _render2D();
+
+    void _drawSelectionHighlight();
+    void _drawSelectedToolip();
+    void _drawHUD();
+
+    Color _getTeamColor(const std::string& teamName);
+    int _getScaledFontSize(int baseFontSize) const;
+
+    void _updateCamera(float worldWidth, float worldHeight);
+    void _updateSelection(float deltaTime);
+
+    void _performRaycast();
+
+    void _addResourceLines(TooltipRenderer::Builder& builder, const Resources& res,
+                           const std::string& indent, Color color);
+};

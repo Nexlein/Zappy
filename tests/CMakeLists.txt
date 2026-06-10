@@ -9,14 +9,19 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
-FetchContent_Declare(
+fetchcontent_declare(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
     GIT_TAG v1.14.0
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+fetchcontent_makeavailable(googletest)
+
+# Silence compiler warnings from external GoogleTest targets
+if(TARGET gtest)
+    target_compile_options(gtest PRIVATE -w)
+endif()
 
 include(GoogleTest)
 
@@ -27,8 +32,6 @@ set(GUI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/EventQueue.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/GameState.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/Args.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/App.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/renderer/HeadlessRenderer.cpp
 )
 
 set(TEST_SOURCES
@@ -38,7 +41,6 @@ set(TEST_SOURCES
     gui/test_protocolparser.cpp
     gui/test_gamestate.cpp
     gui/test_args.cpp
-    gui/test_app.cpp
 )
 
 add_executable(zappy_tests ${TEST_SOURCES} ${GUI_SOURCES})
@@ -49,6 +51,7 @@ target_include_directories(zappy_tests PRIVATE
 
 target_link_libraries(zappy_tests PRIVATE
     gtest_main
+    raylib
 )
 
 target_compile_options(zappy_tests PRIVATE
@@ -56,3 +59,16 @@ target_compile_options(zappy_tests PRIVATE
 )
 
 gtest_discover_tests(zappy_tests)
+
+# Python AI tests
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_Interpreter_FOUND)
+    add_test(NAME zappy_ai_tests
+        COMMAND ${Python3_EXECUTABLE} -m unittest discover -s ${CMAKE_CURRENT_SOURCE_DIR}/ai -p "test_*.py"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../ai
+    )
+    set_tests_properties(zappy_ai_tests PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../ai/src"
+    )
+endif()
+

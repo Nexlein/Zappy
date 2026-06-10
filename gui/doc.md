@@ -57,7 +57,6 @@ public:
 
 private:
     mutable bool dirty = false;
-    // ... event handlers
 };
 ```
 
@@ -89,21 +88,97 @@ Main application orchestrator.
 - `pollAndEnqueue()`: helper for network event collection
 
 ### renderer/HeadlessRenderer
-Text-based state dump for testing/debugging.
-
-Prints game state updates to stdout when dirty flag set.
+Text-based state dump for testing/debugging. Prints game state updates to stdout when dirty flag set.
 
 ### renderer/RaylibRenderer
-*(Not yet implemented - future 3D visualization)*
+3D visualization using raylib. Core rendering and interaction implemented; visual polish and advanced features still in progress.
+
+**Camera: Orbital Observer**
+- Orbits around map center at fixed height
+- Controls: `Q`/`A` or Left/Right arrows to rotate
+- Orbit path is a blend of elliptic and spherical trajectories to handle non-square maps gracefully
+- Camera height scales with orbit radius to maintain viewing angle
+
+**3D Rendering**
+- Players: colored cubes (team color), labeled "Player #N" above
+- Eggs: colored cubes (team color), labeled "Egg #N" above
+- Tiles: grid with per-tile resource indicators (dots scaled by quantity)
+- All world coordinates computed via `RenderingHelper::tileToWorld()`
+
+**Selection System**
+- Single click: raycast via `SelectionFinder`, selects closest entity (player, egg, or tile), auto-deselects after 5s timer
+- Double click (≤300ms): permanent selection, bypasses timer
+- Click empty space: clears selection
+- Selected entity gets a wireframe highlight (players/eggs) or grid outline (tiles)
+- Selection state lives in `SelectionFinder::Selection` (type, id, tileX/Y, timer, permanent flag)
+
+**HUD (top-left)**
+- FPS counter (green ≥55, yellow ≥30, red <30)
+- Map dimensions
+- Current time unit
+- Top 5 teams by player count, each in their team color
+
+**Entity Tooltip (top-right)**
+- Appears when an entity is selected
+- Entity type label colored: Tile=cyan, Player=green, Egg=amber
+- Tile: lists non-zero resources
+- Player: ID, team name (team color), level, inventory (non-zero resources)
+- Egg: ID, team name (team color)
+- Built with `TooltipRenderer` builder pattern
+
+**Window**
+- Resizable; font sizes scale with screen height (base 600px = 1.0x, clamped 0.5x–2.5x)
+
+### renderer/raylib_helpers
+
+Static helper classes extracted from RaylibRenderer for maintainability:
+
+| Class | Responsibility |
+|-------|---------------|
+| `RenderingHelper` | World↔screen coordinate conversion (`tileToWorld`) |
+| `EntityRenderer` | Draw players, eggs, resources, and their highlights |
+| `GridRenderer` | Draw tile grid and tile highlights |
+| `TextRenderer` | Draw text anchored to 3D world positions |
+| `TooltipRenderer` | Builder-pattern 2D tooltip renderer (multi-line, colored segments, anchored) |
+| `SelectionFinder` | Raycast against world entities, returns closest hit |
+
+**TooltipRenderer builder API:**
+```cpp
+TooltipRenderer::create()
+    .setAnchor(Anchor::TopRight)
+    .setBackgroundColor(color)
+    .setBackgroundAlpha(alpha)
+    .setBorderColor(color)
+    .setBorderThickness(px)
+    .setPadding(px)
+    .setFontSize(px)
+    .addLine("text", color)
+    .addColoredText({"seg1", "seg2"}, {color1, color2})
+    .draw({x, y});
+```
+
+## Planned / Ideas
+
+- OBJ model support for players and eggs (replace placeholder cubes)
+- Improved resource visuals (3D models or icons instead of dots)
+- Map aesthetics: skybox, ground texture, decorative elements
+- Incantation visual feedback (glow, particle effect, frozen player indicator)
+- Broadcast visual feedback (directional wave or floating message)
+- Death visual (dissolve, fade, or brief marker on tile)
+- Win screen / end game display when a team reaches 6 players at level 8
+- Fork visual (egg appearing animation on tile when player forks)
+- Level-up visual (burst/flash effect on all players participating in a successful elevation)
+- Smooth movement animation — instead of teleporting, interpolate player position/rotation between tiles over the action's time window (Forward=7/f, turn=7/f); animation speed adapts to server frequency so it always fits within the tick budget
+- Incantation progress bar on the tile (300/f duration, visual countdown until success or failure)
+- Player history trail — faint path showing recent movement of selected player (style TBD based on overall visual direction)
+- Spectate / follow mode — camera locks onto and follows a selected player (3rd person or overhead, TBD)
 
 ## Main Loop
 
 ```cpp
 int main(int argc, char** argv) {
     App app(argc, argv);
-    if (!app.shouldRun()) {
-        return app.exitCode();
-    }
+    if (!app.shouldRun()) return app.exitCode();
     app.run();
     return 0;
 }
@@ -117,15 +192,11 @@ void App::run() {
     socket.send("GRAPHIC\n");
 
     EventQueue queue;
-    IRenderer* renderer = config.headless ? new HeadlessRenderer(...) : ...;
+    IRenderer* renderer = config.headless ? new HeadlessRenderer(...) : new RaylibRenderer(...);
 
     while (!renderer->shouldClose()) {
         pollAndEnqueue(socket, queue);
-
-        while (auto event = queue.pop()) {
-            state.applyEvent(*event);
-        }
-
+        while (auto event = queue.pop()) state.applyEvent(*event);
         renderer->render(state);
     }
 
@@ -156,19 +227,16 @@ Server → Client: ongoing events...
 
 **E2E verification:** Manual testing against reference server (`bin/zappy_server`)
 
-Example:
 ```bash
 # Terminal 1: Server
 ../bin/zappy_server -p 4242 -x 10 -y 10 -n TeamA TeamB -c 10 -f 1000
 
 # Terminal 2: GUI
-./zappy_gui -p 4242 --headless
+./zappy_gui -p 4242
 
 # Terminal 3: Scripted player
 { echo "TeamA"; sleep 0.5; echo "Forward"; sleep 0.5; echo "Take food"; sleep 2; } | nc localhost 4242
 ```
-
-Verified: player join, movement, orientation, resource take/drop, inventory updates, player death.
 
 ## File Structure
 
@@ -190,8 +258,16 @@ gui/
 │   │   └── ProtocolParser.hpp/cpp
 │   └── renderer/
 │       ├── IRenderer.hpp
+│       ├── ARenderer.hpp
 │       ├── HeadlessRenderer.hpp/cpp
-│       └── RaylibRenderer.hpp/cpp (future)
+│       ├── RaylibRenderer.hpp/cpp
+│       └── raylib_helpers/
+│           ├── RenderingHelper.hpp/cpp
+│           ├── EntityRenderer.hpp/cpp
+│           ├── GridRenderer.hpp/cpp
+│           ├── TextRenderer.hpp/cpp
+│           ├── TooltipRenderer.hpp/cpp
+│           └── SelectionFinder.hpp/cpp
 ├── CMakeLists.txt
 └── doc.md
 ```
@@ -209,3 +285,9 @@ Optional for now (single-threaded), but enables future async network thread with
 
 **Why Args class separate from App?**
 Single responsibility. Args handles parsing/validation, App handles orchestration. Easier to test.
+
+**Why static helper classes for renderer?**
+RaylibRenderer grew large. Extracting stateless drawing concerns (grid, entities, text, tooltips) into static classes keeps each file focused and makes them independently testable.
+
+**Why blend elliptic+spherical orbit?**
+Pure circular orbit makes non-square maps look skewed. Pure elliptic stretches too far on wide maps. 50% blend gives a natural feel across all aspect ratios.
