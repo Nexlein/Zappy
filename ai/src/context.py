@@ -68,3 +68,6 @@ class DroneContext:
 
     # Reflects whether the LAST command the FSM issued succeeded.
     last_command_successful: Optional[bool] = None
+
+    # Track ticks since last inventory command
+    ticks_since_inventory: int = 0

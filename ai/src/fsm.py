@@ -38,6 +38,12 @@ class AIController:
 
     def tick(self) -> str | None:
         """Evaluate state logic and return the next command to send, or None."""
+        if self.context.ticks_since_inventory >= 15:
+            self.context.ticks_since_inventory = 0
+            return "Inventory"
+
+        self.context.ticks_since_inventory += 1
+
         if not self.current_state:
             return None
 
