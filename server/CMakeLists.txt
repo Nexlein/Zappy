@@ -1,6 +1,6 @@
-if(NOT DEFINED CMAKE_PROJECT_NAME)
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     cmake_minimum_required(VERSION 3.20)
-    project(ZappyServer)
+    project(ZappyServer C CXX)
 endif()
 
 enable_testing()
@@ -19,6 +19,7 @@ target_compile_options(clap PRIVATE -Wall -Wextra)
 set(SERVER_SOURCES
     src/main.cpp
     src/core/Args.cpp
+    src/core/World.cpp
 )
 
 add_executable(zappy_server ${SERVER_SOURCES})

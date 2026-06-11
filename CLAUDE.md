@@ -103,7 +103,7 @@ When a feature is fully implemented or an architectural change is made:
 ## Component Docs
 
 - **GUI:** `gui/doc.md` — architecture, data flow, rendering design, file structure
-- **Server:** no doc file yet — see `server/` sources directly
+- **Server:** `server/doc.md` — architecture, data flow, game loop design, file structure
 - **AI:** no doc file yet — see `ai/` sources directly
 - **GUI protocol** (server↔GUI messages): `G-YEP-400_zappy_GUI_protocol.pdf`
 - **Full subject** (game rules, commands, elevation table): `G-YEP-400_zappy.pdf`

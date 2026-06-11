@@ -21,7 +21,8 @@ struct ServerConfig {
     int clientsNb;
     int freq;
 
-    friend std::ostream& operator<<(std::ostream& os, const ServerConfig& c) {
+    friend std::ostream& operator<<(std::ostream& os, const ServerConfig& c)
+    {
         os << "Server configuration:\n"
            << "  Port    : " << c.port << "\n"
            << "  Map     : " << c.width << "x" << c.height << "\n"
@@ -37,7 +38,7 @@ struct ServerConfig {
 };
 
 class Args {
-public:
+    public:
     Args(int argc, char** argv);
 
     /**
@@ -64,7 +65,7 @@ public:
      */
     ServerConfig getConfig() const;
 
-private:
+    private:
     enum class ParseResult { Success, HelpRequested, Error };
 
     static constexpr int SUCCESS = 0;

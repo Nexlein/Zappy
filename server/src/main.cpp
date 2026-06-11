@@ -1,5 +1,7 @@
-#include "core/Args.hpp"
 #include <iostream>
+
+#include "core/Args.hpp"
+#include "core/World.hpp"
 
 int main(int argc, char **argv)
 {
@@ -11,5 +13,9 @@ int main(int argc, char **argv)
 
     ServerConfig config = args.getConfig();
     std::cout << config << std::endl;
+
+    World world(config.width, config.height, config.teamNames, config.clientsNb);
+    world.spawnResources();
+
     return args.exitCode();
 }
