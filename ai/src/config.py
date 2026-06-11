@@ -17,6 +17,9 @@ FOOD_TARGET = 15
 # straight line indefinitely.
 EXPLORE_TURN_EVERY = 5
 
+# Ticks between two periodic Inventory refreshes issued by the FSM.
+INVENTORY_REFRESH_INTERVAL = 15
+
 # ── Evolution ---
 
 # Maximum player level.
