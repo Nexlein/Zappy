@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "core/World.hpp"
+#include "../../server/src/core/World.hpp"
 
 static World makeWorld(int w, int h)
 {
@@ -100,4 +100,76 @@ TEST(WorldSpawn, IdempotentWhenFull)
             after += w.at(x, y).resources[static_cast<ResourceType>(1)];
 
     EXPECT_EQ(before, after);
+}
+
+// --- addPlayer() ---
+
+TEST(WorldPlayer, AddPlayerReturnsIncrementingIds)
+{
+    auto w = makeWorld(10, 10);
+    int id0 = w.addPlayer(0, "TeamA", 0, 0, Orientation::N);
+    int id1 = w.addPlayer(1, "TeamA", 0, 0, Orientation::N);
+    EXPECT_EQ(id0, 0);
+    EXPECT_EQ(id1, 1);
+}
+
+TEST(WorldPlayer, AddPlayerAppearsOnTile)
+{
+    auto w = makeWorld(10, 10);
+    int id = w.addPlayer(0, "TeamA", 3, 4, Orientation::N);
+    auto& tile = w.at(3, 4);
+    EXPECT_EQ(tile.playerIds.size(), 1u);
+    EXPECT_EQ(tile.playerIds[0], id);
+}
+
+TEST(WorldPlayer, AddMultiplePlayersSameTile)
+{
+    auto w = makeWorld(10, 10);
+    int id0 = w.addPlayer(0, "TeamA", 5, 5, Orientation::N);
+    int id1 = w.addPlayer(1, "TeamB", 5, 5, Orientation::S);
+    auto& tile = w.at(5, 5);
+    EXPECT_EQ(tile.playerIds.size(), 2u);
+    EXPECT_NE(id0, id1);
+}
+
+// --- removePlayer() ---
+
+TEST(WorldPlayer, RemovePlayerClearsFromTile)
+{
+    auto w = makeWorld(10, 10);
+    int id = w.addPlayer(0, "TeamA", 1, 1, Orientation::N);
+    w.removePlayer(id);
+    EXPECT_EQ(w.at(1, 1).playerIds.size(), 0u);
+}
+
+TEST(WorldPlayer, RemoveOneOfMultiplePlayers)
+{
+    auto w = makeWorld(10, 10);
+    int id0 = w.addPlayer(0, "TeamA", 2, 2, Orientation::N);
+    int id1 = w.addPlayer(1, "TeamB", 2, 2, Orientation::N);
+    w.removePlayer(id0);
+    auto& tile = w.at(2, 2);
+    EXPECT_EQ(tile.playerIds.size(), 1u);
+    EXPECT_EQ(tile.playerIds[0], id1);
+}
+
+// --- movePlayer() ---
+
+TEST(WorldPlayer, MovePlayerUpdatesPosition)
+{
+    auto w = makeWorld(10, 10);
+    int id = w.addPlayer(0, "TeamA", 0, 0, Orientation::N);
+    w.movePlayer(id, 2, 3);
+    EXPECT_EQ(w.at(0, 0).playerIds.size(), 0u);
+    EXPECT_EQ(w.at(2, 3).playerIds.size(), 1u);
+    EXPECT_EQ(w.at(2, 3).playerIds[0], id);
+}
+
+TEST(WorldPlayer, MovePlayerToroidalWrap)
+{
+    auto w = makeWorld(10, 10);
+    int id = w.addPlayer(0, "TeamA", 9, 9, Orientation::N);
+    w.movePlayer(id, 10, 10);
+    EXPECT_EQ(w.at(0, 0).playerIds.size(), 1u);
+    EXPECT_EQ(w.at(9, 9).playerIds.size(), 0u);
 }
