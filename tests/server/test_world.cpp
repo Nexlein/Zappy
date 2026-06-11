@@ -223,3 +223,84 @@ TEST(WorldInventory, SetResourceFailsWhenInventoryEmpty)
 
     EXPECT_FALSE(ok);
 }
+
+// --- ejectPlayers() ---
+
+TEST(WorldEject, EjectMovesOtherPlayers)
+{
+    auto w = makeWorld(10, 10);
+    int ejector = w.addPlayer(0, "TeamA", 5, 5, Orientation::N);
+    int victim  = w.addPlayer(1, "TeamB", 5, 5, Orientation::S);
+
+    auto result = w.ejectPlayers(ejector);
+
+    EXPECT_EQ(result.ejectedPlayerIds.size(), 1u);
+    EXPECT_EQ(result.ejectedPlayerIds[0], victim);
+    EXPECT_EQ(w.at(5, 5).playerIds.size(), 1u);  // only ejector remains
+    EXPECT_EQ(w.getPlayer(victim).y, 4);          // N = y-1
+}
+
+TEST(WorldEject, EjectorStaysOnTile)
+{
+    auto w = makeWorld(10, 10);
+    int ejector = w.addPlayer(0, "TeamA", 3, 3, Orientation::E);
+    w.addPlayer(1, "TeamB", 3, 3, Orientation::N);
+
+    w.ejectPlayers(ejector);
+
+    EXPECT_EQ(w.getPlayer(ejector).x, 3);
+    EXPECT_EQ(w.getPlayer(ejector).y, 3);
+}
+
+TEST(WorldEject, EjectDestroysEggsOnTile)
+{
+    auto w = makeWorld(10, 10);
+    int ejector = w.addPlayer(0, "TeamA", 2, 2, Orientation::N);
+    w.addEgg(ejector);
+
+    w.ejectPlayers(ejector);
+
+    EXPECT_EQ(w.at(2, 2).eggIds.size(), 0u);
+}
+
+TEST(WorldEject, EjectToroidalWrap)
+{
+    auto w = makeWorld(10, 10);
+    int ejector = w.addPlayer(0, "TeamA", 5, 0, Orientation::N);
+    int victim  = w.addPlayer(1, "TeamB", 5, 0, Orientation::S);
+
+    w.ejectPlayers(ejector);
+
+    EXPECT_EQ(w.getPlayer(victim).y, 9);  // 0 - 1 wraps to 9
+}
+
+// --- addEgg() / hatchEgg() ---
+
+TEST(WorldEgg, AddEggAppearsOnTile)
+{
+    auto w = makeWorld(10, 10);
+    int pid = w.addPlayer(0, "TeamA", 3, 3, Orientation::N);
+    int eid = w.addEgg(pid);
+
+    EXPECT_EQ(w.at(3, 3).eggIds.size(), 1u);
+    EXPECT_EQ(w.at(3, 3).eggIds[0], eid);
+}
+
+TEST(WorldEgg, HatchEggRemovesFromTile)
+{
+    auto w = makeWorld(10, 10);
+    int pid = w.addPlayer(0, "TeamA", 1, 1, Orientation::N);
+    int eid = w.addEgg(pid);
+
+    bool ok = w.hatchEgg(eid);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(w.at(1, 1).eggIds.size(), 0u);
+}
+
+TEST(WorldEgg, HatchUnknownEggReturnsFalse)
+{
+    auto w = makeWorld(10, 10);
+
+    EXPECT_FALSE(w.hatchEgg(999));
+}
