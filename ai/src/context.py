@@ -71,3 +71,6 @@ class DroneContext:
 
     # Track ticks since last inventory command
     ticks_since_inventory: int = 0
+
+    # True while a ritual freezes this drone
+    elevation_in_progress: bool = False

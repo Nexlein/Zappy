@@ -6,10 +6,14 @@
 ##
 
 from fsm import AIController
-from context import DroneContext
+from context import DroneContext, BroadcastMessage
 from NetworkBuffer import NetworkBuffer
 from tcpClient import TcpClient
 from argsParser import parseArgs
+from BroadcastProtocol import BroadcastProtocol
+
+class DroneDied(Exception):
+    """Raised when the server announces this drone's death."""
 
 class Orchestrator:
     """
@@ -23,6 +27,7 @@ class Orchestrator:
     """
     _net: NetworkBuffer
     _fsm: AIController
+    _context: DroneContext
 
     def __init__(self, config):
         print("[Orchestrator] Initializing Zappy AI client...")
@@ -30,46 +35,87 @@ class Orchestrator:
         client.connect()
         slots, (w, h) = client.handshake(config.teamName)
 
-        context = DroneContext(team_name=config.teamName)
-        context.available_slots = slots
-        context.map_width = w
-        context.map_height = h
+        self._context = DroneContext(team_name=config.teamName)
+        self._context.available_slots = slots
+        self._context.map_width = w
+        self._context.map_height = h
 
-        net = NetworkBuffer(client)
-        fsm = AIController(context)
-
-        self._net = net
-        self._fsm = fsm
+        self._net = NetworkBuffer(client)
+        self._fsm = AIController(self._context)
+        self._pending_command: str | None = None
 
     def run(self):
-        pending_command = None
-        while True:
-            self._net.poll()
+        try:
+            while True:
+                self._net.poll()
 
-            while (event := self._net.next_event()) is not None:
-                self._handle_event(self._fsm.context, event)
+                while (event := self._net.next_event()) is not None:
+                    self._handle_event(event)
 
-            if pending_command is None:
-                command = self._fsm.tick()
-                if command:
-                    self._net.send_command(command)
-                    pending_command = command
+                # Frozen by a ritual: the server buffers anything we send and
+                # runs it only after, so stay silent until the verdict.
+                if (
+                    self._pending_command is None
+                    and not self._context.elevation_in_progress
+                ):
+                    command = self._fsm.tick()
+                    self._context.broadcasts.clear()
+                    if command:
+                        self._net.send_command(command)
+                        self._pending_command = command
 
-            if pending_command is not None:
                 response = self._net.next_response()
                 if response is not None:
-                    self._handle_response(self._fsm.context, pending_command, response)
-                    pending_command = None
+                    self._handle_response(self._pending_command, response)
+        except DroneDied:
+            print("[Orchestrator] This drone has died. Exiting.")
 
-    def _handle_event(self, context: DroneContext, event: str):
-        # For now, we just print the raw event. In a full implementation,
-        # this would parse the event and update the context accordingly.
-        print(f"[Event] {event}")
-    
-    def _handle_response(self, context: DroneContext, command: str, response: str):
-        # For now, we just print the raw response. In a full implementation,
-        # this would parse the response and update the context accordingly.
-        print(f"[Response] {response}")
+    def _handle_event(self, event: str):
+        if event.startswith("message"):
+            try:
+                direction, payload = BroadcastProtocol.parse_message(event)
+                decoded = BroadcastProtocol.decode(payload)
+            except ValueError:
+                return
+            if decoded.team_name != self._context.team_name:
+                return
+            self._context.broadcasts.append(BroadcastMessage(direction, decoded))
+        elif event.startswith("eject"):
+            self._context.vision.clear()
+        elif event.startswith("dead"):
+            raise DroneDied()
+        elif event.startswith("Elevation underway"):
+            print("[Orchestrator] Ritual started: drone is frozen until verdict.")
+            self._context.elevation_in_progress = True
+        elif event.startswith("Current level:"):
+            try:
+                level = int(event.split(":")[1].strip())
+            except ValueError:
+                print(f"[Orchestrator] Could not parse level from event: {event}")
+                return
+            self._context.level = level
+            self._context.elevation_in_progress = False
+            if self._pending_command == "Incantation":
+                # Our own ritual's success reply, routed here as an event.
+                self._context.last_command_successful = True
+                self._pending_command = None
+
+    def _handle_response(self, command: str | None, response: str):
+        if (
+            self._context.elevation_in_progress
+            and response == "ko"
+            and command != "Incantation"
+        ):
+            self._context.elevation_in_progress = False
+            return
+        if command is None:
+            print(f"[Orchestrator] Response with no pending command: {response}")
+            return
+        if command == "Incantation":
+            # Failure verdict of our own ritual (success arrives as an event).
+            self._context.elevation_in_progress = False
+            self._context.last_command_successful = response != "ko"
+        self._pending_command = None
 
 def main():
     config = parseArgs()
