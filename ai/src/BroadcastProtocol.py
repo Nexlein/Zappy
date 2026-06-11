@@ -26,6 +26,13 @@ class DecodedBroadcast:
 
 class BroadcastProtocol:
     @staticmethod
+    def parse_message(message_line: str) -> tuple[int, str]:
+        """Parse 'message <direction>,<payload>' from server."""
+        _, rest = message_line.split(" ", 1)
+        direction_str, payload = rest.split(",", 1)
+        return int(direction_str), payload
+
+    @staticmethod
     def encode(team_name: str, msg_type: MessageType, level: int) -> str:
         return f"{team_name}|{msg_type.value}|{level}"
 

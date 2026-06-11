@@ -32,6 +32,10 @@ class NetworkBuffer:
             self._buffer += chunk
             self._drain()
 
+    def send_command(self, command: str) -> None:
+        """Send a command to the server."""
+        self._client.send(command)
+
     def next_event(self) -> str | None:
         """Pop and return the oldest unsolicited event, or None."""
         if self.event_queue:

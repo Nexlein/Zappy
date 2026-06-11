@@ -140,16 +140,9 @@ class MapsToAlly(State):
 
         # -- Still travelling: follow the latest RALLY broadcast direction. --
         for bcst in context.broadcasts:
-            try:
-                decoded = BroadcastProtocol.decode(bcst.text)
-            except ValueError:
-                continue
-
             if (
-                decoded
-                and decoded.team_name == context.team_name
-                and decoded.msg_type == MessageType.RALLY
-                and decoded.level == self._entry_level
+                bcst.content.msg_type == MessageType.RALLY
+                and bcst.content.level == self._entry_level
             ):
                 direction = bcst.direction
 
