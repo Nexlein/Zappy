@@ -37,6 +37,7 @@ void RaylibRenderer::init()
 
 void RaylibRenderer::render()
 {
+    _initTeamColors();
     _updateSelection(GetFrameTime());
     _updateCamera(_state->world.width, _state->world.height);
 
@@ -103,7 +104,7 @@ void RaylibRenderer::_render3D()
                 _state->world.at(x, y), x, y,
                 RenderingHelper::tileToWorld(x, y, _state->world.width, _state->world.height,
                                              TILE_SIZE),
-                TILE_SIZE);
+                TILE_SIZE, RESOURCE_SPHERE_BASE_SIZE);
         }
     }
 
@@ -282,16 +283,20 @@ void RaylibRenderer::_drawHUD()
         .draw({10.0f, 10.0f});
 }
 
+void RaylibRenderer::_initTeamColors()
+{
+    if (_teamColors.size() == _state->world.teams.size()) return;
+    _teamColors.clear();
+    for (const auto& teamName : _state->world.teams)
+        _teamColors[teamName] = ColorPalette::getTeamColor(_teamColors.size());
+}
+
 Color RaylibRenderer::_getTeamColor(const std::string& teamName)
 {
-    if (_teamColors.find(teamName) != _teamColors.end()) {
-        return _teamColors[teamName];
-    }
-
-    int index = _teamColors.size();
-    Color newColor = ColorPalette::getTeamColor(index);
-    _teamColors[teamName] = newColor;
-    return newColor;
+    auto it = _teamColors.find(teamName);
+    if (it != _teamColors.end()) return it->second;
+    // fallback for teams not in tna list (shouldn't happen)
+    return WHITE;
 }
 
 int RaylibRenderer::_getScaledFontSize(int baseFontSize) const
