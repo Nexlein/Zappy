@@ -5,11 +5,18 @@
 ## The Evolution Layer (Medium Priority)
 ##
 
+import random
 from states.AStates import State
 from context import DroneContext
 from elevations import ELEVATION_REQUIREMENTS
 from BroadcastProtocol import BroadcastProtocol, MessageType
-from config import MAX_LEVEL, SOLO_INCANTATION_LEVEL, SURVIVAL_THRESHOLD
+from config import (
+    MAX_LEVEL,
+    SOLO_INCANTATION_LEVEL,
+    SURVIVAL_THRESHOLD,
+    EXPLORE_TURN_EVERY,
+)
+from look_parser import navigate_toward_tile
 
 
 class SearchStone(State):
@@ -24,6 +31,7 @@ class SearchStone(State):
 
     def enter(self, context: DroneContext) -> None:
         print(f"[SearchStone] Hunting for stones to reach level {context.level + 1}.")
+        self._forward_streak = 0
 
     def _get_missing_stones(self, context: DroneContext) -> dict[str, int]:
         """Return stones still needed compared to the current inventory."""
@@ -84,9 +92,25 @@ class SearchStone(State):
         # Pick up any needed stone on the current tile.
         for stone in missing_stones:
             if getattr(current_tile, stone, 0) > 0:
+                self._forward_streak = 0
                 return f"Take {stone}"
 
+        # Check vision for needed stones ahead
+        for i, tile in enumerate(context.vision):
+            if i == 0:
+                continue
+            for stone in missing_stones:
+                if getattr(tile, stone, 0) > 0:
+                    self._forward_streak = 0
+                    action = navigate_toward_tile(i)
+                    if action:
+                        return action
+
         # Nothing useful here — explore.
+        # Rotate every 5 steps to avoid getting stuck in a straight line.
+        self._forward_streak += 1
+        if self._forward_streak % EXPLORE_TURN_EVERY == 0:
+            return random.choice(["Right", "Left"])
         return "Forward"
 
     def exit(self, context: DroneContext) -> None:
@@ -103,7 +127,7 @@ class IncantationState(State):
         self.command_sent = False
 
     def update(self, context: DroneContext) -> str | None:
-        if self.command_sent:
+        if self.command_sent and context.last_command_successful is not None:
             if context.last_command_successful:
                 print(f"[Incantation] Elevation succeeded! Now level {context.level}.")
             else:
