@@ -25,7 +25,9 @@ class EntityRenderer {
      * @param teamColor Color for the egg's team.
      * @param size Size of the egg cube.
      */
-    static void drawEgg(const Vector3& worldPos, Color teamColor, float size = 0.4f);
+    static void drawEgg(Vector3& worldPos, Color teamColor, Model& model,
+                        const Color* baseMats = nullptr, float cubeSize = 0.4f,
+                        float modelSize = 0.3f);
 
     /**
      * @brief Draws a wireframe highlight around a player cube.
@@ -80,4 +82,5 @@ class EntityRenderer {
     static void _drawCubeWireframeThick(const Vector3& worldPos, float size, Color color,
                                         float thickness);
     static float _getRotationForPlayerOrientation(Orientation orientation);
+    static void _restoreModelBaseColors(Model& model, const Color* baseMats, int count = 6);
 };

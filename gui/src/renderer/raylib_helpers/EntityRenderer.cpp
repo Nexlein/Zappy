@@ -31,19 +31,29 @@ void EntityRenderer::drawPlayer(Vector3& worldPos, Color teamColor, Orientation 
         DrawModelEx(*model, worldPos, {0.0f, 1.0f, 0.0f}, rotation,
                     {modelSize, modelSize, modelSize}, WHITE);
 
-        if (baseMats) {
-            for (int i = 0; i < model->materialCount && i < 6; i++)
-                model->materials[i].maps[MATERIAL_MAP_DIFFUSE].color = baseMats[i];
-        }
+        if (baseMats) _restoreModelBaseColors(*model, baseMats);
     } else {
         worldPos.y = cubeSize / 2.0f;  // Sit on ground
         DrawCube(worldPos, cubeSize, cubeSize, cubeSize, teamColor);
     }
 }
 
-void EntityRenderer::drawEgg(const Vector3& worldPos, Color teamColor, float size)
+void EntityRenderer::drawEgg(Vector3& worldPos, Color teamColor, Model& model,
+                             const Color* baseMats, float cubeSize, float modelSize)
 {
-    DrawCube(worldPos, size, size, size, teamColor);
+    if (model.meshCount > 0) {
+        // mat[0] = white base color, the shell
+        // mat[1] = inner part color (visible through shell)
+
+        model.materials[1].maps[MATERIAL_MAP_DIFFUSE].color = teamColor;
+        DrawModelEx(model, worldPos, {0.0f, 1.0f, 0.0f}, 0.0f,
+                    {modelSize, modelSize, modelSize}, WHITE);
+
+        if (baseMats) _restoreModelBaseColors(model, baseMats, 2);
+    } else {
+        worldPos.y = cubeSize / 2.0f;  // Sit on ground
+        DrawCube(worldPos, cubeSize, cubeSize, cubeSize, teamColor);
+    }
 }
 
 void EntityRenderer::drawPlayerHighlight(const Vector3& worldPos, float size, Color color,
@@ -81,8 +91,8 @@ void EntityRenderer::drawResources(const Resources& resources, int tileX, int ti
         // Regenerate position only if resource appeared (was 0, now >0)
         if (cache.lastCount == 0) {
             float offsetRange = tileSize / 2.0f - baseSize;
-            float offsetX = (static_cast<float>(rand()) / RAND_MAX) * offsetRange * 2 - offsetRange;
-            float offsetZ = (static_cast<float>(rand()) / RAND_MAX) * offsetRange * 2 - offsetRange;
+            float offsetX = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * offsetRange * 2 - offsetRange;
+            float offsetZ = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * offsetRange * 2 - offsetRange;
 
             cache.position = {tileCenter.x + offsetX, 0.0f, tileCenter.z + offsetZ};
         }
@@ -151,4 +161,10 @@ float EntityRenderer::_getRotationForPlayerOrientation(Orientation orientation)
         default:
             return 0.0f;
     }
+}
+
+void EntityRenderer::_restoreModelBaseColors(Model& model, const Color* baseMats, int count)
+{
+    for (int i = 0; i < model.materialCount && i < count; i++)
+        model.materials[i].maps[MATERIAL_MAP_DIFFUSE].color = baseMats[i];
 }

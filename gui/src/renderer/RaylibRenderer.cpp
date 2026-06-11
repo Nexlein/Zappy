@@ -33,6 +33,18 @@ void RaylibRenderer::init()
         for (int i = 0; i < _playerModel.materialCount && i < 6; i++)
             _playerModelBaseMats[i] = _playerModel.materials[i].maps[MATERIAL_MAP_DIFFUSE].color;
     }
+
+    SetTraceLogLevel(LOG_ERROR);
+    _eggModel = LoadModel("gui/assets/egg.glb");
+    SetTraceLogLevel(LOG_WARNING);
+    if (_eggModel.meshCount == 0) {
+        std::cerr << "[WARNING] GUI failed to load egg model" << std::endl;
+    } else {
+        // set mat0 to a grayish white color
+        _eggModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = {235, 235, 235, 255};
+        for (int i = 0; i < _eggModel.materialCount && i < 2; i++)
+            _eggModelBaseMats[i] = _eggModel.materials[i].maps[MATERIAL_MAP_DIFFUSE].color;
+    }
 }
 
 void RaylibRenderer::render()
@@ -94,8 +106,8 @@ void RaylibRenderer::_render3D()
     for (const auto& [id, egg] : _state->world.eggs) {
         Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
                                                         _state->world.height, TILE_SIZE);
-        worldPos.y = EGG_CUBE_SIZE / 2.0f;  // Sit on ground
-        EntityRenderer::drawEgg(worldPos, _getTeamColor(egg.team), EGG_CUBE_SIZE);
+        EntityRenderer::drawEgg(worldPos, _getTeamColor(egg.team), _eggModel, _eggModelBaseMats,
+                                EGG_CUBE_SIZE, EGG_MODEL_SIZE);
     }
 
     for (int x = 0; x < _state->world.width; x++) {

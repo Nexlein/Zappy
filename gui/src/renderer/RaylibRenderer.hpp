@@ -30,6 +30,7 @@ class RaylibRenderer : public ARenderer {
     static constexpr float PLAYER_CUBE_SIZE = 0.8f;
     static constexpr float PLAYER_MODEL_SIZE = 0.4f;
     static constexpr float EGG_CUBE_SIZE = 0.4f;
+    static constexpr float EGG_MODEL_SIZE = 0.3f;
     static constexpr float RESOURCE_SPHERE_BASE_SIZE = 0.1f;
     static constexpr float TILE_SIZE = 1.0f;
     static constexpr float SELECTION_TIMER = 5.0f;         // seconds
@@ -44,6 +45,9 @@ class RaylibRenderer : public ARenderer {
 
     Model _playerModel = {};
     Color _playerModelBaseMats[6] = {};
+
+    Model _eggModel = {};
+    Color _eggModelBaseMats[2] = {};
 
     std::unordered_map<std::string, Color> _teamColors;
 
