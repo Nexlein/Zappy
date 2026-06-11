@@ -91,8 +91,12 @@ void EntityRenderer::drawResources(const Resources& resources, int tileX, int ti
         // Regenerate position only if resource appeared (was 0, now >0)
         if (cache.lastCount == 0) {
             float offsetRange = tileSize / 2.0f - baseSize;
-            float offsetX = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * offsetRange * 2 - offsetRange;
-            float offsetZ = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * offsetRange * 2 - offsetRange;
+            float offsetX =
+                (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * offsetRange * 2 -
+                offsetRange;
+            float offsetZ =
+                (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * offsetRange * 2 -
+                offsetRange;
 
             cache.position = {tileCenter.x + offsetX, 0.0f, tileCenter.z + offsetZ};
         }
