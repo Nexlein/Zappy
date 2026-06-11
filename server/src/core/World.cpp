@@ -30,12 +30,10 @@ void World::spawnResources()
         int target = std::max(1, (int)(_width * _height * Resources::density(type)));
 
         int current = 0;
-        for (auto& tile : _tiles)
-            current += tile.resources[type];
+        for (auto& tile : _tiles) current += tile.resources[type];
 
         int deficit = target - current;
         std::uniform_int_distribution<int> dist(0, (int)_tiles.size() - 1);
-        for (int j = 0; j < deficit; j++)
-            _tiles[dist(_rng)].resources[type]++;
+        for (int j = 0; j < deficit; j++) _tiles[dist(_rng)].resources[type]++;
     }
 }

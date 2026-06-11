@@ -2,10 +2,7 @@
 
 #include "core/World.hpp"
 
-static World makeWorld(int w, int h)
-{
-    return World(w, h, {"TeamA", "TeamB"}, 5);
-}
+static World makeWorld(int w, int h) { return World(w, h, {"TeamA", "TeamB"}, 5); }
 
 // --- at() toroidal wrap ---
 
@@ -57,8 +54,7 @@ TEST(WorldSpawn, TotalReachesTarget)
 
         int total = 0;
         for (int x = 0; x < 10; x++)
-            for (int y = 0; y < 10; y++)
-                total += w.at(x, y).resources[type];
+            for (int y = 0; y < 10; y++) total += w.at(x, y).resources[type];
 
         EXPECT_EQ(total, target) << "Resource type " << i << " mismatch";
     }
@@ -74,8 +70,7 @@ TEST(WorldSpawn, NeverBelowOne)
 
         int total = 0;
         for (int x = 0; x < 2; x++)
-            for (int y = 0; y < 2; y++)
-                total += w.at(x, y).resources[type];
+            for (int y = 0; y < 2; y++) total += w.at(x, y).resources[type];
 
         EXPECT_GE(total, 1) << "Resource type " << i << " is zero";
     }
@@ -90,14 +85,13 @@ TEST(WorldSpawn, IdempotentWhenFull)
     int before = 0;
     for (int x = 0; x < 10; x++)
         for (int y = 0; y < 10; y++)
-            before += w.at(x, y).resources[static_cast<ResourceType>(1)]; // linemate
+            before += w.at(x, y).resources[static_cast<ResourceType>(1)];  // linemate
 
     w.spawnResources();
 
     int after = 0;
     for (int x = 0; x < 10; x++)
-        for (int y = 0; y < 10; y++)
-            after += w.at(x, y).resources[static_cast<ResourceType>(1)];
+        for (int y = 0; y < 10; y++) after += w.at(x, y).resources[static_cast<ResourceType>(1)];
 
     EXPECT_EQ(before, after);
 }
