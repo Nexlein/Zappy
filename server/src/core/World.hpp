@@ -10,6 +10,8 @@
 #include "data/Player.hpp"
 #include "data/Resources.hpp"
 #include "data/Tile.hpp"
+#include "data/Orientation.hpp"
+
 
 class World {
 public:
@@ -20,6 +22,13 @@ public:
 
     void spawnResources();
 
+    int addPlayer(int connectionId, const std::string& teamName, int x, int y, Orientation orientation);
+    void removePlayer(int id);
+    void movePlayer(int id, int x, int y);
+
+    bool takeResource(int playerId, ResourceType type);
+    bool setResource(int playerId, ResourceType type);
+
 private:
     int _width;
     int _height;
@@ -29,4 +38,5 @@ private:
     std::vector<std::string> _teamNames;
     int _clientNb;
     std::mt19937 _rng{std::random_device{}()};
+    int _nextPlayerId = 0;
 };
