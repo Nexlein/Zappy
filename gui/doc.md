@@ -135,6 +135,7 @@ Static helper classes extracted from RaylibRenderer for maintainability:
 
 | Class | Responsibility |
 |-------|---------------|
+| `ColorPalette` | Team color palette + slime material palettes. Single source of truth for all entity coloring |
 | `RenderingHelper` | World↔screen coordinate conversion (`tileToWorld`) |
 | `EntityRenderer` | Draw players, eggs, resources, and their highlights |
 | `GridRenderer` | Draw tile grid and tile highlights |
@@ -262,6 +263,7 @@ gui/
 │       ├── HeadlessRenderer.hpp/cpp
 │       ├── RaylibRenderer.hpp/cpp
 │       └── raylib_helpers/
+│           ├── ColorPalette.hpp/cpp
 │           ├── RenderingHelper.hpp/cpp
 │           ├── EntityRenderer.hpp/cpp
 │           ├── GridRenderer.hpp/cpp
@@ -273,6 +275,9 @@ gui/
 ```
 
 ## Implementation Notes
+
+**CMake source list is manual.**
+New `.cpp` files must be explicitly added to `GUI_SOURCES` in `gui/CMakeLists.txt` — there is no glob. Easy to forget when adding helper classes.
 
 **Why dirty flag?**
 Server sends 100+ events on initial handshake, then sparse updates. Dirty flag prevents render spam.
