@@ -6,7 +6,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 # each binary can also be built standalone from its own directory
 add_subdirectory(server)
 add_subdirectory(gui)
-# add_subdirectory(ai)  # uncomment when AI team decides on language
+add_subdirectory(ai)
 
 # optional: build tests alongside everything
 option(ZAPPY_BUILD_TESTS "Build tests" OFF)
