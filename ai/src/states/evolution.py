@@ -9,7 +9,7 @@ import random
 from states.AStates import State
 from context import DroneContext
 from elevations import ELEVATION_REQUIREMENTS
-from BroadcastProtocol import BroadcastProtocol, MessageType
+from BroadcastProtocol import MessageType
 from config import (
     MAX_LEVEL,
     SOLO_INCANTATION_LEVEL,
@@ -54,21 +54,15 @@ class SearchStone(State):
         # React to a teammate's RALLY call (solo levels can incant alone).
         if context.level > SOLO_INCANTATION_LEVEL:
             for bcst in context.broadcasts:
-                try:
-                    decoded = BroadcastProtocol.decode(bcst.text)
-                    if (
-                        decoded
-                        and decoded.team_name == context.team_name
-                        and decoded.msg_type == MessageType.RALLY
-                        and decoded.level == context.level
-                    ):
-                        print(
-                            f"[SearchStone] Heard RALLY for level {context.level}. "
-                            "Switching to MapsToAlly."
-                        )
-                        return "MapsToAlly"
-                except ValueError:
-                    continue
+                if (
+                    bcst.content.msg_type == MessageType.RALLY
+                    and bcst.content.level == context.level
+                ):
+                    print(
+                        f"[SearchStone] Heard RALLY for level {context.level}. "
+                        "Switching to MapsToAlly."
+                    )
+                    return "MapsToAlly"
 
         missing = self._get_missing_stones(context)
         if not missing:

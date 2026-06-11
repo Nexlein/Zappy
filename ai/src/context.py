@@ -7,6 +7,7 @@
 
 from dataclasses import dataclass, field
 from typing import List, Optional
+from BroadcastProtocol import DecodedBroadcast
 
 
 @dataclass
@@ -41,8 +42,7 @@ class BroadcastMessage:
     """Represents an incoming sound/message from another player."""
 
     direction: int  # 0 (same tile) to 8.
-    text: str  # The raw decoded string payload
-
+    content: DecodedBroadcast
 
 @dataclass
 class DroneContext:
@@ -71,3 +71,6 @@ class DroneContext:
 
     # Track ticks since last inventory command
     ticks_since_inventory: int = 0
+
+    # True while a ritual freezes this drone
+    elevation_in_progress: bool = False
