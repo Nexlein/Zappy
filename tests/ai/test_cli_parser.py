@@ -18,17 +18,35 @@ from argsParser import parseArgs, Config
 class TestParseArgs(unittest.TestCase):
     def test_all_args(self):
         with patch(
-            "sys.argv", ["zappy_ai", "-p", "4242", "-n", "team1", "-h", "192.168.1.1"]
+            "sys.argv",
+            [
+                "zappy_ai",
+                "-p",
+                "4242",
+                "-n",
+                "team1",
+                "-h",
+                "192.168.1.1",
+                "-s",
+                "utility",
+            ],
         ):
             config = parseArgs()
             self.assertEqual(
-                config, Config(port=4242, teamName="team1", host="192.168.1.1")
+                config,
+                Config(
+                    port=4242,
+                    teamName="team1",
+                    host="192.168.1.1",
+                    strategy="utility",
+                ),
             )
 
-    def test_default_host(self):
+    def test_default_host_and_strategy(self):
         with patch("sys.argv", ["zappy_ai", "-p", "4242", "-n", "team1"]):
             config = parseArgs()
             self.assertEqual(config.host, "localhost")
+            self.assertEqual(config.strategy, "fsm")
 
     def test_missing_port(self):
         with patch("sys.argv", ["zappy_ai", "-n", "team1"]):

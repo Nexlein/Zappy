@@ -15,16 +15,18 @@ class Config:
     port: int
     teamName: str
     host: str
+    strategy: str
 
 
 def parseArgs() -> Config:
     if "--help" in sys.argv:
-        print("USAGE: ./zappy_ai -p PORT -n NAME [-h HOST]")
+        print("USAGE: ./zappy_ai -p PORT -n NAME [-h HOST] [-s STRATEGY]")
         print("")
         print("option\t\tdescription")
         print("-p port\t\tport number")
         print("-n name\t\tname of the team")
         print("-h machine\tname of the machine; localhost by default")
+        print("-s strategy\tAI strategy: fsm or utility; fsm by default")
         sys.exit(0)
 
     parser = ArgumentParser(description="Zappy AI Client", add_help=False)
@@ -45,6 +47,19 @@ def parseArgs() -> Config:
         default="localhost",
         help="Hostname of the ai client (default: localhost)",
     )
+    parser.add_argument(
+        "-s",
+        "--strategy",
+        type=str,
+        default="fsm",
+        choices=["fsm", "utility"],
+        help="AI strategy: fsm or utility (default: fsm)",
+    )
 
     args = parser.parse_args()
-    return Config(port=args.port, teamName=args.name, host=args.host)
+    return Config(
+        port=args.port,
+        teamName=args.name,
+        host=args.host,
+        strategy=args.strategy,
+    )

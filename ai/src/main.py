@@ -5,7 +5,7 @@
 ## main
 ##
 
-from fsm import AIController
+from ai_factory import create_ai_controller
 from context import DroneContext, BroadcastMessage
 from NetworkBuffer import NetworkBuffer
 from tcpClient import TcpClient
@@ -13,6 +13,7 @@ from argsParser import parseArgs
 from BroadcastProtocol import BroadcastProtocol
 from look_parser import parse_look_to_tiles
 from inventory_parser import update_inventory
+from typing import Any
 
 class DroneDied(Exception):
     """Raised when the server announces this drone's death."""
@@ -28,7 +29,7 @@ class Orchestrator:
       - Main loop: poll network, update context, tick FSM, send commands
     """
     _net: NetworkBuffer
-    _fsm: AIController
+    _controller: Any
     _context: DroneContext
 
     def __init__(self, config):
@@ -43,7 +44,7 @@ class Orchestrator:
         self._context.map_height = h
 
         self._net = NetworkBuffer(client)
-        self._fsm = AIController(self._context)
+        self._controller = create_ai_controller(config.strategy, self._context)
         self._pending_command: str | None = None
 
     def run(self):
@@ -58,7 +59,7 @@ class Orchestrator:
                     self._pending_command is None
                     and not self._context.elevation_in_progress
                 ):
-                    command = self._fsm.tick()
+                    command = self._controller.tick()
                     self._context.broadcasts.clear()
                     if command:
                         self._net.send_command(command)
