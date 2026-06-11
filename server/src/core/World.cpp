@@ -74,3 +74,29 @@ void World::movePlayer(int id, int x, int y)
     p.y = ((y % _height) + _height) % _height;
     at(p.x, p.y).playerIds.push_back(id);
 }
+
+bool World::takeResource(int playerId, ResourceType type)
+{
+    auto& p = _players.at(playerId);
+    auto& tile = at(p.x, p.y);
+    if (tile.resources[type] <= 0)
+        return false;
+    tile.resources[type]--;
+    p.inventory[type]++;
+    return true;
+}
+
+bool World::setResource(int playerId, ResourceType type)
+{
+    auto& p = _players.at(playerId);
+    if (p.inventory[type] <= 0)
+        return false;
+    p.inventory[type]--;
+    at(p.x, p.y).resources[type]++;
+    return true;
+}
+
+Player& World::getPlayer(int id)
+{
+    return _players.at(id);
+}

@@ -29,6 +29,8 @@ public:
     bool takeResource(int playerId, ResourceType type);
     bool setResource(int playerId, ResourceType type);
 
+    Player& getPlayer(int id);
+
 private:
     int _width;
     int _height;
