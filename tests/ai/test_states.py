@@ -12,6 +12,15 @@ from states.evolution import SearchStone
 from states.swarm import BroadcastHelp, MapsToAlly
 from context import BroadcastMessage
 from states.evolution import IncantationState
+from BroadcastProtocol import DecodedBroadcast, MessageType
+
+
+def _rally(team: str, level: int, direction: int = 1) -> BroadcastMessage:
+    """Build a pre-decoded RALLY message (decoding happens in the orchestrator)."""
+    return BroadcastMessage(
+        direction=direction,
+        content=DecodedBroadcast(team, MessageType.RALLY, level),
+    )
 
 
 class TestForageFood(unittest.TestCase):
@@ -124,22 +133,18 @@ class TestSearchStone(unittest.TestCase):
         self.assertEqual(res, "Left")
 
     def test_update_hear_ally_rally(self):
-        from context import BroadcastMessage
-
         self.context.level = 2
         self.context.team_name = "team5"
-        self.context.broadcasts = [BroadcastMessage(direction=1, text="team5|RALLY|2")]
+        self.context.broadcasts = [_rally("team5", 2)]
         res = self.state.update(self.context)
         self.assertEqual(res, "MapsToAlly")
 
-    def test_update_ignore_other_team_rally(self):
-        from context import BroadcastMessage
-
+    def test_update_ignore_wrong_level_rally(self):
+        # Team filtering now happens in the orchestrator; states only
+        # check the message type and level.
         self.context.level = 2
         self.context.team_name = "team5"
-        self.context.broadcasts = [
-            BroadcastMessage(direction=1, text="other_team|RALLY|2")
-        ]
+        self.context.broadcasts = [_rally("team5", 3)]
         res = self.state.update(self.context)
         self.assertNotEqual(res, "MapsToAlly")
 
@@ -239,6 +244,6 @@ class TestMapsToAlly(unittest.TestCase):
         self.state.enter(self.context)
         self.context.level = 1
         self.context.team_name = "team5"
-        self.context.broadcasts = [BroadcastMessage(direction=1, text="team5|RALLY|1")]
+        self.context.broadcasts = [_rally("team5", 1)]
         action = self.state.get_action(self.context)
         self.assertEqual(action, "Forward")
