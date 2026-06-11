@@ -34,12 +34,36 @@ Args::Args(int argc, char** argv)
         return;
     }
 
-    config.port = port.get();
-    config.width = width.get();
-    config.height = height.get();
+    int p = port.get(), w = width.get(), h = height.get();
+    int c = clientsNb.get(), f = freq.get();
+
+    if (p < 1 || p > 65535) {
+        std::cerr << "Port must be between 1 and 65535.\n";
+        result = ParseResult::Error;
+        return;
+    }
+    if (w < 1 || h < 1) {
+        std::cerr << "Map dimensions must be positive.\n";
+        result = ParseResult::Error;
+        return;
+    }
+    if (c < 1) {
+        std::cerr << "Clients per team must be positive.\n";
+        result = ParseResult::Error;
+        return;
+    }
+    if (f < 1) {
+        std::cerr << "Frequency must be positive.\n";
+        result = ParseResult::Error;
+        return;
+    }
+
+    config.port = p;
+    config.width = w;
+    config.height = h;
     config.teamNames = names;
-    config.clientsNb = clientsNb.get();
-    config.freq = freq.get();
+    config.clientsNb = c;
+    config.freq = f;
     result = ParseResult::Success;
 }
 
