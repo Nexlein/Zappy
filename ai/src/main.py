@@ -11,6 +11,8 @@ from NetworkBuffer import NetworkBuffer
 from tcpClient import TcpClient
 from argsParser import parseArgs
 from BroadcastProtocol import BroadcastProtocol
+from look_parser import parse_look_to_tiles
+from inventory_parser import update_inventory
 
 class DroneDied(Exception):
     """Raised when the server announces this drone's death."""
@@ -115,6 +117,31 @@ class Orchestrator:
             # Failure verdict of our own ritual (success arrives as an event).
             self._context.elevation_in_progress = False
             self._context.last_command_successful = response != "ko"
+        elif command == "Look":
+            self._context.vision = parse_look_to_tiles(response)
+        elif command == "Inventory":
+            update_inventory(self._context.inventory, response)
+            self._context.ticks_since_inventory = 0
+        elif command.startswith("Take"):
+            if response == "ok":
+                resource = command.removeprefix("Take ").strip()
+                if self._context.vision:
+                    tile = self._context.vision[0]
+                    setattr(tile, resource, max(0, getattr(tile, resource, 0) - 1))
+                inv = self._context.inventory
+                setattr(inv, resource, getattr(inv, resource, 0) + 1)
+        elif command.startswith("Set"):
+            if response == "ok":
+                resource = command.removeprefix("Set ").strip()
+                inv = self._context.inventory
+                setattr(inv, resource, max(0, getattr(inv, resource, 0) - 1))
+                if self._context.vision:
+                    tile = self._context.vision[0]
+                    setattr(tile, resource, getattr(tile, resource, 0) + 1)
+        elif command in ("Forward", "Right", "Left"):
+            if response == "ok":
+                self._context.vision.clear()
+        self._context.last_command_successful = response != "ko"
         self._pending_command = None
 
 def main():
