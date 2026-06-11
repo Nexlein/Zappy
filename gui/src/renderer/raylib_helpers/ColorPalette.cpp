@@ -1,7 +1,7 @@
 #include "ColorPalette.hpp"
 
-const Color ColorPalette::_teamColors[PALETTE_SIZE] = {
-    RED, GREEN, BLUE, YELLOW, ORANGE, PURPLE, PINK, LIME, SKYBLUE, MAGENTA};
+const Color ColorPalette::_teamColors[PALETTE_SIZE] = {RED,    GREEN, BLUE, YELLOW,  ORANGE,
+                                                       PURPLE, PINK,  LIME, SKYBLUE, MAGENTA};
 
 // KEEP = {0,0,0,0} = don't touch that material slot
 const ColorPalette::SlimePalette ColorPalette::_slimePalettes[PALETTE_SIZE] = {
@@ -27,16 +27,12 @@ const ColorPalette::SlimePalette ColorPalette::_slimePalettes[PALETTE_SIZE] = {
     {MAGENTA, MAGENTA, {160, 0, 200, 255}},
 };
 
-Color ColorPalette::getTeamColor(int index)
-{
-    return _teamColors[index % PALETTE_SIZE];
-}
+Color ColorPalette::getTeamColor(int index) { return _teamColors[index % PALETTE_SIZE]; }
 
 ColorPalette::SlimePalette ColorPalette::getSlimePalette(Color teamColor)
 {
     for (int i = 0; i < PALETTE_SIZE; i++) {
-        if (colorEquals(_teamColors[i], teamColor))
-            return _slimePalettes[i];
+        if (colorEquals(_teamColors[i], teamColor)) return _slimePalettes[i];
     }
     // fallback: raw tint on outer+inner, leave blush
     return {teamColor, teamColor, KEEP};

@@ -6,7 +6,7 @@
  * @brief Centralized color palette for teams and entity materials.
  */
 class ColorPalette {
-public:
+    public:
     struct SlimePalette {
         Color outer;  // mat[1] - outer shell. SKIP if {0,0,0,0}
         Color inner;  // mat[3] - inner body.  SKIP if {0,0,0,0}
@@ -17,7 +17,8 @@ public:
     static constexpr Color KEEP = {0, 0, 0, 0};
 
     /**
-     * @brief Returns a unique color for a team based on its index. Will repeat if more teams than palette size.
+     * @brief Returns a unique color for a team based on its index. Will repeat if more teams than
+     * palette size.
      * @param index Index of the team (0-based).
      * @return Color for the team.
      */
@@ -40,7 +41,7 @@ public:
 
     static constexpr int PALETTE_SIZE = 10;
 
-private:
+    private:
     static const Color _teamColors[PALETTE_SIZE];
     static const SlimePalette _slimePalettes[PALETTE_SIZE];
 };
