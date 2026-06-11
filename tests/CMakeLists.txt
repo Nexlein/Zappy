@@ -1,26 +1,31 @@
 #  NOT FINAL, JUST A STARTING POINT
 
-if(NOT DEFINED CMAKE_PROJECT_NAME)
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     cmake_minimum_required(VERSION 3.20)
-    project(ZappyTests)
+    project(ZappyTests C CXX)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include(FetchContent)
-fetchcontent_declare(
-    googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG v1.14.0
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-fetchcontent_makeavailable(googletest)
-
-# Silence compiler warnings from external GoogleTest targets
-if(TARGET gtest)
-    target_compile_options(gtest PRIVATE -w)
+find_package(GTest QUIET)
+if(NOT GTest_FOUND)
+    message(STATUS "GTest not found in system, downloading with FetchContent...")
+    include(FetchContent)
+    fetchcontent_declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.14.0
+    )
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    fetchcontent_makeavailable(googletest)
+    if(TARGET gtest)
+        target_compile_options(gtest PRIVATE -w)
+    endif()
+    set(GTEST_TARGET gtest_main)
+else()
+    message(STATUS "Found system GTest ${GTest_VERSION}")
+    set(GTEST_TARGET GTest::gtest_main)
 endif()
 
 include(GoogleTest)
@@ -43,22 +48,51 @@ set(TEST_SOURCES
     gui/test_args.cpp
 )
 
-add_executable(zappy_tests ${TEST_SOURCES} ${GUI_SOURCES})
+add_executable(zappy_gui_tests ${TEST_SOURCES} ${GUI_SOURCES})
 
-target_include_directories(zappy_tests PRIVATE
+target_include_directories(zappy_gui_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src
 )
 
-target_link_libraries(zappy_tests PRIVATE
-    gtest_main
+target_link_libraries(zappy_gui_tests PRIVATE
+    ${GTEST_TARGET}
     raylib
 )
 
-target_compile_options(zappy_tests PRIVATE
+target_compile_options(zappy_gui_tests PRIVATE
     -Wall -Wextra
 )
 
-gtest_discover_tests(zappy_tests)
+gtest_discover_tests(zappy_gui_tests)
+
+set(SERVER_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/core/World.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/core/Args.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../server/lib/clap/App.cpp
+)
+
+set(SERVER_TEST_SOURCES
+    server/test_world.cpp
+    server/test_args.cpp
+    server/test_resources.cpp
+)
+
+add_executable(zappy_server_tests ${SERVER_TEST_SOURCES} ${SERVER_SOURCES})
+
+target_include_directories(zappy_server_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../server/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../server/lib
+)
+
+target_link_libraries(zappy_server_tests PRIVATE
+    ${GTEST_TARGET}
+)
+
+target_compile_options(zappy_server_tests PRIVATE
+    -Wall -Wextra
+)
+
+gtest_discover_tests(zappy_server_tests)
 
 # Python AI tests
 find_package(Python3 COMPONENTS Interpreter)
