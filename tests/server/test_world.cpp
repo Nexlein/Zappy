@@ -173,3 +173,53 @@ TEST(WorldPlayer, MovePlayerToroidalWrap)
     EXPECT_EQ(w.at(0, 0).playerIds.size(), 1u);
     EXPECT_EQ(w.at(9, 9).playerIds.size(), 0u);
 }
+
+// --- takeResource() / setResource() ---
+
+TEST(WorldInventory, TakeResourceMovesFromTileToPlayer)
+{
+    auto w = makeWorld(10, 10);
+    int id = w.addPlayer(0, "TeamA", 0, 0, Orientation::N);
+    w.at(0, 0).resources[ResourceType::LINEMATE] = 3;
+
+    bool ok = w.takeResource(id, ResourceType::LINEMATE);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(w.at(0, 0).resources[ResourceType::LINEMATE], 2);
+    EXPECT_EQ(w.getPlayer(id).inventory[ResourceType::LINEMATE], 1);
+}
+
+TEST(WorldInventory, TakeResourceFailsWhenTileEmpty)
+{
+    auto w = makeWorld(10, 10);
+    int id = w.addPlayer(0, "TeamA", 0, 0, Orientation::N);
+
+    bool ok = w.takeResource(id, ResourceType::THYSTAME);
+
+    EXPECT_FALSE(ok);
+    EXPECT_EQ(w.getPlayer(id).inventory[ResourceType::THYSTAME], 0);
+}
+
+TEST(WorldInventory, SetResourceMovesFromPlayerToTile)
+{
+    auto w = makeWorld(10, 10);
+    int id = w.addPlayer(0, "TeamA", 2, 2, Orientation::N);
+    w.at(2, 2).resources[ResourceType::FOOD] = 1;
+    w.takeResource(id, ResourceType::FOOD);
+
+    bool ok = w.setResource(id, ResourceType::FOOD);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(w.getPlayer(id).inventory[ResourceType::FOOD], 0);
+    EXPECT_EQ(w.at(2, 2).resources[ResourceType::FOOD], 1);
+}
+
+TEST(WorldInventory, SetResourceFailsWhenInventoryEmpty)
+{
+    auto w = makeWorld(10, 10);
+    int id = w.addPlayer(0, "TeamA", 0, 0, Orientation::N);
+
+    bool ok = w.setResource(id, ResourceType::SIBUR);
+
+    EXPECT_FALSE(ok);
+}
