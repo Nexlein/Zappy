@@ -129,3 +129,25 @@ EjectResult World::ejectPlayers(int ejectorId)
 
     return {toEject, dx, dy};
 }
+
+int World::addEgg(int playerId)
+{
+    auto& p = _players.at(playerId);
+    int eid = _nextEggId++;
+    Egg egg{eid, p.x, p.y, p.teamName};
+    _eggs[eid] = egg;
+    at(p.x, p.y).eggIds.push_back(eid);
+    return eid;
+}
+
+bool World::hatchEgg(int eggId)
+{
+    auto it = _eggs.find(eggId);
+    if (it == _eggs.end())
+        return false;
+    auto& egg = it->second;
+    auto& ids = at(egg.x, egg.y).eggIds;
+    ids.erase(std::remove(ids.begin(), ids.end(), eggId), ids.end());
+    _eggs.erase(it);
+    return true;
+}
