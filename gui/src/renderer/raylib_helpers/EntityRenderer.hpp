@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ColorPalette.hpp"
 #include "core/GameState.hpp"
 #include "raylib.h"
 
@@ -14,7 +15,9 @@ class EntityRenderer {
      * @param teamColor Color for the player's team.
      * @param size Size of the player cube.
      */
-    static void drawPlayer(const Vector3& worldPos, Color teamColor, float size = 0.8f);
+    static void drawPlayer(Vector3& worldPos, Color teamColor, Orientation orientation,
+                           Model* model = nullptr, const Color* baseMats = nullptr,
+                           float cubeSize = 0.8f, float modelSize = 0.4f);
 
     /**
      * @brief Draws an egg cube at the given world position.
@@ -74,6 +77,7 @@ class EntityRenderer {
     static std::unordered_map<std::tuple<int, int, int>, ResourceCacheEntry, TupleHash>
         _resourcePositions;
 
-    static void drawCubeWireframeThick(const Vector3& worldPos, float size, Color color,
-                                       float thickness);
+    static void _drawCubeWireframeThick(const Vector3& worldPos, float size, Color color,
+                                        float thickness);
+    static float _getRotationForPlayerOrientation(Orientation orientation);
 };

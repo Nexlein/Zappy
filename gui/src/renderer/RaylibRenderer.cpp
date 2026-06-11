@@ -23,6 +23,16 @@ void RaylibRenderer::init()
                .projection = CAMERA_PERSPECTIVE};
 
     _selection = SelectionFinder::getEmptySelection();
+
+    SetTraceLogLevel(LOG_ERROR);
+    _playerModel = LoadModel("gui/assets/rimuru.glb");
+    SetTraceLogLevel(LOG_WARNING);
+    if (_playerModel.meshCount == 0) {
+        std::cerr << "[WARNING] GUI failed to load player model" << std::endl;
+    } else {
+        for (int i = 0; i < _playerModel.materialCount && i < 6; i++)
+            _playerModelBaseMats[i] = _playerModel.materials[i].maps[MATERIAL_MAP_DIFFUSE].color;
+    }
 }
 
 void RaylibRenderer::render()
@@ -46,8 +56,9 @@ void RaylibRenderer::handleInput()
 {
     static double lastLeftClickTime = -1.0;
     // KEY_A maps to 'Q' on AZERTY
-    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) _cameraAngle += MOVE_SPEED * GetFrameTime();
-    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) _cameraAngle -= MOVE_SPEED * GetFrameTime();
+    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) _cameraAngle += CAMERA_MOVE_SPEED * GetFrameTime();
+    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
+        _cameraAngle -= CAMERA_MOVE_SPEED * GetFrameTime();
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         _performRaycast();
@@ -60,7 +71,12 @@ void RaylibRenderer::handleInput()
 
 bool RaylibRenderer::shouldClose() { return WindowShouldClose(); }
 
-void RaylibRenderer::shutdown() { CloseWindow(); }
+void RaylibRenderer::shutdown()
+{
+    if (_playerModel.meshCount > 0) UnloadModel(_playerModel);
+
+    CloseWindow();
+}
 
 void RaylibRenderer::_render3D()
 {
@@ -69,8 +85,9 @@ void RaylibRenderer::_render3D()
     for (const auto& [id, player] : _state->world.players) {
         Vector3 worldPos = RenderingHelper::tileToWorld(player.x, player.y, _state->world.width,
                                                         _state->world.height, TILE_SIZE);
-        worldPos.y = PLAYER_CUBE_SIZE / 2.0f;  // Sit on ground
-        EntityRenderer::drawPlayer(worldPos, _getTeamColor(player.team), PLAYER_CUBE_SIZE);
+        EntityRenderer::drawPlayer(worldPos, _getTeamColor(player.team), player.orientation,
+                                   &_playerModel, _playerModelBaseMats, PLAYER_CUBE_SIZE,
+                                   PLAYER_MODEL_SIZE);
     }
 
     for (const auto& [id, egg] : _state->world.eggs) {
@@ -198,6 +215,9 @@ void RaylibRenderer::_drawSelectedToolip()
                 builder.addLine("  Inventory:", textColor);
                 _addResourceLines(builder, player.inventory, "    ", textColor);
             }
+
+            // temp
+            builder.addLine("  Orientation: " + to_string(player.orientation), textColor);
             break;
         }
 
@@ -268,10 +288,9 @@ Color RaylibRenderer::_getTeamColor(const std::string& teamName)
         return _teamColors[teamName];
     }
 
-    int colorIndex = _teamColors.size() % _paletteSize;
-    Color newColor = _colorPalette[colorIndex];
+    int index = _teamColors.size();
+    Color newColor = ColorPalette::getTeamColor(index);
     _teamColors[teamName] = newColor;
-
     return newColor;
 }
 
