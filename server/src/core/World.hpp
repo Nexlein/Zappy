@@ -12,6 +12,11 @@
 #include "data/Tile.hpp"
 #include "data/Orientation.hpp"
 
+struct EjectResult {
+    std::vector<int> ejectedPlayerIds;
+    int dx;
+    int dy;
+};
 
 class World {
 public:
@@ -31,6 +36,11 @@ public:
 
     Player& getPlayer(int id);
 
+    EjectResult ejectPlayers(int ejectorId);
+
+    int addEgg(int playerId);
+    bool hatchEgg(int eggId);
+
 private:
     int _width;
     int _height;
@@ -41,4 +51,5 @@ private:
     int _clientNb;
     std::mt19937 _rng{std::random_device{}()};
     int _nextPlayerId = 0;
+    int _nextEggId = 0;
 };

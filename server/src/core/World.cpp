@@ -100,3 +100,32 @@ Player& World::getPlayer(int id)
 {
     return _players.at(id);
 }
+
+EjectResult World::ejectPlayers(int ejectorId)
+{
+    auto& ejector = _players.at(ejectorId);
+
+    int dx = 0, dy = 0;
+    switch (ejector.orientation) {
+        case Orientation::N: dy = -1; break;
+        case Orientation::S: dy =  1; break;
+        case Orientation::E: dx =  1; break;
+        case Orientation::W: dx = -1; break;
+    }
+
+    auto& tile = at(ejector.x, ejector.y);
+
+    std::vector<int> toEject;
+    for (int pid : tile.playerIds)
+        if (pid != ejectorId)
+            toEject.push_back(pid);
+
+    for (int pid : toEject)
+        movePlayer(pid, _players.at(pid).x + dx, _players.at(pid).y + dy);
+
+    for (int eid : tile.eggIds)
+        _eggs.erase(eid);
+    tile.eggIds.clear();
+
+    return {toEject, dx, dy};
+}
