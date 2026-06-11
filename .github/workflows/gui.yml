@@ -40,11 +40,11 @@ jobs:
             ${{ runner.os }}-gui-ccache-
 
       - name: Make configuration
-        run: cmake -B build -DZAPPY_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+        run: cmake -B build -DZAPPY_BUILD_TESTS=ON -DZAPPY_BUILD_SERVER=OFF -DZAPPY_BUILD_AI=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Compilation
         run: cmake --build build --config Release --target zappy_gui zappy_gui_tests -j 4
 
       - name: Tests
         working-directory: ${{github.workspace}}/build
-        run: ctest -C Release --output-on-failure -E "zappy_ai_tests|zappy_server"
+        run: ctest -C Release --output-on-failure

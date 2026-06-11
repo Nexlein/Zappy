@@ -28,12 +28,23 @@ jobs:
       - name: Get code
         uses: actions/checkout@v6
 
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y ccache
+
+      - name: Setup ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ${{ runner.os }}-server-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-server-ccache-
+
       - name: Make configuration
-        run: cmake -B build -DZAPPY_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -DZAPPY_BUILD_TESTS=ON -DZAPPY_BUILD_GUI=OFF -DZAPPY_BUILD_AI=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Compilation
         run: cmake --build build --config Release --target zappy_server zappy_server_tests -j 4
 
       - name: Tests
         working-directory: ${{github.workspace}}/build
-        run: ctest -C Release --output-on-failure -E "zappy_ai_tests|zappy_gui"
+        run: ctest -C Release --output-on-failure
