@@ -50,10 +50,10 @@ void App::run()
 
 void App::pollAndEnqueue(TcpSocket& socket, EventQueue& queue)
 {
-    if (!socket.poll(0)) return;
-    std::optional<std::string> line = socket.recvLine();
-    if (!line) return;
-    std::optional<Event> event = ProtocolParser::parse(*line);
-    if (!event) return;
-    queue.push(*event);
+    while (socket.poll(0)) {
+        std::optional<std::string> line = socket.recvLine();
+        if (!line) break;
+        std::optional<Event> event = ProtocolParser::parse(*line);
+        if (event) queue.push(*event);
+    }
 }

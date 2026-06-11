@@ -5,6 +5,7 @@
 
 #include "ARenderer.hpp"
 #include "raylib.h"
+#include "raylib_helpers/ColorPalette.hpp"
 #include "raylib_helpers/EntityRenderer.hpp"
 #include "raylib_helpers/GridRenderer.hpp"
 #include "raylib_helpers/SelectionFinder.hpp"
@@ -25,9 +26,12 @@ class RaylibRenderer : public ARenderer {
     void shutdown() override;
 
     private:
-    static constexpr float MOVE_SPEED = 2.0f;
+    static constexpr float CAMERA_MOVE_SPEED = 2.0f;
     static constexpr float PLAYER_CUBE_SIZE = 0.8f;
+    static constexpr float PLAYER_MODEL_SIZE = 0.4f;
     static constexpr float EGG_CUBE_SIZE = 0.4f;
+    static constexpr float EGG_MODEL_SIZE = 0.3f;
+    static constexpr float RESOURCE_SPHERE_BASE_SIZE = 0.1f;
     static constexpr float TILE_SIZE = 1.0f;
     static constexpr float SELECTION_TIMER = 5.0f;         // seconds
     static constexpr double SELECTION_DOUBLE_CLICK = 0.3;  // seconds
@@ -37,12 +41,15 @@ class RaylibRenderer : public ARenderer {
 
     Camera3D _camera;
     float _cameraAngle = 0.0f;
-    float _cameraHeight = 10.0f;
+    float _cameraHeight = 5.0f;
+
+    Model _playerModel = {};
+    Color _playerModelBaseMats[6] = {};
+
+    Model _eggModel = {};
+    Color _eggModelBaseMats[2] = {};
 
     std::unordered_map<std::string, Color> _teamColors;
-    static constexpr Color _colorPalette[] = {RED,    GREEN, BLUE, YELLOW,  ORANGE,
-                                              PURPLE, PINK,  LIME, SKYBLUE, MAGENTA};
-    static constexpr int _paletteSize = sizeof(_colorPalette) / sizeof(_colorPalette[0]);
 
     SelectionFinder::Selection _selection;
 
@@ -53,6 +60,7 @@ class RaylibRenderer : public ARenderer {
     void _drawSelectedToolip();
     void _drawHUD();
 
+    void _initTeamColors();
     Color _getTeamColor(const std::string& teamName);
     int _getScaledFontSize(int baseFontSize) const;
 
