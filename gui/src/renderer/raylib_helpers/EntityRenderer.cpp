@@ -38,7 +38,7 @@ void EntityRenderer::drawPlayer(Vector3& worldPos, Color teamColor, Orientation 
     }
 }
 
-void EntityRenderer::drawEgg(Vector3& worldPos, Color teamColor, Model& model,
+void EntityRenderer::drawEgg(Vector3& worldPos, Color teamColor, Model& model, float rotation,
                              const Color* baseMats, float cubeSize, float modelSize)
 {
     if (model.meshCount > 0) {
@@ -46,7 +46,7 @@ void EntityRenderer::drawEgg(Vector3& worldPos, Color teamColor, Model& model,
         // mat[1] = inner part color (visible through shell)
 
         model.materials[1].maps[MATERIAL_MAP_DIFFUSE].color = teamColor;
-        DrawModelEx(model, worldPos, {0.0f, 1.0f, 0.0f}, 0.0f,
+        DrawModelEx(model, worldPos, {0.0f, 1.0f, 0.0f}, rotation,
                     {modelSize, modelSize, modelSize}, WHITE);
 
         if (baseMats) _restoreModelBaseColors(model, baseMats, 2);

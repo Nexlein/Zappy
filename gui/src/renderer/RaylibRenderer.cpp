@@ -106,8 +106,8 @@ void RaylibRenderer::_render3D()
     for (const auto& [id, egg] : _state->world.eggs) {
         Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
                                                         _state->world.height, TILE_SIZE);
-        EntityRenderer::drawEgg(worldPos, _getTeamColor(egg.team), _eggModel, _eggModelBaseMats,
-                                EGG_CUBE_SIZE, EGG_MODEL_SIZE);
+        EntityRenderer::drawEgg(worldPos, _getTeamColor(egg.team), _eggModel, egg.rotation,
+                                _eggModelBaseMats, EGG_CUBE_SIZE, EGG_MODEL_SIZE);
     }
 
     for (int x = 0; x < _state->world.width; x++) {

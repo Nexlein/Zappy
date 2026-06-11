@@ -25,7 +25,7 @@ class EntityRenderer {
      * @param teamColor Color for the egg's team.
      * @param size Size of the egg cube.
      */
-    static void drawEgg(Vector3& worldPos, Color teamColor, Model& model,
+    static void drawEgg(Vector3& worldPos, Color teamColor, Model& model, float rotation = 0.0f,
                         const Color* baseMats = nullptr, float cubeSize = 0.4f,
                         float modelSize = 0.3f);
 
