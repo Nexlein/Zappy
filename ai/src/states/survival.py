@@ -11,7 +11,7 @@ from context import DroneContext
 from config import FOOD_TARGET, EXPLORE_TURN_EVERY
 
 
-from look_parser import navigate_toward_tile
+from look_parser import generate_path_to_tile
 
 
 class ForageFood(State):
@@ -30,6 +30,9 @@ class ForageFood(State):
         return None
 
     def get_action(self, context: DroneContext) -> str | None:
+        if context.path_queue:
+            return context.path_queue.pop(0)
+
         if not context.vision:
             return "Look"
 
@@ -44,9 +47,10 @@ class ForageFood(State):
                 continue
             if tile.food > 0:
                 self._forward_streak = 0
-                action = navigate_toward_tile(i)
-                if action:
-                    return action
+                path = generate_path_to_tile(i)
+                if path:
+                    context.path_queue.extend(path)
+                    return context.path_queue.pop(0)
 
         # No food visible — explore.
         # Rotate every 5 steps to avoid getting stuck in a straight line.

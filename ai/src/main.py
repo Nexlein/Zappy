@@ -15,8 +15,10 @@ from look_parser import parse_look_to_tiles
 from inventory_parser import update_inventory
 from typing import Any
 
+
 class DroneDied(Exception):
     """Raised when the server announces this drone's death."""
+
 
 class Orchestrator:
     """
@@ -28,6 +30,7 @@ class Orchestrator:
       - Initialize shared context and FSM controller
       - Main loop: poll network, update context, tick FSM, send commands
     """
+
     _net: NetworkBuffer
     _controller: Any
     _context: DroneContext
@@ -143,11 +146,13 @@ class Orchestrator:
         self._context.last_command_successful = response != "ko"
         self._pending_command = None
 
+
 def main():
     config = parseArgs()
 
     orchestrator = Orchestrator(config)
     orchestrator.run()
+
 
 if __name__ == "__main__":
     main()

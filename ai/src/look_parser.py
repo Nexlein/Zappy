@@ -101,29 +101,28 @@ def parse_look_to_tiles(look_str: str) -> List[Tile]:
     return tiles
 
 
-def navigate_toward_tile(index: int) -> str | None:
+def generate_path_to_tile(index: int) -> List[str]:
     """
-    Given a target tile index in the vision array, returns the immediate
-    action needed to approach it.
+    Returns a sequence of commands to reach a specific tile index.
+    To reach a tile, we must move forward first, then turn, then move forward.
 
     Vision indexes:
     0: self
     1: left-front, 2: front, 3: right-front
     4: left-left-front, 5: left-front, 6: front, 7: right-front, 8: right-right-front
-
-    - If it's directly ahead (x=0), go Forward.
-    - If it's to the left (x<0), go Left.
-    - If it's to the right (x>0), go Right.
     """
     if index == 0:
-        return None
+        return []
 
-    d = int(math.isqrt(index))
-    x_rel = index - d * d - d
+    row = math.isqrt(index)
+    x_offset = index - row * row - row
 
-    if x_rel < 0:
-        return "Left"
-    elif x_rel > 0:
-        return "Right"
-    else:
-        return "Forward"
+    path = ["Forward"] * row
+    if x_offset < 0:
+        path.append("Left")
+        path.extend(["Forward"] * abs(x_offset))
+    elif x_offset > 0:
+        path.append("Right")
+        path.extend(["Forward"] * x_offset)
+
+    return path

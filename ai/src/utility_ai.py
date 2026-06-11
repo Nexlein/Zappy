@@ -25,7 +25,7 @@ from config import (
 from BroadcastProtocol import BroadcastProtocol, MessageType
 
 
-from look_parser import navigate_toward_tile
+from look_parser import generate_path_to_tile
 
 
 class UtilityAIController:
@@ -182,6 +182,9 @@ class UtilityAIController:
 
     def _get_survival_action(self) -> str:
         """Action logic for finding food."""
+        if self.context.path_queue:
+            return self.context.path_queue.pop(0)
+
         if not self.context.vision:
             return "Look"
 
@@ -195,9 +198,10 @@ class UtilityAIController:
                 continue
             if tile.food > 0:
                 self._forward_streak = 0
-                action = navigate_toward_tile(i)
-                if action:
-                    return action
+                path = generate_path_to_tile(i)
+                if path:
+                    self.context.path_queue.extend(path)
+                    return self.context.path_queue.pop(0)
 
         # Explore forward or turn
         self._forward_streak += 1
@@ -207,6 +211,9 @@ class UtilityAIController:
 
     def _get_gather_action(self) -> str:
         """Action logic for mining missing stones."""
+        if self.context.path_queue:
+            return self.context.path_queue.pop(0)
+
         if not self.context.vision:
             return "Look"
 
@@ -226,9 +233,10 @@ class UtilityAIController:
             for stone in missing:
                 if getattr(tile, stone, 0) > 0:
                     self._forward_streak = 0
-                    action = navigate_toward_tile(i)
-                    if action:
-                        return action
+                    path = generate_path_to_tile(i)
+                    if path:
+                        self.context.path_queue.extend(path)
+                        return self.context.path_queue.pop(0)
 
         # Walk forward to find more
         self._forward_streak += 1
