@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Zappy)
+project(Zappy C CXX)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
