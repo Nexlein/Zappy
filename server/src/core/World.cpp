@@ -39,3 +39,38 @@ void World::spawnResources()
             _tiles[dist(_rng)].resources[type]++;
     }
 }
+
+int World::addPlayer(int connectionId, const std::string& teamName, int x, int y, Orientation orientation)
+{
+    int id = _nextPlayerId++;
+    Player p;
+    p.id = id;
+    p.connectionId = connectionId;
+    p.teamName = teamName;
+    p.x = x;
+    p.y = y;
+    p.orientation = orientation;
+    _players[id] = p;
+    at(x, y).playerIds.push_back(id);
+    return id;
+}
+
+void World::removePlayer(int id)
+{
+    auto it = _players.find(id);
+    if (it == _players.end()) return;
+    auto& p = it->second;
+    auto& ids = at(p.x, p.y).playerIds;
+    ids.erase(std::remove(ids.begin(), ids.end(), id), ids.end());
+    _players.erase(it);
+}
+
+void World::movePlayer(int id, int x, int y)
+{
+    auto& p = _players.at(id);
+    auto& oldIds = at(p.x, p.y).playerIds;
+    oldIds.erase(std::remove(oldIds.begin(), oldIds.end(), id), oldIds.end());
+    p.x = ((x % _width) + _width) % _width;
+    p.y = ((y % _height) + _height) % _height;
+    at(p.x, p.y).playerIds.push_back(id);
+}
