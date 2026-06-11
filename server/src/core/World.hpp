@@ -12,7 +12,7 @@
 #include "data/Tile.hpp"
 
 class World {
-public:
+    public:
     World(int width, int height, const std::vector<std::string>& teamNames, int clientNb);
 
     Tile& at(int x, int y);
@@ -20,7 +20,7 @@ public:
 
     void spawnResources();
 
-private:
+    private:
     int _width;
     int _height;
     std::vector<Tile> _tiles;
