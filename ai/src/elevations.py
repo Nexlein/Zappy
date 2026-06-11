@@ -94,5 +94,7 @@ def is_incantation_ready(level, tile) -> bool:
 
 BROADCAST_DIRECTION_ARRIVED = frozenset({0})
 BROADCAST_DIRECTION_FORWARD = frozenset({1, 2, 8})  # roughly ahead
-BROADCAST_DIRECTION_RIGHT = frozenset({3, 4, 5})  # right side / behind-right
-BROADCAST_DIRECTION_LEFT = frozenset({6, 7})  # left side / behind-left
+BROADCAST_DIRECTION_RIGHT = frozenset({3, 4})  # right side / behind-right
+BROADCAST_DIRECTION_LEFT = frozenset(
+    {5, 6, 7}
+)  # directly behind / left side / behind-left

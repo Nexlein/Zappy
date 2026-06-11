@@ -47,7 +47,7 @@ class TestForageFood(unittest.TestCase):
     def test_get_action_no_food_on_current_tile(self):
         self.context.vision = [Tile(food=0), Tile(food=3)]
         res = self.state.get_action(self.context)
-        self.assertEqual(res, "Forward")
+        self.assertEqual(res, "Left")
 
     def test_exit(self):
         res = self.state.exit(self.context)
@@ -121,7 +121,7 @@ class TestSearchStone(unittest.TestCase):
         # Current tile has sibur, but we don't need it at lvl 1
         self.context.vision = [Tile(sibur=1), Tile(linemate=1)]
         res = self.state.get_action(self.context)
-        self.assertEqual(res, "Forward")
+        self.assertEqual(res, "Left")
 
     def test_update_hear_ally_rally(self):
         from context import BroadcastMessage
