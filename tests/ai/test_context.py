@@ -39,9 +39,12 @@ class TestContext(unittest.TestCase):
         self.assertEqual(tile.thystame, 0)
 
     def test_broadcast_message(self):
-        msg = BroadcastMessage(direction=4, text="message")
+        from BroadcastProtocol import DecodedBroadcast, MessageType
+
+        content = DecodedBroadcast("team5", MessageType.RALLY, 2)
+        msg = BroadcastMessage(direction=4, content=content)
         self.assertEqual(msg.direction, 4)
-        self.assertEqual(msg.text, "message")
+        self.assertEqual(msg.content, content)
 
     def test_drone_context_defaults(self):
         ctx = DroneContext()
