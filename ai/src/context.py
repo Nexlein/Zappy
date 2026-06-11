@@ -44,6 +44,7 @@ class BroadcastMessage:
     direction: int  # 0 (same tile) to 8.
     content: DecodedBroadcast
 
+
 @dataclass
 class DroneContext:
     """
@@ -65,6 +66,9 @@ class DroneContext:
 
     # Incoming broadcast messages
     broadcasts: List[BroadcastMessage] = field(default_factory=list)
+
+    # Queue of commands to reach a specific tile
+    path_queue: List[str] = field(default_factory=list)
 
     # Reflects whether the LAST command the FSM issued succeeded.
     last_command_successful: Optional[bool] = None

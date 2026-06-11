@@ -76,7 +76,9 @@ class TestUtilityAIController(unittest.TestCase):
         self.context.team_name = "test_team"
         self.context.inventory.linemate = 0  # Missing linemate
         self.context.broadcasts = [
-            BroadcastMessage(direction=1, content=BroadcastProtocol.decode("test_team|RALLY|2"))
+            BroadcastMessage(
+                direction=1, content=BroadcastProtocol.decode("test_team|RALLY|2")
+            )
         ]
 
         # Should follow teammate
