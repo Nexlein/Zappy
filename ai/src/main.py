@@ -54,8 +54,6 @@ class Orchestrator:
                 while (event := self._net.next_event()) is not None:
                     self._handle_event(event)
 
-                # Frozen by a ritual: the server buffers anything we send and
-                # runs it only after, so stay silent until the verdict.
                 if (
                     self._pending_command is None
                     and not self._context.elevation_in_progress
