@@ -7,9 +7,26 @@
 #include <vector>
 
 #include "data/Egg.hpp"
+#include "data/Orientation.hpp"
 #include "data/Player.hpp"
 #include "data/Resources.hpp"
 #include "data/Tile.hpp"
+
+struct EjectResult {
+    std::vector<int> ejectedPlayerIds;
+    int dx;
+    int dy;
+};
+
+struct IncantationReq {
+    int playerCount;
+    int linemate;
+    int deraumere;
+    int sibur;
+    int mendiane;
+    int phiras;
+    int thystame;
+};
 
 class World {
     public:
@@ -20,6 +37,26 @@ class World {
 
     void spawnResources();
 
+    int addPlayer(int connectionId, const std::string& teamName, int x, int y,
+                  Orientation orientation);
+    void removePlayer(int id);
+    void movePlayer(int id, int x, int y);
+
+    bool takeResource(int playerId, ResourceType type);
+    bool setResource(int playerId, ResourceType type);
+
+    Player& getPlayer(int id);
+
+    EjectResult ejectPlayers(int ejectorId);
+
+    int addEgg(int playerId);
+    bool hatchEgg(int eggId);
+
+    std::optional<std::vector<int>> startIncantation(int playerId);
+    bool finalizeIncantation(const std::vector<int>& participantIds);
+
+    std::optional<std::string> checkWin() const;
+
     private:
     int _width;
     int _height;
@@ -29,4 +66,6 @@ class World {
     std::vector<std::string> _teamNames;
     int _clientNb;
     std::mt19937 _rng{std::random_device{}()};
+    int _nextPlayerId = 0;
+    int _nextEggId = 0;
 };

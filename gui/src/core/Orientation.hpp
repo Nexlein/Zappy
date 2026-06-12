@@ -23,3 +23,18 @@ inline std::ostream& operator<<(std::ostream& os, Orientation orientation)
     }
     return os << "Unknown";
 }
+
+inline std::string to_string(Orientation orientation)
+{
+    switch (orientation) {
+        case Orientation::N:
+            return "North";
+        case Orientation::E:
+            return "East";
+        case Orientation::S:
+            return "South";
+        case Orientation::W:
+            return "West";
+    }
+    return "Unknown";
+}

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "core/data/Resources.hpp"
+#include "../../server/src/core/data/Resources.hpp"
 
 TEST(ResourcesTest, DefaultZero)
 {
