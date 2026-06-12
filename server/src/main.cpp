@@ -17,8 +17,7 @@ static void smokeScheduler()
 
     while (true) {
         int wait = sched.msUntilNext();
-        if (wait == -1)
-            break;
+        if (wait == -1) break;
         std::this_thread::sleep_for(std::chrono::milliseconds(wait == 0 ? 1 : wait));
         sched.tick();
     }
@@ -39,7 +38,8 @@ static void smokeWorld(const ServerConfig& config)
         }
     }
 
-    int id = world.addPlayer(0, config.teamNames[0], config.width / 2, config.height / 2, Orientation::N);
+    int id = world.addPlayer(0, config.teamNames[0], config.width / 2, config.height / 2,
+                             Orientation::N);
     std::cout << "Player added: id=" << id << "\n";
 }
 
@@ -47,8 +47,7 @@ int main(int argc, char** argv)
 {
     Args args(argc, argv);
 
-    if (!args.isValid() || args.isHelpRequested())
-        return args.exitCode();
+    if (!args.isValid() || args.isHelpRequested()) return args.exitCode();
 
     ServerConfig config = args.getConfig();
 
