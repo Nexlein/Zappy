@@ -98,7 +98,7 @@ void RaylibRenderer::_render3D()
     for (auto& [id, player] : _state->world.players) {
         player.visual.update(GetFrameTime());
         Vector3 worldPos = player.visual.pos;
-        EntityRenderer::drawPlayer(worldPos, _getTeamColor(player.team), player.orientation,
+        EntityRenderer::drawPlayer(worldPos, _getTeamColor(player.team), player.visual.angle,
                                    &_playerModel, _playerModelBaseMats, PLAYER_CUBE_SIZE,
                                    PLAYER_MODEL_SIZE);
     }
