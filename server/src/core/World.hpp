@@ -84,6 +84,10 @@ class World {
 
     std::optional<std::string> checkWin() const;
 
+    int teamPlayerCount(const std::string& team) const;
+    int width() const;
+    int height() const;
+
     private:
     int _width;
     int _height;

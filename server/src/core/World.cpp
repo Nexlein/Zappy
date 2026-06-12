@@ -262,6 +262,17 @@ bool World::finalizeIncantation(const std::vector<int>& participantIds)
     return true;
 }
 
+int World::teamPlayerCount(const std::string& team) const
+{
+    int count = 0;
+    for (auto& [id, p] : _players)
+        if (p.teamName == team) count++;
+    return count;
+}
+
+int World::width() const { return _width; }
+int World::height() const { return _height; }
+
 std::optional<std::string> World::checkWin() const
 {
     std::unordered_map<std::string, int> level8count;
