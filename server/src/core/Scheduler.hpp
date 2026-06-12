@@ -3,7 +3,6 @@
 #include <chrono>
 #include <functional>
 #include <queue>
-#include <thread>
 
 struct TimedEvent {
     std::chrono::steady_clock::time_point fireAt;
