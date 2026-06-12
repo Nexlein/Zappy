@@ -2,16 +2,17 @@
 
 #include <cmath>
 
+#include "core/Orientation.hpp"
+
 std::unordered_map<std::tuple<int, int, int>, EntityRenderer::ResourceCacheEntry,
                    EntityRenderer::TupleHash>
     EntityRenderer::_resourcePositions;
 
-void EntityRenderer::drawPlayer(Vector3& worldPos, Color teamColor, Orientation orientation,
+void EntityRenderer::drawPlayer(Vector3& worldPos, Color teamColor, float rotation,
                                 Model* model, const Color* baseMats, float cubeSize,
                                 float modelSize)
 {
     if (model != nullptr) {
-        float rotation = _getRotationForPlayerOrientation(orientation);
 
         // mat[0] idk what it controls
         // mat[1] = internal transparent layer (reflects mat[3], lighter color)
@@ -150,22 +151,6 @@ void EntityRenderer::_drawCubeWireframeThick(const Vector3& worldPos, float size
              color);
 }
 
-float EntityRenderer::_getRotationForPlayerOrientation(Orientation orientation)
-{
-    // The model faces West by default
-    switch (orientation) {
-        case Orientation::W:
-            return 0.0f;
-        case Orientation::S:
-            return 90.0f;
-        case Orientation::E:
-            return 180.0f;
-        case Orientation::N:
-            return 270.0f;
-        default:
-            return 0.0f;
-    }
-}
 
 void EntityRenderer::_restoreModelBaseColors(Model& model, const Color* baseMats, int count)
 {
