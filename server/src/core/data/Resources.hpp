@@ -1,8 +1,10 @@
 #pragma once
 
+#include <optional>
 #include <ostream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
 /**
  * @brief Enumerate the different types of resources in the game.
@@ -28,7 +30,7 @@ class Resources {
                phiras == 0 && thystame == 0;
     }
 
-    std::string get_name(int index) const
+    static std::string get_name(int index)
     {
         switch (index) {
             case 0:
@@ -50,7 +52,19 @@ class Resources {
         }
     }
 
-    std::string get_name(ResourceType type) const { return get_name(static_cast<int>(type)); }
+    static std::optional<ResourceType> fromName(std::string_view name)
+    {
+        if (name == "food") return ResourceType::FOOD;
+        if (name == "linemate") return ResourceType::LINEMATE;
+        if (name == "deraumere") return ResourceType::DERAUMERE;
+        if (name == "sibur") return ResourceType::SIBUR;
+        if (name == "mendiane") return ResourceType::MENDIANE;
+        if (name == "phiras") return ResourceType::PHIRAS;
+        if (name == "thystame") return ResourceType::THYSTAME;
+        return std::nullopt;
+    }
+
+    static std::string get_name(ResourceType type) { return get_name(static_cast<int>(type)); }
 
     int& operator[](size_t index)
     {
