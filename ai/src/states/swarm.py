@@ -82,10 +82,7 @@ class BroadcastHelp(State):
                     f"[BroadcastHelp] A teammate is ready! "
                     f"({self.ready_count + 1}/{PLAYERS_REQUIRED[context.level]})"
                 )
-            elif (
-                bcst.content.msg_type == MessageType.LEAVING
-                and self.ready_count > 0
-            ):
+            elif bcst.content.msg_type == MessageType.LEAVING and self.ready_count > 0:
                 self.ready_count -= 1
                 ai_logger.talk(
                     f"[BroadcastHelp] A teammate left... "
@@ -186,9 +183,7 @@ class MapsToAlly(State):
 
         # Leveled up thanks to the elevations
         if context.level > self._entry_level:
-            ai_logger.talk(
-                "[MapsToAlly] I leveled up! This rally is over for me."
-            )
+            ai_logger.talk("[MapsToAlly] I leveled up! This rally is over for me.")
             return "SearchStone"
 
         for bcst in context.broadcasts:

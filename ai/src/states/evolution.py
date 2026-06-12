@@ -152,9 +152,7 @@ class IncantationState(State):
                     f"[Incantation] Yes! I successfully reached level {context.level}!"
                 )
                 return "SearchStone"
-            ai_logger.talk(
-                "[Incantation] Oh no, the ritual failed. Let's try again..."
-            )
+            ai_logger.talk("[Incantation] Oh no, the ritual failed. Let's try again...")
             if context.level > SOLO_INCANTATION_LEVEL:
                 self.need_abort = True
                 return None
