@@ -72,6 +72,7 @@ set(SERVER_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../server/lib/clap/App.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/protocol/AiParser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/protocol/GuiParser.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/protocol/Serializer.cpp
 )
 
 set(SERVER_TEST_SOURCES
@@ -81,6 +82,7 @@ set(SERVER_TEST_SOURCES
     server/test_scheduler.cpp
     server/test_aiparser.cpp
     server/test_guiparser.cpp
+    server/test_serializer.cpp
 )
 
 add_executable(zappy_server_tests ${SERVER_TEST_SOURCES} ${SERVER_SOURCES})
