@@ -1,5 +1,8 @@
 #include "CommandDispatcher.hpp"
 
+#include <variant>
+
+#include "protocol/AiParser.hpp"
 #include "protocol/GuiParser.hpp"
 #include "utils/overloaded.hpp"
 
@@ -64,8 +67,49 @@ void CommandDispatcher::_dispatchGui(int connectionId, const std::string& line)
 
 void CommandDispatcher::_dispatchAi(int connectionId, const std::string& line)
 {
-    (void)connectionId;
-    (void)line;
+    auto cmd = AiParser::parse(line);
+    if (!cmd) {
+        _clients.send(connectionId, "ko\n");
+        return;
+    }
+
+    if (std::holds_alternative<Ai::ConnectNbr>(*cmd)) {
+        auto& player = _world.getPlayer(_clients.getConnection(connectionId).playerId());
+        int slots = _config.clientsNb - _world.teamPlayerCount(player.teamName);
+        _clients.send(connectionId, std::to_string(slots) + "\n");
+        return;
+    }
+
+    if (_queues[connectionId].size() >= 10) return;
+    _queues[connectionId].push_back(*cmd);
+    if (!_hasActive[connectionId]) _executeNext(connectionId);
 }
 
-void CommandDispatcher::_executeNext(int connectionId) { (void)connectionId; }
+void CommandDispatcher::_executeNext(int connectionId)
+{
+    auto& queue = _queues[connectionId];
+    if (queue.empty()) {
+        _hasActive[connectionId] = false;
+        return;
+    }
+
+    _hasActive[connectionId] = true;
+    Ai::Command cmd = queue.front();
+    queue.pop_front();
+
+    std::visit(overloaded{
+                   [&](Ai::Forward) { _handleForward(connectionId); },
+                   [&](Ai::Right) { _handleRight(connectionId); },
+                   [&](Ai::Left) { _handleLeft(connectionId); },
+                   [&](Ai::Look) { _handleLook(connectionId); },
+                   [&](Ai::Inventory) { _handleInventory(connectionId); },
+                   [&](Ai::Broadcast& b) { _handleBroadcast(connectionId, b.message); },
+                   [&](Ai::Fork) { _handleFork(connectionId); },
+                   [&](Ai::Eject) { _handleEject(connectionId); },
+                   [&](Ai::Take& t) { _handleTake(connectionId, t.resource); },
+                   [&](Ai::Set& s) { _handleSet(connectionId, s.resource); },
+                   [&](Ai::Incantation) { _handleIncantation(connectionId); },
+                   [&](Ai::ConnectNbr) {},
+               },
+               cmd);
+}

@@ -24,6 +24,7 @@ class CommandDispatcher {
     void _dispatchGui(int connectionId, const std::string& line);
     void _executeNext(int connectionId);
 
+    // GUI command handlers
     void _handleMsz(int connectionId);
     void _handleBct(int connectionId, int x, int y);
     void _handleMct(int connectionId);
@@ -33,6 +34,19 @@ class CommandDispatcher {
     void _handlePin(int connectionId, int playerId);
     void _handleSgt(int connectionId);
     void _handleSst(int freq);
+
+    // AI command handlers
+    void _handleForward(int connectionId);
+    void _handleRight(int connectionId);
+    void _handleLeft(int connectionId);
+    void _handleLook(int connectionId);
+    void _handleInventory(int connectionId);
+    void _handleBroadcast(int connectionId, const std::string& msg);
+    void _handleFork(int connectionId);
+    void _handleEject(int connectionId);
+    void _handleTake(int connectionId, ResourceType resource);
+    void _handleSet(int connectionId, ResourceType resource);
+    void _handleIncantation(int connectionId);
 
     ClientManager& _clients;
     World& _world;
