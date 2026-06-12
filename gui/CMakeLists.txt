@@ -36,6 +36,7 @@ set(GUI_SOURCES
     src/network/TcpSocket.cpp
     src/network/ProtocolParser.cpp
     src/core/behaviors/MoveBehavior.cpp
+    src/core/behaviors/TurnBehavior.cpp
     src/core/EventQueue.cpp
     src/core/GameState.cpp
     src/core/Args.cpp
