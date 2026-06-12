@@ -1,12 +1,17 @@
 #include "CommandDispatcher.hpp"
 
+#include "protocol/GuiParser.hpp"
+#include "utils/overloaded.hpp"
+
 CommandDispatcher::CommandDispatcher(ClientManager& clients, World& world, GuiNotifier& notifier,
                                      const ServerConfig& config, Scheduler& scheduler)
     : _clients(clients),
       _world(world),
-      _handshakeHandler(clients, world, notifier, config),
       _notifier(notifier),
-      _scheduler(scheduler)
+      _scheduler(scheduler),
+      _config(config),
+      _handshakeHandler(clients, world, notifier, config),
+      _freq(config.freq)
 {
 }
 
@@ -30,16 +35,37 @@ void CommandDispatcher::onDisconnect(int connectionId)
 {
     auto& conn = _clients.getConnection(connectionId);
     if (conn.type() == ClientType::GUI) _notifier.removeGui(connectionId);
-}
-
-void CommandDispatcher::_dispatchAi(int playerId, const std::string& line)
-{
-    (void)playerId;
-    (void)line;
+    _queues.erase(connectionId);
+    _hasActive.erase(connectionId);
 }
 
 void CommandDispatcher::_dispatchGui(int connectionId, const std::string& line)
 {
+    auto req = GuiParser::parse(line);
+    if (!req) {
+        _clients.send(connectionId, "suc\n");
+        return;
+    }
+
+    std::visit(overloaded{
+                   [&](Gui::Msz) { _handleMsz(connectionId); },
+                   [&](Gui::Bct c) { _handleBct(connectionId, c.x, c.y); },
+                   [&](Gui::Mct) { _handleMct(connectionId); },
+                   [&](Gui::Tna) { _handleTna(connectionId); },
+                   [&](Gui::Ppo p) { _handlePpo(connectionId, p.id); },
+                   [&](Gui::Plv p) { _handlePlv(connectionId, p.id); },
+                   [&](Gui::Pin p) { _handlePin(connectionId, p.id); },
+                   [&](Gui::Sgt) { _handleSgt(connectionId); },
+                   [&](Gui::Sst s) { _handleSst(s.freq); },
+                   [&](auto&) { _clients.send(connectionId, "suc\n"); },
+               },
+               *req);
+}
+
+void CommandDispatcher::_dispatchAi(int connectionId, const std::string& line)
+{
     (void)connectionId;
     (void)line;
 }
+
+void CommandDispatcher::_executeNext(int connectionId) { (void)connectionId; }
