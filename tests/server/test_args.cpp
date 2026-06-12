@@ -5,7 +5,8 @@
 // Valid full args
 TEST(ServerArgsTest, ValidAllFlags)
 {
-    const char* argv[] = {"prog", "-p", "4242", "-x", "10", "-y", "10", "-n", "TeamA", "TeamB", "-c", "5", "-f", "100"};
+    const char* argv[] = {"prog", "-p",    "4242",  "-x", "10", "-y", "10",
+                          "-n",   "TeamA", "TeamB", "-c", "5",  "-f", "100"};
     Args args(14, const_cast<char**>(argv));
 
     EXPECT_TRUE(args.isValid());
@@ -25,7 +26,8 @@ TEST(ServerArgsTest, ValidAllFlags)
 
 TEST(ServerArgsTest, SingleTeam)
 {
-    const char* argv[] = {"prog", "-p", "4242", "-x", "5", "-y", "5", "-n", "Solo", "-c", "1", "-f", "50"};
+    const char* argv[] = {"prog", "-p",   "4242", "-x", "5",  "-y", "5",
+                          "-n",   "Solo", "-c",   "1",  "-f", "50"};
     Args args(13, const_cast<char**>(argv));
 
     EXPECT_TRUE(args.isValid());
@@ -102,7 +104,8 @@ TEST(ServerArgsTest, MissingClientsUsesDefault)
 // Invalid values
 TEST(ServerArgsTest, InvalidPort)
 {
-    const char* argv[] = {"prog", "-p", "notaport", "-x", "10", "-y", "10", "-n", "TeamA", "-c", "5", "-f", "100"};
+    const char* argv[] = {"prog", "-p",    "notaport", "-x", "10", "-y", "10",
+                          "-n",   "TeamA", "-c",       "5",  "-f", "100"};
     Args args(13, const_cast<char**>(argv));
 
     EXPECT_FALSE(args.isValid());
@@ -111,7 +114,8 @@ TEST(ServerArgsTest, InvalidPort)
 
 TEST(ServerArgsTest, NegativeWidth)
 {
-    const char* argv[] = {"prog", "-p", "4242", "-x", "-1", "-y", "10", "-n", "TeamA", "-c", "5", "-f", "100"};
+    const char* argv[] = {"prog", "-p",    "4242", "-x", "-1", "-y", "10",
+                          "-n",   "TeamA", "-c",   "5",  "-f", "100"};
     Args args(13, const_cast<char**>(argv));
 
     EXPECT_FALSE(args.isValid());
@@ -120,7 +124,8 @@ TEST(ServerArgsTest, NegativeWidth)
 
 TEST(ServerArgsTest, ZeroHeight)
 {
-    const char* argv[] = {"prog", "-p", "4242", "-x", "10", "-y", "0", "-n", "TeamA", "-c", "5", "-f", "100"};
+    const char* argv[] = {"prog", "-p",    "4242", "-x", "10", "-y", "0",
+                          "-n",   "TeamA", "-c",   "5",  "-f", "100"};
     Args args(13, const_cast<char**>(argv));
 
     EXPECT_FALSE(args.isValid());
@@ -130,7 +135,8 @@ TEST(ServerArgsTest, ZeroHeight)
 // Reserved team name
 TEST(ServerArgsTest, GraphicTeamNameRejected)
 {
-    const char* argv[] = {"prog", "-p", "4242", "-x", "10", "-y", "10", "-n", "GRAPHIC", "-c", "5", "-f", "100"};
+    const char* argv[] = {"prog", "-p",      "4242", "-x", "10", "-y", "10",
+                          "-n",   "GRAPHIC", "-c",   "5",  "-f", "100"};
     Args args(13, const_cast<char**>(argv));
 
     EXPECT_FALSE(args.isValid());
@@ -139,7 +145,8 @@ TEST(ServerArgsTest, GraphicTeamNameRejected)
 
 TEST(ServerArgsTest, GraphicMixedWithValidTeams)
 {
-    const char* argv[] = {"prog", "-p", "4242", "-x", "10", "-y", "10", "-n", "TeamA", "GRAPHIC", "-c", "5", "-f", "100"};
+    const char* argv[] = {"prog", "-p",    "4242",    "-x", "10", "-y", "10",
+                          "-n",   "TeamA", "GRAPHIC", "-c", "5",  "-f", "100"};
     Args args(14, const_cast<char**>(argv));
 
     EXPECT_FALSE(args.isValid());
@@ -149,7 +156,8 @@ TEST(ServerArgsTest, GraphicMixedWithValidTeams)
 // Port boundaries
 TEST(ServerArgsTest, PortBoundaryLow)
 {
-    const char* argv[] = {"prog", "-p", "1", "-x", "10", "-y", "10", "-n", "TeamA", "-c", "5", "-f", "100"};
+    const char* argv[] = {"prog", "-p",    "1",  "-x", "10", "-y", "10",
+                          "-n",   "TeamA", "-c", "5",  "-f", "100"};
     Args args(13, const_cast<char**>(argv));
 
     EXPECT_TRUE(args.isValid());
@@ -158,7 +166,8 @@ TEST(ServerArgsTest, PortBoundaryLow)
 
 TEST(ServerArgsTest, PortBoundaryHigh)
 {
-    const char* argv[] = {"prog", "-p", "65535", "-x", "10", "-y", "10", "-n", "TeamA", "-c", "5", "-f", "100"};
+    const char* argv[] = {"prog", "-p",    "65535", "-x", "10", "-y", "10",
+                          "-n",   "TeamA", "-c",    "5",  "-f", "100"};
     Args args(13, const_cast<char**>(argv));
 
     EXPECT_TRUE(args.isValid());
@@ -167,7 +176,8 @@ TEST(ServerArgsTest, PortBoundaryHigh)
 
 TEST(ServerArgsTest, PortTooHigh)
 {
-    const char* argv[] = {"prog", "-p", "70000", "-x", "10", "-y", "10", "-n", "TeamA", "-c", "5", "-f", "100"};
+    const char* argv[] = {"prog", "-p",    "70000", "-x", "10", "-y", "10",
+                          "-n",   "TeamA", "-c",    "5",  "-f", "100"};
     Args args(13, const_cast<char**>(argv));
 
     EXPECT_FALSE(args.isValid());
