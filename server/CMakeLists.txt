@@ -20,6 +20,7 @@ set(SERVER_SOURCES
     src/main.cpp
     src/core/Args.cpp
     src/core/World.cpp
+    src/core/Scheduler.cpp
 )
 
 add_executable(zappy_server ${SERVER_SOURCES})
