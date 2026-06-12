@@ -27,7 +27,7 @@ static void smokeScheduler()
 static void smokeWorld(const ServerConfig& config)
 {
     std::cout << "=== World smoke test ===\n";
-    World world(config.width, config.height, config.teamNames, config.clientsNb);
+    World world(config.width, config.height, config.teamNames);
     world.spawnResources();
 
     for (int y = 0; y < config.height; y++) {

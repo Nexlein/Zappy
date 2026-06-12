@@ -2,8 +2,8 @@
 
 #include <algorithm>
 
-World::World(int width, int height, const std::vector<std::string>& teamNames, int clientNb)
-    : _width(width), _height(height), _teamNames(teamNames), _clientNb(clientNb)
+World::World(int width, int height, const std::vector<std::string>& teamNames)
+    : _width(width), _height(height), _teamNames(teamNames)
 {
     _tiles = std::vector<Tile>(width * height);
 }
