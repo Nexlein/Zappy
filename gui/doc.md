@@ -50,6 +50,7 @@ public:
     WorldState world;
     int timeUnit;
     std::string winnerTeam;
+    float tileSize = 1.0f;  // used when constructing behaviors
 
     void applyEvent(const Event& e);
     bool isDirty() const;
@@ -64,6 +65,25 @@ private:
 - Set to `true` on every `applyEvent()`
 - Renderer checks before rendering, clears after
 - Prevents redundant renders when no state changes
+
+**Behavior creation:**
+- `applyPlayerNew` initializes `player.visual.pos` to spawn world position
+- `applyPlayerPosition` clears existing behaviors and pushes a `MoveBehavior` (duration = `7.0f / timeUnit`)
+
+### core/behaviors
+
+Visual behavior system. Each `IBehavior` subclass owns a piece of per-entity visual state and ticks every frame via `VisualState::update(dt)`.
+
+```
+IBehavior (pure virtual: update, isDone)
+└── MoveBehavior  — smoothstep lerp of visual.pos between tiles, handles toroidal wrap
+```
+
+**Design:**
+- Logical state (`x`, `y`, `orientation`) stays server-authoritative in `Player`
+- Visual state (`visual.pos`, `visual.angle`) is driven by behaviors
+- New behaviors: subclass `IBehavior`, push onto `player.visual.behaviors` from relevant `GameState::apply*`
+- Add `.cpp` to `CMakeLists.txt`
 
 ### core/Args
 CLI argument parser with validation.
@@ -100,9 +120,9 @@ Text-based state dump for testing/debugging. Prints game state updates to stdout
 - Camera height scales with orbit radius to maintain viewing angle
 
 **3D Rendering**
-- Players: colored cubes (team color), labeled "Player #N" above
-- Eggs: colored cubes (team color), labeled "Egg #N" above
-- Tiles: grid with per-tile resource indicators (dots scaled by quantity)
+- Players: 3D GLB model (rimuru slime, `gui/assets/rimuru.glb`) tinted per team via `ColorPalette::getSlimePalette()`, falls back to colored cube if model fails to load
+- Eggs: 3D GLB model (`gui/assets/egg.glb`) with team-colored inner layer, random stable Y rotation set at spawn
+- Tiles: grid with per-tile resource indicators (spheres scaled logarithmically by quantity, stable random positions per tile)
 - All world coordinates computed via `RenderingHelper::tileToWorld()`
 
 **Selection System**
@@ -169,7 +189,8 @@ TooltipRenderer::create()
 - Win screen / end game display when a team reaches 6 players at level 8
 - Fork visual (egg appearing animation on tile when player forks)
 - Level-up visual (burst/flash effect on all players participating in a successful elevation)
-- Smooth movement animation — instead of teleporting, interpolate player position/rotation between tiles over the action's time window (Forward=7/f, turn=7/f); animation speed adapts to server frequency so it always fits within the tick budget
+- ~~Smooth movement animation~~ — **done**: `MoveBehavior` smoothstep-lerps position, toroidal wrap slides to edge then teleports
+- Turn animation — `TurnBehavior` to smoothstep-lerp `visual.angle` with 0/360 wraparound
 - Incantation progress bar on the tile (300/f duration, visual countdown until success or failure)
 - Player history trail — faint path showing recent movement of selected player (style TBD based on overall visual direction)
 - Spectate / follow mode — camera locks onto and follows a selected player (3rd person or overhead, TBD)
@@ -253,7 +274,10 @@ gui/
 │   │   ├── EventQueue.hpp/cpp
 │   │   ├── GameState.hpp/cpp
 │   │   ├── Args.hpp/cpp
-│   │   └── App.hpp/cpp
+│   │   ├── App.hpp/cpp
+│   │   └── behaviors/
+│   │       ├── IBehavior.hpp
+│   │       └── MoveBehavior.hpp/cpp
 │   ├── network/
 │   │   ├── TcpSocket.hpp/cpp
 │   │   └── ProtocolParser.hpp/cpp
@@ -290,6 +314,9 @@ Optional for now (single-threaded), but enables future async network thread with
 
 **Why Args class separate from App?**
 Single responsibility. Args handles parsing/validation, App handles orchestration. Easier to test.
+
+**GLB model material mutation:**
+Raylib shares a single `Model` instance across all draw calls. Tinting a material slot mutates it globally. Fix: store base material colors on `init()`, restore after each `DrawModelEx` via `EntityRenderer::_restoreModelBaseColors`. Player model has 6 material slots, egg model has 2.
 
 **Why static helper classes for renderer?**
 RaylibRenderer grew large. Extracting stateless drawing concerns (grid, entities, text, tooltips) into static classes keeps each file focused and makes them independently testable.
