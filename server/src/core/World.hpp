@@ -7,10 +7,10 @@
 #include <vector>
 
 #include "data/Egg.hpp"
+#include "data/Orientation.hpp"
 #include "data/Player.hpp"
 #include "data/Resources.hpp"
 #include "data/Tile.hpp"
-#include "data/Orientation.hpp"
 
 struct EjectResult {
     std::vector<int> ejectedPlayerIds;
@@ -18,8 +18,18 @@ struct EjectResult {
     int dy;
 };
 
+struct IncantationReq {
+    int playerCount;
+    int linemate;
+    int deraumere;
+    int sibur;
+    int mendiane;
+    int phiras;
+    int thystame;
+};
+
 class World {
-public:
+    public:
     World(int width, int height, const std::vector<std::string>& teamNames, int clientNb);
 
     Tile& at(int x, int y);
@@ -27,7 +37,8 @@ public:
 
     void spawnResources();
 
-    int addPlayer(int connectionId, const std::string& teamName, int x, int y, Orientation orientation);
+    int addPlayer(int connectionId, const std::string& teamName, int x, int y,
+                  Orientation orientation);
     void removePlayer(int id);
     void movePlayer(int id, int x, int y);
 
@@ -41,7 +52,12 @@ public:
     int addEgg(int playerId);
     bool hatchEgg(int eggId);
 
-private:
+    std::optional<std::vector<int>> startIncantation(int playerId);
+    bool finalizeIncantation(const std::vector<int>& participantIds);
+
+    std::optional<std::string> checkWin() const;
+
+    private:
     int _width;
     int _height;
     std::vector<Tile> _tiles;
