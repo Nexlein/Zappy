@@ -27,6 +27,8 @@ set(SERVER_SOURCES
     src/network/Listener.cpp
     src/network/Connection.cpp
     src/network/ClientManager.cpp
+    src/game/GuiNotifier.cpp
+    src/game/HandshakeHandler.cpp
 )
 
 add_executable(zappy_server ${SERVER_SOURCES})
