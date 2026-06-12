@@ -1,6 +1,6 @@
 #!/bin/bash
 PORT=4242
-TEAM="TeamC"
+TEAM="TeamA"
 SLEEP=0.3
 MAP_X=15
 MAP_Y=10
