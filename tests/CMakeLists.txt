@@ -81,6 +81,7 @@ if(ZAPPY_BUILD_SERVER)
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/protocol/Serializer.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/network/Listener.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/network/Connection.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/network/ClientManager.cpp
     )
 
     set(SERVER_TEST_SOURCES
@@ -93,6 +94,7 @@ if(ZAPPY_BUILD_SERVER)
         server/test_serializer.cpp
         server/test_listener.cpp
         server/test_connection.cpp
+        server/test_client_manager.cpp
     )
 
     add_executable(zappy_server_tests ${SERVER_TEST_SOURCES} ${SERVER_SOURCES})
