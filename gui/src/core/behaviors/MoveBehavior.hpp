@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IBehavior.hpp"
-#include "core/WorldState.hpp"
+#include "core/VisualState.hpp"
 #include "raylib.h"
 
 /**
