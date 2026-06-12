@@ -82,6 +82,9 @@ if(ZAPPY_BUILD_SERVER)
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/network/Listener.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/network/Connection.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/network/ClientManager.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/game/GuiNotifier.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/game/HandshakeHandler.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/game/CommandDispatcher.cpp
     )
 
     set(SERVER_TEST_SOURCES
