@@ -2,10 +2,7 @@
 
 #include "../../server/src/core/World.hpp"
 
-static World makeWorld(int w, int h)
-{
-    return World(w, h, {"TeamA", "TeamB"}, 5);
-}
+static World makeWorld(int w, int h) { return World(w, h, {"TeamA", "TeamB"}, 5); }
 
 // --- at() toroidal wrap ---
 
@@ -57,8 +54,7 @@ TEST(WorldSpawn, TotalReachesTarget)
 
         int total = 0;
         for (int x = 0; x < 10; x++)
-            for (int y = 0; y < 10; y++)
-                total += w.at(x, y).resources[type];
+            for (int y = 0; y < 10; y++) total += w.at(x, y).resources[type];
 
         EXPECT_EQ(total, target) << "Resource type " << i << " mismatch";
     }
@@ -74,8 +70,7 @@ TEST(WorldSpawn, NeverBelowOne)
 
         int total = 0;
         for (int x = 0; x < 2; x++)
-            for (int y = 0; y < 2; y++)
-                total += w.at(x, y).resources[type];
+            for (int y = 0; y < 2; y++) total += w.at(x, y).resources[type];
 
         EXPECT_GE(total, 1) << "Resource type " << i << " is zero";
     }
@@ -90,14 +85,13 @@ TEST(WorldSpawn, IdempotentWhenFull)
     int before = 0;
     for (int x = 0; x < 10; x++)
         for (int y = 0; y < 10; y++)
-            before += w.at(x, y).resources[static_cast<ResourceType>(1)]; // linemate
+            before += w.at(x, y).resources[static_cast<ResourceType>(1)];  // linemate
 
     w.spawnResources();
 
     int after = 0;
     for (int x = 0; x < 10; x++)
-        for (int y = 0; y < 10; y++)
-            after += w.at(x, y).resources[static_cast<ResourceType>(1)];
+        for (int y = 0; y < 10; y++) after += w.at(x, y).resources[static_cast<ResourceType>(1)];
 
     EXPECT_EQ(before, after);
 }
@@ -230,14 +224,14 @@ TEST(WorldEject, EjectMovesOtherPlayers)
 {
     auto w = makeWorld(10, 10);
     int ejector = w.addPlayer(0, "TeamA", 5, 5, Orientation::N);
-    int victim  = w.addPlayer(1, "TeamB", 5, 5, Orientation::S);
+    int victim = w.addPlayer(1, "TeamB", 5, 5, Orientation::S);
 
     auto result = w.ejectPlayers(ejector);
 
     EXPECT_EQ(result.ejectedPlayerIds.size(), 1u);
     EXPECT_EQ(result.ejectedPlayerIds[0], victim);
     EXPECT_EQ(w.at(5, 5).playerIds.size(), 1u);  // only ejector remains
-    EXPECT_EQ(w.getPlayer(victim).y, 4);          // N = y-1
+    EXPECT_EQ(w.getPlayer(victim).y, 4);         // N = y-1
 }
 
 TEST(WorldEject, EjectorStaysOnTile)
@@ -267,7 +261,7 @@ TEST(WorldEject, EjectToroidalWrap)
 {
     auto w = makeWorld(10, 10);
     int ejector = w.addPlayer(0, "TeamA", 5, 0, Orientation::N);
-    int victim  = w.addPlayer(1, "TeamB", 5, 0, Orientation::S);
+    int victim = w.addPlayer(1, "TeamB", 5, 0, Orientation::S);
 
     w.ejectPlayers(ejector);
 
@@ -303,4 +297,168 @@ TEST(WorldEgg, HatchUnknownEggReturnsFalse)
     auto w = makeWorld(10, 10);
 
     EXPECT_FALSE(w.hatchEgg(999));
+}
+
+// --- incantation ---
+
+TEST(Incantation, StartLevel1Success)
+{
+    auto w = makeWorld(10, 10);
+    int pid = w.addPlayer(0, "TeamA", 5, 5, Orientation::E);
+    w.at(5, 5).resources[ResourceType::LINEMATE] = 1;
+
+    auto result = w.startIncantation(pid);
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->size(), 1u);
+    EXPECT_TRUE(w.getPlayer(pid).isIncanting);
+}
+
+TEST(Incantation, StartFailsMissingStones)
+{
+    auto w = makeWorld(10, 10);
+    int pid = w.addPlayer(0, "TeamA", 3, 3, Orientation::N);
+    // no linemate on tile
+
+    auto result = w.startIncantation(pid);
+
+    EXPECT_FALSE(result.has_value());
+    EXPECT_FALSE(w.getPlayer(pid).isIncanting);
+}
+
+TEST(Incantation, StartFailsNotEnoughPlayers)
+{
+    auto w = makeWorld(10, 10);
+    int pid = w.addPlayer(0, "TeamA", 3, 3, Orientation::N);
+    w.getPlayer(pid).level = 2;
+    // level 2 requires 2 players — only 1 here
+    w.at(3, 3).resources[ResourceType::LINEMATE] = 1;
+    w.at(3, 3).resources[ResourceType::DERAUMERE] = 1;
+    w.at(3, 3).resources[ResourceType::SIBUR] = 1;
+
+    auto result = w.startIncantation(pid);
+
+    EXPECT_FALSE(result.has_value());
+}
+
+TEST(Incantation, StartLevel2TwoPlayersSuccess)
+{
+    auto w = makeWorld(10, 10);
+    int p1 = w.addPlayer(0, "TeamA", 4, 4, Orientation::N);
+    int p2 = w.addPlayer(1, "TeamB", 4, 4, Orientation::S);
+    w.getPlayer(p1).level = 2;
+    w.getPlayer(p2).level = 2;
+    w.at(4, 4).resources[ResourceType::LINEMATE] = 1;
+    w.at(4, 4).resources[ResourceType::DERAUMERE] = 1;
+    w.at(4, 4).resources[ResourceType::SIBUR] = 1;
+
+    auto result = w.startIncantation(p1);
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->size(), 2u);
+    EXPECT_TRUE(w.getPlayer(p1).isIncanting);
+    EXPECT_TRUE(w.getPlayer(p2).isIncanting);
+}
+
+TEST(Incantation, StartIgnoresWrongLevelPlayers)
+{
+    auto w = makeWorld(10, 10);
+    int p1 = w.addPlayer(0, "TeamA", 2, 2, Orientation::N);
+    int p2 = w.addPlayer(1, "TeamB", 2, 2, Orientation::N);
+    // p1 level 1, p2 level 2 — only p1 counts for level 1 ritual
+    w.getPlayer(p2).level = 2;
+    w.at(2, 2).resources[ResourceType::LINEMATE] = 1;
+
+    auto result = w.startIncantation(p1);
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->size(), 1u);  // only p1 in participants
+    EXPECT_FALSE(w.getPlayer(p2).isIncanting);
+}
+
+TEST(Incantation, FinalizeSuccessLevelsUpAndConsumesStones)
+{
+    auto w = makeWorld(10, 10);
+    int pid = w.addPlayer(0, "TeamA", 0, 0, Orientation::N);
+    w.at(0, 0).resources[ResourceType::LINEMATE] = 1;
+
+    auto participants = w.startIncantation(pid);
+    ASSERT_TRUE(participants.has_value());
+
+    bool ok = w.finalizeIncantation(*participants);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(w.getPlayer(pid).level, 2);
+    EXPECT_EQ(w.at(0, 0).resources[ResourceType::LINEMATE], 0);
+    EXPECT_FALSE(w.getPlayer(pid).isIncanting);
+}
+
+TEST(Incantation, FinalizeFailsIfPlayerDied)
+{
+    auto w = makeWorld(10, 10);
+    int pid = w.addPlayer(0, "TeamA", 0, 0, Orientation::N);
+    w.at(0, 0).resources[ResourceType::LINEMATE] = 1;
+
+    auto participants = w.startIncantation(pid);
+    ASSERT_TRUE(participants.has_value());
+
+    w.removePlayer(pid);  // player dies mid-ritual
+    bool ok = w.finalizeIncantation(*participants);
+
+    EXPECT_FALSE(ok);
+}
+
+TEST(Incantation, FinalizeStonesConsumedMatchLevel)
+{
+    auto w = makeWorld(10, 10);
+    int p1 = w.addPlayer(0, "TeamA", 1, 1, Orientation::N);
+    int p2 = w.addPlayer(1, "TeamB", 1, 1, Orientation::N);
+    w.getPlayer(p1).level = 2;
+    w.getPlayer(p2).level = 2;
+    w.at(1, 1).resources[ResourceType::LINEMATE] = 1;
+    w.at(1, 1).resources[ResourceType::DERAUMERE] = 1;
+    w.at(1, 1).resources[ResourceType::SIBUR] = 1;
+
+    auto participants = w.startIncantation(p1);
+    ASSERT_TRUE(participants.has_value());
+    w.finalizeIncantation(*participants);
+
+    EXPECT_EQ(w.at(1, 1).resources[ResourceType::LINEMATE], 0);
+    EXPECT_EQ(w.at(1, 1).resources[ResourceType::DERAUMERE], 0);
+    EXPECT_EQ(w.at(1, 1).resources[ResourceType::SIBUR], 0);
+    EXPECT_EQ(w.getPlayer(p1).level, 3);
+    EXPECT_EQ(w.getPlayer(p2).level, 3);
+}
+
+TEST(Incantation, CheckWinNoWinnerYet)
+{
+    auto w = makeWorld(10, 10);
+    w.addPlayer(0, "TeamA", 0, 0, Orientation::N);
+
+    EXPECT_FALSE(w.checkWin().has_value());
+}
+
+TEST(Incantation, CheckWinDetectsWinner)
+{
+    auto w = makeWorld(10, 10);
+    for (int i = 0; i < 6; i++) {
+        int pid = w.addPlayer(i, "TeamA", i, 0, Orientation::N);
+        w.getPlayer(pid).level = 8;
+    }
+
+    auto winner = w.checkWin();
+
+    ASSERT_TRUE(winner.has_value());
+    EXPECT_EQ(*winner, "TeamA");
+}
+
+TEST(Incantation, CheckWinRequiresSixPlayers)
+{
+    auto w = makeWorld(10, 10);
+    for (int i = 0; i < 5; i++) {
+        int pid = w.addPlayer(i, "TeamA", i, 0, Orientation::N);
+        w.getPlayer(pid).level = 8;
+    }
+
+    EXPECT_FALSE(w.checkWin().has_value());
 }
