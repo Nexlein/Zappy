@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "behaviors/MoveBehavior.hpp"
+#include "behaviors/TurnBehavior.hpp"
 #include "renderer/raylib_helpers/RenderingHelper.hpp"
 
 void GameState::applyEvent(const Event& e)
@@ -85,6 +86,7 @@ void GameState::applyPlayerNew(const PlayerNew& e)
                                                        .team = e.team});
     it->second.visual.pos =
         RenderingHelper::tileToWorld(e.x, e.y, world.width, world.height, tileSize);
+    it->second.visual.angle = toAngle(e.orientation);
 }
 
 void GameState::applyPlayerPosition(const PlayerPosition& e)
@@ -102,6 +104,8 @@ void GameState::applyPlayerPosition(const PlayerPosition& e)
         player.visual.behaviors.clear();
         player.visual.behaviors.push_back(std::make_unique<MoveBehavior>(
             player.visual, fromX, fromY, e.x, e.y, world.width, world.height, tileSize, duration));
+        player.visual.behaviors.push_back(std::make_unique<TurnBehavior>(
+            player.visual, player.visual.angle, toAngle(e.orientation), duration));
     }
 }
 
