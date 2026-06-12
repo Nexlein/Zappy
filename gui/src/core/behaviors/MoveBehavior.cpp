@@ -37,7 +37,8 @@ MoveBehavior::MoveBehavior(VisualState& visual, int fromX, int fromY, int toX, i
         }
 
         // Split duration proportionally: dist(from→exit) / total_dist
-        float d1 = std::sqrt(std::pow(_wrapExit.x - _from.x, 2) + std::pow(_wrapExit.z - _from.z, 2));
+        float d1 =
+            std::sqrt(std::pow(_wrapExit.x - _from.x, 2) + std::pow(_wrapExit.z - _from.z, 2));
         float d2 = std::sqrt(std::pow(_to.x - _wrapEntry.x, 2) + std::pow(_to.z - _wrapEntry.z, 2));
         float total = d1 + d2;
         _splitT = (total > 0.0f) ? (d1 / total) : 0.5f;

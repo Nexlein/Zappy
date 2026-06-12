@@ -18,8 +18,7 @@ class VisualState {
 
     void update(float dt) const
     {
-        for (auto& b : behaviors)
-            b->update(dt);
+        for (auto& b : behaviors) b->update(dt);
         for (auto it = behaviors.begin(); it != behaviors.end();) {
             if ((*it)->isDone())
                 it = behaviors.erase(it);

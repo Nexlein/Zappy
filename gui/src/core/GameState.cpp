@@ -79,11 +79,11 @@ void GameState::applyTeamName(const TeamName& e) { world.teams.push_back(e.name)
 void GameState::applyPlayerNew(const PlayerNew& e)
 {
     auto [it, _] = world.players.emplace(e.id, Player{.id = e.id,
-                                                       .x = e.x,
-                                                       .y = e.y,
-                                                       .orientation = e.orientation,
-                                                       .level = e.level,
-                                                       .team = e.team});
+                                                      .x = e.x,
+                                                      .y = e.y,
+                                                      .orientation = e.orientation,
+                                                      .level = e.level,
+                                                      .team = e.team});
     it->second.visual.pos =
         RenderingHelper::tileToWorld(e.x, e.y, world.width, world.height, tileSize);
     it->second.visual.angle = toAngle(e.orientation);

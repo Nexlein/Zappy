@@ -8,12 +8,10 @@ std::unordered_map<std::tuple<int, int, int>, EntityRenderer::ResourceCacheEntry
                    EntityRenderer::TupleHash>
     EntityRenderer::_resourcePositions;
 
-void EntityRenderer::drawPlayer(Vector3& worldPos, Color teamColor, float rotation,
-                                Model* model, const Color* baseMats, float cubeSize,
-                                float modelSize)
+void EntityRenderer::drawPlayer(Vector3& worldPos, Color teamColor, float rotation, Model* model,
+                                const Color* baseMats, float cubeSize, float modelSize)
 {
     if (model != nullptr) {
-
         // mat[0] idk what it controls
         // mat[1] = internal transparent layer (reflects mat[3], lighter color)
         // mat[2] = blush accent color
@@ -150,7 +148,6 @@ void EntityRenderer::_drawCubeWireframeThick(const Vector3& worldPos, float size
     DrawCube({worldPos.x + halfSize, worldPos.y, worldPos.z + halfSize}, thickness, size, thickness,
              color);
 }
-
 
 void EntityRenderer::_restoreModelBaseColors(Model& model, const Color* baseMats, int count)
 {
