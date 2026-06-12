@@ -10,8 +10,7 @@
 
 Listener::Listener(int port)
 {
-    if (port < 1 || port > 65535)
-        throw ListenerException("invalid port: " + std::to_string(port));
+    if (port < 1 || port > 65535) throw ListenerException("invalid port: " + std::to_string(port));
 
     _fd = socket(AF_INET, SOCK_STREAM, 0);
     if (_fd < 0) throw ListenerException("socket() failed: " + std::string(strerror(errno)));
