@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "core/data/Resources.hpp"
+#include "../../server/src/core/data/Resources.hpp"
 
 TEST(ResourcesTest, DefaultZero)
 {
@@ -55,7 +55,8 @@ TEST(ResourcesTest, DensityAllPositive)
 TEST(ResourcesTest, DensityFoodHighest)
 {
     EXPECT_GT(Resources::density(ResourceType::FOOD), Resources::density(ResourceType::LINEMATE));
-    EXPECT_GT(Resources::density(ResourceType::LINEMATE), Resources::density(ResourceType::THYSTAME));
+    EXPECT_GT(Resources::density(ResourceType::LINEMATE),
+              Resources::density(ResourceType::THYSTAME));
 }
 
 TEST(ResourcesTest, DensityThystameLowest)
@@ -67,7 +68,4 @@ TEST(ResourcesTest, DensityThystameLowest)
     }
 }
 
-TEST(ResourcesTest, TypeCountCorrect)
-{
-    EXPECT_EQ(Resources::TYPE_COUNT, 7);
-}
+TEST(ResourcesTest, TypeCountCorrect) { EXPECT_EQ(Resources::TYPE_COUNT, 7); }
