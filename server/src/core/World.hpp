@@ -87,6 +87,7 @@ class World {
     int teamPlayerCount(const std::string& team) const;
     int width() const;
     int height() const;
+    const std::unordered_map<int, Player>& getPlayers() const;
 
     private:
     int _width;

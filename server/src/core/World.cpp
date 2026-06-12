@@ -272,6 +272,7 @@ int World::teamPlayerCount(const std::string& team) const
 
 int World::width() const { return _width; }
 int World::height() const { return _height; }
+const std::unordered_map<int, Player>& World::getPlayers() const { return _players; }
 
 std::optional<std::string> World::checkWin() const
 {
