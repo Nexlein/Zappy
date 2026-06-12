@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ColorPalette.hpp"
 #include "core/GameState.hpp"
 #include "raylib.h"
 
@@ -14,7 +15,9 @@ class EntityRenderer {
      * @param teamColor Color for the player's team.
      * @param size Size of the player cube.
      */
-    static void drawPlayer(const Vector3& worldPos, Color teamColor, float size = 0.8f);
+    static void drawPlayer(Vector3& worldPos, Color teamColor, float rotation,
+                           Model* model = nullptr, const Color* baseMats = nullptr,
+                           float cubeSize = 0.8f, float modelSize = 0.4f);
 
     /**
      * @brief Draws an egg cube at the given world position.
@@ -22,7 +25,9 @@ class EntityRenderer {
      * @param teamColor Color for the egg's team.
      * @param size Size of the egg cube.
      */
-    static void drawEgg(const Vector3& worldPos, Color teamColor, float size = 0.4f);
+    static void drawEgg(Vector3& worldPos, Color teamColor, Model& model, float rotation = 0.0f,
+                        const Color* baseMats = nullptr, float cubeSize = 0.4f,
+                        float modelSize = 0.3f);
 
     /**
      * @brief Draws a wireframe highlight around a player cube.
@@ -74,6 +79,7 @@ class EntityRenderer {
     static std::unordered_map<std::tuple<int, int, int>, ResourceCacheEntry, TupleHash>
         _resourcePositions;
 
-    static void drawCubeWireframeThick(const Vector3& worldPos, float size, Color color,
-                                       float thickness);
+    static void _drawCubeWireframeThick(const Vector3& worldPos, float size, Color color,
+                                        float thickness);
+    static void _restoreModelBaseColors(Model& model, const Color* baseMats, int count = 6);
 };

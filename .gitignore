@@ -1,3 +1,4 @@
+graphify-out/
 # Build directories
 build/
 
@@ -16,8 +17,11 @@ _deps/
 *.dylib
 *.exe
 /zappy_server
+/zappy_server_tests
 /zappy_gui
+/zappy_gui_tests
 /zappy_ai
+/zappy_ai_tests
 /zappy_tests
 
 # IDE and editor files
@@ -32,6 +36,7 @@ _deps/
 __pycache__/
 *.py[cod]
 *.pyo
+ai/logs/
 
 # Test outputs
 Testing/

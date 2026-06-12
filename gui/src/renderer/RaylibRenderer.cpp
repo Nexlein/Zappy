@@ -23,10 +23,33 @@ void RaylibRenderer::init()
                .projection = CAMERA_PERSPECTIVE};
 
     _selection = SelectionFinder::getEmptySelection();
+
+    SetTraceLogLevel(LOG_ERROR);
+    _playerModel = LoadModel("gui/assets/rimuru.glb");
+    SetTraceLogLevel(LOG_WARNING);
+    if (_playerModel.meshCount == 0) {
+        std::cerr << "[WARNING] GUI failed to load player model" << std::endl;
+    } else {
+        for (int i = 0; i < _playerModel.materialCount && i < 6; i++)
+            _playerModelBaseMats[i] = _playerModel.materials[i].maps[MATERIAL_MAP_DIFFUSE].color;
+    }
+
+    SetTraceLogLevel(LOG_ERROR);
+    _eggModel = LoadModel("gui/assets/egg.glb");
+    SetTraceLogLevel(LOG_WARNING);
+    if (_eggModel.meshCount == 0) {
+        std::cerr << "[WARNING] GUI failed to load egg model" << std::endl;
+    } else {
+        // set mat0 to a grayish white color
+        _eggModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = {235, 235, 235, 255};
+        for (int i = 0; i < _eggModel.materialCount && i < 2; i++)
+            _eggModelBaseMats[i] = _eggModel.materials[i].maps[MATERIAL_MAP_DIFFUSE].color;
+    }
 }
 
 void RaylibRenderer::render()
 {
+    _initTeamColors();
     _updateSelection(GetFrameTime());
     _updateCamera(_state->world.width, _state->world.height);
 
@@ -46,8 +69,9 @@ void RaylibRenderer::handleInput()
 {
     static double lastLeftClickTime = -1.0;
     // KEY_A maps to 'Q' on AZERTY
-    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) _cameraAngle += MOVE_SPEED * GetFrameTime();
-    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) _cameraAngle -= MOVE_SPEED * GetFrameTime();
+    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) _cameraAngle += CAMERA_MOVE_SPEED * GetFrameTime();
+    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
+        _cameraAngle -= CAMERA_MOVE_SPEED * GetFrameTime();
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         _performRaycast();
@@ -60,24 +84,30 @@ void RaylibRenderer::handleInput()
 
 bool RaylibRenderer::shouldClose() { return WindowShouldClose(); }
 
-void RaylibRenderer::shutdown() { CloseWindow(); }
+void RaylibRenderer::shutdown()
+{
+    if (_playerModel.meshCount > 0) UnloadModel(_playerModel);
+
+    CloseWindow();
+}
 
 void RaylibRenderer::_render3D()
 {
     GridRenderer::drawGrid(_state->world.width, _state->world.height, TILE_SIZE);
 
-    for (const auto& [id, player] : _state->world.players) {
-        Vector3 worldPos = RenderingHelper::tileToWorld(player.x, player.y, _state->world.width,
-                                                        _state->world.height, TILE_SIZE);
-        worldPos.y = PLAYER_CUBE_SIZE / 2.0f;  // Sit on ground
-        EntityRenderer::drawPlayer(worldPos, _getTeamColor(player.team), PLAYER_CUBE_SIZE);
+    for (auto& [id, player] : _state->world.players) {
+        player.visual.update(GetFrameTime());
+        Vector3 worldPos = player.visual.pos;
+        EntityRenderer::drawPlayer(worldPos, _getTeamColor(player.team), player.visual.angle,
+                                   &_playerModel, _playerModelBaseMats, PLAYER_CUBE_SIZE,
+                                   PLAYER_MODEL_SIZE);
     }
 
     for (const auto& [id, egg] : _state->world.eggs) {
         Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
                                                         _state->world.height, TILE_SIZE);
-        worldPos.y = EGG_CUBE_SIZE / 2.0f;  // Sit on ground
-        EntityRenderer::drawEgg(worldPos, _getTeamColor(egg.team), EGG_CUBE_SIZE);
+        EntityRenderer::drawEgg(worldPos, _getTeamColor(egg.team), _eggModel, egg.rotation,
+                                _eggModelBaseMats, EGG_CUBE_SIZE, EGG_MODEL_SIZE);
     }
 
     for (int x = 0; x < _state->world.width; x++) {
@@ -86,7 +116,7 @@ void RaylibRenderer::_render3D()
                 _state->world.at(x, y), x, y,
                 RenderingHelper::tileToWorld(x, y, _state->world.width, _state->world.height,
                                              TILE_SIZE),
-                TILE_SIZE);
+                TILE_SIZE, RESOURCE_SPHERE_BASE_SIZE);
         }
     }
 
@@ -96,8 +126,7 @@ void RaylibRenderer::_render3D()
 void RaylibRenderer::_render2D()
 {
     for (const auto& [id, player] : _state->world.players) {
-        Vector3 worldPos = RenderingHelper::tileToWorld(player.x, player.y, _state->world.width,
-                                                        _state->world.height, TILE_SIZE);
+        Vector3 worldPos = player.visual.pos;
         worldPos.y = PLAYER_CUBE_SIZE * 1.5f;  // Above cube
         TextRenderer::drawTextAt3DPosition(worldPos, _camera,
                                            "Player #" + std::to_string(player.id),
@@ -129,8 +158,7 @@ void RaylibRenderer::_drawSelectionHighlight()
         case SelectionFinder::EntityType::Player:
             if (_state->world.players.find(_selection.id) != _state->world.players.end()) {
                 const Player& player = _state->world.players.at(_selection.id);
-                Vector3 worldPos = RenderingHelper::tileToWorld(
-                    player.x, player.y, _state->world.width, _state->world.height, TILE_SIZE);
+                Vector3 worldPos = player.visual.pos;
                 worldPos.y = PLAYER_CUBE_SIZE / 2.0f;
                 EntityRenderer::drawPlayerHighlight(worldPos, PLAYER_CUBE_SIZE, SELECTION_COLOR,
                                                     SELECTION_WIREFRAME_THICKNESS);
@@ -198,6 +226,9 @@ void RaylibRenderer::_drawSelectedToolip()
                 builder.addLine("  Inventory:", textColor);
                 _addResourceLines(builder, player.inventory, "    ", textColor);
             }
+
+            // temp
+            builder.addLine("  Orientation: " + to_string(player.orientation), textColor);
             break;
         }
 
@@ -262,17 +293,20 @@ void RaylibRenderer::_drawHUD()
         .draw({10.0f, 10.0f});
 }
 
+void RaylibRenderer::_initTeamColors()
+{
+    if (_teamColors.size() == _state->world.teams.size()) return;
+    _teamColors.clear();
+    for (const auto& teamName : _state->world.teams)
+        _teamColors[teamName] = ColorPalette::getTeamColor(_teamColors.size());
+}
+
 Color RaylibRenderer::_getTeamColor(const std::string& teamName)
 {
-    if (_teamColors.find(teamName) != _teamColors.end()) {
-        return _teamColors[teamName];
-    }
-
-    int colorIndex = _teamColors.size() % _paletteSize;
-    Color newColor = _colorPalette[colorIndex];
-    _teamColors[teamName] = newColor;
-
-    return newColor;
+    auto it = _teamColors.find(teamName);
+    if (it != _teamColors.end()) return it->second;
+    // fallback for teams not in tna list (shouldn't happen)
+    return WHITE;
 }
 
 int RaylibRenderer::_getScaledFontSize(int baseFontSize) const

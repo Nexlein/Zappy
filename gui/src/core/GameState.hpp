@@ -13,6 +13,7 @@ class GameState {
     WorldState world;
     int timeUnit = -1;
     std::string winnerTeam = "";
+    float tileSize = 1.0f;
 
     /**
      * @brief Applies an event to the game state, modifying it accordingly and setting the dirty

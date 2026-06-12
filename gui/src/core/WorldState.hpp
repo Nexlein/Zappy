@@ -7,6 +7,7 @@
 
 #include "Orientation.hpp"
 #include "Resources.hpp"
+#include "VisualState.hpp"
 
 /**
  * @brief Represents a player in the game.
@@ -20,6 +21,7 @@ struct Player {
     std::string team;
     Resources inventory = {};
     bool incanting = false;
+    VisualState visual = {};
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Player& player)
@@ -40,6 +42,7 @@ struct Egg {
     int x;
     int y;
     std::string team;
+    float rotation = static_cast<float>(rand() % 360);
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Egg& egg)
