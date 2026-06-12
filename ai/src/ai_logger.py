@@ -10,7 +10,6 @@ import time
 import os
 import json
 from datetime import datetime
-from logging.handlers import RotatingFileHandler
 
 logging.addLevelName(25, "AI_TALK")
 
@@ -70,15 +69,11 @@ class AILogger:
 
         log_dir = os.path.join(os.path.dirname(__file__), "..", "logs")
         os.makedirs(log_dir, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        pid = os.getpid()
+        log_filename = f"ai_{team_name}_{timestamp}_{pid}.jsonl"
 
-        log_filename = f"ai_{team_name}.jsonl"
-
-        # Keep 10 logs max, 5MB each
-        fh = RotatingFileHandler(
-            os.path.join(log_dir, log_filename),
-            maxBytes=5 * 1024 * 1024,
-            backupCount=10,
-        )
+        fh = logging.FileHandler(os.path.join(log_dir, log_filename), mode="w")
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(JsonFormatter())
         fh.addFilter(NoTalkFilter())  # Filter out AI_TALK from JSON file
