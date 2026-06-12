@@ -24,6 +24,7 @@ set(SERVER_SOURCES
     src/protocol/AiParser.cpp
     src/protocol/GuiParser.cpp
     src/protocol/Serializer.cpp
+    src/network/Listener.cpp
 )
 
 add_executable(zappy_server ${SERVER_SOURCES})
