@@ -30,81 +30,87 @@ endif()
 
 include(GoogleTest)
 
-# pull in GUI sources needed for protocol/state tests
-set(GUI_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/network/TcpSocket.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/network/ProtocolParser.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/EventQueue.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/GameState.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/Args.cpp
-)
-
-set(TEST_SOURCES
-    gui/test_main.cpp
-    gui/test_tcpsocket.cpp
-    gui/test_eventqueue.cpp
-    gui/test_protocolparser.cpp
-    gui/test_gamestate.cpp
-    gui/test_args.cpp
-)
-
-add_executable(zappy_gui_tests ${TEST_SOURCES} ${GUI_SOURCES})
-
-target_include_directories(zappy_gui_tests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src
-)
-
-target_link_libraries(zappy_gui_tests PRIVATE
-    ${GTEST_TARGET}
-    raylib
-)
-
-target_compile_options(zappy_gui_tests PRIVATE
-    -Wall -Wextra
-)
-
-gtest_discover_tests(zappy_gui_tests)
-
-set(SERVER_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/core/World.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/core/Args.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/core/Scheduler.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../server/lib/clap/App.cpp
-)
-
-set(SERVER_TEST_SOURCES
-    server/test_world.cpp
-    server/test_args.cpp
-    server/test_resources.cpp
-    server/test_scheduler.cpp
-)
-
-add_executable(zappy_server_tests ${SERVER_TEST_SOURCES} ${SERVER_SOURCES})
-
-target_include_directories(zappy_server_tests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../server/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/../server/lib
-)
-
-target_link_libraries(zappy_server_tests PRIVATE
-    ${GTEST_TARGET}
-)
-
-target_compile_options(zappy_server_tests PRIVATE
-    -Wall -Wextra
-)
-
-gtest_discover_tests(zappy_server_tests)
-
-# Python AI tests
-find_package(Python3 COMPONENTS Interpreter)
-if(Python3_Interpreter_FOUND)
-    add_test(NAME zappy_ai_tests
-        COMMAND ${Python3_EXECUTABLE} -m unittest discover -s ${CMAKE_CURRENT_SOURCE_DIR}/ai -p "test_*.py"
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../ai
+if(ZAPPY_BUILD_GUI)
+    # pull in GUI sources needed for protocol/state tests
+    set(GUI_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/network/TcpSocket.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/network/ProtocolParser.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/EventQueue.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/GameState.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/Args.cpp
     )
-    set_tests_properties(zappy_ai_tests PROPERTIES
-        ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../ai/src"
+
+    set(TEST_SOURCES
+        gui/test_main.cpp
+        gui/test_tcpsocket.cpp
+        gui/test_eventqueue.cpp
+        gui/test_protocolparser.cpp
+        gui/test_gamestate.cpp
+        gui/test_args.cpp
     )
+
+    add_executable(zappy_gui_tests ${TEST_SOURCES} ${GUI_SOURCES})
+
+    target_include_directories(zappy_gui_tests PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src
+    )
+
+    target_link_libraries(zappy_gui_tests PRIVATE
+        ${GTEST_TARGET}
+        raylib
+    )
+
+    target_compile_options(zappy_gui_tests PRIVATE
+        -Wall -Wextra
+    )
+
+    gtest_discover_tests(zappy_gui_tests)
+endif()
+
+if(ZAPPY_BUILD_SERVER)
+    set(SERVER_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/core/World.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/core/Args.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/core/Scheduler.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/lib/clap/App.cpp
+    )
+
+    set(SERVER_TEST_SOURCES
+        server/test_world.cpp
+        server/test_args.cpp
+        server/test_resources.cpp
+        server/test_scheduler.cpp
+    )
+
+    add_executable(zappy_server_tests ${SERVER_TEST_SOURCES} ${SERVER_SOURCES})
+
+    target_include_directories(zappy_server_tests PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/lib
+    )
+
+    target_link_libraries(zappy_server_tests PRIVATE
+        ${GTEST_TARGET}
+    )
+
+    target_compile_options(zappy_server_tests PRIVATE
+        -Wall -Wextra
+    )
+
+    gtest_discover_tests(zappy_server_tests)
+endif()
+
+if(ZAPPY_BUILD_AI)
+    # Python AI tests
+    find_package(Python3 COMPONENTS Interpreter)
+    if(Python3_Interpreter_FOUND)
+        add_test(NAME zappy_ai_tests
+            COMMAND ${Python3_EXECUTABLE} -m unittest discover -s ${CMAKE_CURRENT_SOURCE_DIR}/ai -p "test_*.py"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../ai
+        )
+        set_tests_properties(zappy_ai_tests PROPERTIES
+            ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../ai/src"
+        )
+    endif()
 endif()
 

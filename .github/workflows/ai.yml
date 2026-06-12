@@ -24,8 +24,8 @@ jobs:
 
       - name: Check ruff formatting
         run: |
-          python3 -m ruff format --check .
-          python3 -m ruff check --select F --show-source .
+          python3 -m ruff format --check
+          python3 -m ruff check
 
   test-ai:
     if: github.repository == 'Nexlein/Zappy'

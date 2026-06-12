@@ -1,3 +1,4 @@
+graphify-out/
 # Build directories
 build/
 
@@ -35,6 +36,7 @@ _deps/
 __pycache__/
 *.py[cod]
 *.pyo
+ai/logs/
 
 # Test outputs
 Testing/

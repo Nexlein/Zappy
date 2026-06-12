@@ -5,20 +5,12 @@ if(NOT DEFINED CMAKE_PROJECT_NAME)
     project(ZappyAI)
 endif()
 
-# AI has no language constraint — swap CXX for C or Python if you go that route
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-set(AI_SOURCES
-    src/main.cpp
+# AI -> Python
+add_custom_command(
+    OUTPUT ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zappy_ai
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/zappy_ai_wrapper ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zappy_ai
+    COMMAND chmod +x ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zappy_ai
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/zappy_ai_wrapper
 )
 
-add_executable(zappy_ai ${AI_SOURCES})
-
-target_include_directories(zappy_ai PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
-
-target_compile_options(zappy_ai PRIVATE
-    -Wall -Wextra -Wpedantic
-)
+add_custom_target(zappy_ai ALL DEPENDS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/zappy_ai)
