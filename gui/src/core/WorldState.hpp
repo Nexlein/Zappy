@@ -21,7 +21,7 @@ struct Player {
     std::string team;
     Resources inventory = {};
     bool incanting = false;
-    VisualState visual;
+    VisualState visual = {};
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Player& player)

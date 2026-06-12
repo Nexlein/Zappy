@@ -38,6 +38,9 @@ if(ZAPPY_BUILD_GUI)
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/EventQueue.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/GameState.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/Args.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/MoveBehavior.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/TurnBehavior.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/renderer/raylib_helpers/RenderingHelper.cpp
     )
 
     set(TEST_SOURCES
