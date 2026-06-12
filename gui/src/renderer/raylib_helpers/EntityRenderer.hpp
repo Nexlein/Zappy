@@ -15,7 +15,7 @@ class EntityRenderer {
      * @param teamColor Color for the player's team.
      * @param size Size of the player cube.
      */
-    static void drawPlayer(Vector3& worldPos, Color teamColor, Orientation orientation,
+    static void drawPlayer(Vector3& worldPos, Color teamColor, float rotation,
                            Model* model = nullptr, const Color* baseMats = nullptr,
                            float cubeSize = 0.8f, float modelSize = 0.4f);
 
@@ -81,6 +81,5 @@ class EntityRenderer {
 
     static void _drawCubeWireframeThick(const Vector3& worldPos, float size, Color color,
                                         float thickness);
-    static float _getRotationForPlayerOrientation(Orientation orientation);
     static void _restoreModelBaseColors(Model& model, const Color* baseMats, int count = 6);
 };

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# This script wrapper allows the compiled zappy_ai to execute
+# the Python source from the correct directory when run from the root.
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+export PYTHONPATH="${DIR}/ai/src:${PYTHONPATH}"
+exec python3 "${DIR}/ai/src/main.py" "$@"

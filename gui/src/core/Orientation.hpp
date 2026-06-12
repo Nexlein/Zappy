@@ -38,3 +38,22 @@ inline std::string to_string(Orientation orientation)
     }
     return "Unknown";
 }
+
+/**
+ * @brief Returns the Y rotation angle (degrees) for a given orientation.
+ * @note Specific to the rimuru player model, which faces West at 0°.
+ */
+inline float toAngle(Orientation orientation)
+{
+    switch (orientation) {
+        case Orientation::W:
+            return 0.0f;
+        case Orientation::S:
+            return 90.0f;
+        case Orientation::E:
+            return 180.0f;
+        case Orientation::N:
+            return 270.0f;
+    }
+    return 0.0f;
+}

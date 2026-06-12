@@ -22,6 +22,14 @@ fetchcontent_declare(
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 fetchcontent_makeavailable(raylib)
 
+# Suppress compiler warnings from third-party raylib and glfw libraries
+if(TARGET raylib)
+    target_compile_options(raylib PRIVATE -w)
+endif()
+if(TARGET glfw)
+    target_compile_options(glfw PRIVATE -w)
+endif()
+
 set(GUI_SOURCES
     src/main.cpp
     src/renderer/HeadlessRenderer.cpp
@@ -35,6 +43,8 @@ set(GUI_SOURCES
     src/renderer/raylib_helpers/TooltipRenderer.cpp
     src/network/TcpSocket.cpp
     src/network/ProtocolParser.cpp
+    src/core/behaviors/MoveBehavior.cpp
+    src/core/behaviors/TurnBehavior.cpp
     src/core/EventQueue.cpp
     src/core/GameState.cpp
     src/core/Args.cpp

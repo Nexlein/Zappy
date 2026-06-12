@@ -1,6 +1,11 @@
 #include "GameState.hpp"
 
 #include <iostream>
+#include <memory>
+
+#include "behaviors/MoveBehavior.hpp"
+#include "behaviors/TurnBehavior.hpp"
+#include "renderer/raylib_helpers/RenderingHelper.hpp"
 
 void GameState::applyEvent(const Event& e)
 {
@@ -73,22 +78,34 @@ void GameState::applyTeamName(const TeamName& e) { world.teams.push_back(e.name)
 
 void GameState::applyPlayerNew(const PlayerNew& e)
 {
-    Player player{.id = e.id,
-                  .x = e.x,
-                  .y = e.y,
-                  .orientation = e.orientation,
-                  .level = e.level,
-                  .team = e.team};
-    world.players[e.id] = player;
+    auto [it, _] = world.players.emplace(e.id, Player{.id = e.id,
+                                                      .x = e.x,
+                                                      .y = e.y,
+                                                      .orientation = e.orientation,
+                                                      .level = e.level,
+                                                      .team = e.team});
+    it->second.visual.pos =
+        RenderingHelper::tileToWorld(e.x, e.y, world.width, world.height, tileSize);
+    it->second.visual.angle = toAngle(e.orientation);
 }
 
 void GameState::applyPlayerPosition(const PlayerPosition& e)
 {
     auto it = world.players.find(e.id);
     if (it != world.players.end()) {
-        it->second.x = e.x;
-        it->second.y = e.y;
-        it->second.orientation = e.orientation;
+        Player& player = it->second;
+        int fromX = player.x;
+        int fromY = player.y;
+        player.x = e.x;
+        player.y = e.y;
+        player.orientation = e.orientation;
+
+        float duration = timeUnit > 0 ? 7.0f / timeUnit : 0.1f;
+        player.visual.behaviors.clear();
+        player.visual.behaviors.push_back(std::make_unique<MoveBehavior>(
+            player.visual, fromX, fromY, e.x, e.y, world.width, world.height, tileSize, duration));
+        player.visual.behaviors.push_back(std::make_unique<TurnBehavior>(
+            player.visual, player.visual.angle, toAngle(e.orientation), duration));
     }
 }
 

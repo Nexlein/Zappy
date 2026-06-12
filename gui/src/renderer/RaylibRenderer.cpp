@@ -95,10 +95,10 @@ void RaylibRenderer::_render3D()
 {
     GridRenderer::drawGrid(_state->world.width, _state->world.height, TILE_SIZE);
 
-    for (const auto& [id, player] : _state->world.players) {
-        Vector3 worldPos = RenderingHelper::tileToWorld(player.x, player.y, _state->world.width,
-                                                        _state->world.height, TILE_SIZE);
-        EntityRenderer::drawPlayer(worldPos, _getTeamColor(player.team), player.orientation,
+    for (auto& [id, player] : _state->world.players) {
+        player.visual.update(GetFrameTime());
+        Vector3 worldPos = player.visual.pos;
+        EntityRenderer::drawPlayer(worldPos, _getTeamColor(player.team), player.visual.angle,
                                    &_playerModel, _playerModelBaseMats, PLAYER_CUBE_SIZE,
                                    PLAYER_MODEL_SIZE);
     }
@@ -126,8 +126,7 @@ void RaylibRenderer::_render3D()
 void RaylibRenderer::_render2D()
 {
     for (const auto& [id, player] : _state->world.players) {
-        Vector3 worldPos = RenderingHelper::tileToWorld(player.x, player.y, _state->world.width,
-                                                        _state->world.height, TILE_SIZE);
+        Vector3 worldPos = player.visual.pos;
         worldPos.y = PLAYER_CUBE_SIZE * 1.5f;  // Above cube
         TextRenderer::drawTextAt3DPosition(worldPos, _camera,
                                            "Player #" + std::to_string(player.id),
@@ -159,8 +158,7 @@ void RaylibRenderer::_drawSelectionHighlight()
         case SelectionFinder::EntityType::Player:
             if (_state->world.players.find(_selection.id) != _state->world.players.end()) {
                 const Player& player = _state->world.players.at(_selection.id);
-                Vector3 worldPos = RenderingHelper::tileToWorld(
-                    player.x, player.y, _state->world.width, _state->world.height, TILE_SIZE);
+                Vector3 worldPos = player.visual.pos;
                 worldPos.y = PLAYER_CUBE_SIZE / 2.0f;
                 EntityRenderer::drawPlayerHighlight(worldPos, PLAYER_CUBE_SIZE, SELECTION_COLOR,
                                                     SELECTION_WIREFRAME_THICKNESS);
