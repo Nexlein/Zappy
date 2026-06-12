@@ -10,6 +10,7 @@ from context import DroneContext
 from elevations import (
     is_incantation_ready,
     ELEVATION_REQUIREMENTS,
+    PLAYERS_REQUIRED,
     BROADCAST_DIRECTION_ARRIVED,
     BROADCAST_DIRECTION_FORWARD,
     BROADCAST_DIRECTION_RIGHT,
@@ -51,34 +52,74 @@ class BroadcastHelp(State):
     def enter(self, context: DroneContext) -> None:
         self.ticks_waited = 0
         self.tick_since_bcast = BCAST_INTERVAL  # broadcast on the first tick
+        self.ready_count = 0
+        self._abort_target = None
+        self._abort_emitted = False
         ai_logger.talk(
             "[BroadcastHelp] Help! I need my teammates to gather here! RALLY!"
         )
 
     def update(self, context: DroneContext) -> str | None:
+        """
+        Count READY (K=0) / LEAVING confirmations; launch the incantation once
+        enough teammates confirmed AND the tile passes is_incantation_ready.
+        On hunger/timeout, get_action emits ABORT before the state exits.
+        """
+        if self._abort_target:
+            return self._abort_target if self._abort_emitted else None
+
         self.ticks_waited += 1
 
-        # Check if the tile is ready for incantation (independent of elif chain).
+        for bcst in context.broadcasts:
+            if bcst.content.level != context.level:
+                continue
+            if (
+                bcst.content.msg_type == MessageType.READY
+                and bcst.direction in BROADCAST_DIRECTION_ARRIVED
+            ):
+                self.ready_count += 1
+                ai_logger.talk(
+                    f"[BroadcastHelp] A teammate is ready! "
+                    f"({self.ready_count + 1}/{PLAYERS_REQUIRED[context.level]})"
+                )
+            elif (
+                bcst.content.msg_type == MessageType.LEAVING
+                and self.ready_count > 0
+            ):
+                self.ready_count -= 1
+                ai_logger.talk(
+                    f"[BroadcastHelp] A teammate left... "
+                    f"({self.ready_count + 1}/{PLAYERS_REQUIRED[context.level]})"
+                )
+
         if context.vision:
             tile = context.vision[0]
-            if is_incantation_ready(context.level, tile):
+            if self.ready_count + 1 >= PLAYERS_REQUIRED[
+                context.level
+            ] and is_incantation_ready(context.level, tile):
                 return "Incantation"
 
-        # Safety exits (checked regardless of vision state).
         if context.inventory.food < SURVIVAL_THRESHOLD:
             ai_logger.talk(
                 "[BroadcastHelp] Waiting is making me hungry! I'm going to look for food."
             )
-            return "ForageFood"
-        if self.ticks_waited > RALLY_TIMEOUT:
+            self._abort_target = "ForageFood"
+        elif self.ticks_waited > RALLY_TIMEOUT:
             ai_logger.talk(
                 "[BroadcastHelp] Nobody is coming... I will go back to looking for stones."
             )
-            return "SearchStone"
+            self._abort_target = "SearchStone"
 
         return None
 
     def get_action(self, context: DroneContext) -> str | None:
+        if self._abort_target and not self._abort_emitted:
+            self._abort_emitted = True
+            payload = BroadcastProtocol.encode(
+                context.team_name, MessageType.ABORT, context.level
+            )
+            return f"Broadcast {payload}"
+
         if not context.vision:
             return "Look"
 
@@ -116,30 +157,85 @@ class MapsToAlly(State):
         self._entry_level = context.level
         self.ticks_waited = 0
         self.arrived = False
+        self.ready_sent = False
+        self.waiting_incant = False
+        self._leave_target = None
+        self._leave_emitted = False
+
+    def _leave(self, target: str) -> str | None:
+        """Exit toward `target`, emitting LEAVING first if we said READY."""
+        if not self.ready_sent:
+            return target
+        self._leave_target = target
+        return None
 
     def update(self, context: DroneContext) -> str | None:
+        """
+        Exit on hunger/level-up/timeout (emitting LEAVING first if READY was
+        sent) and react to the initiator's INCANT (K=0: hold still, else too
+        late) and ABORT signals.
+        """
+        if self._leave_target:
+            return self._leave_target if self._leave_emitted else None
+
         self.ticks_waited += 1
 
         if context.inventory.food < SURVIVAL_THRESHOLD:
             ai_logger.talk("[MapsToAlly] I'm too hungry to keep walking... Food first!")
-            return "ForageFood"
+            return self._leave("ForageFood")
 
-        # Another player's incantation already leveled us up.
+        # Leveled up thanks to the elevations
         if context.level > self._entry_level:
             ai_logger.talk(
-                "[MapsToAlly] Wow, I leveled up on the way thanks to someone else!"
+                "[MapsToAlly] I leveled up! This rally is over for me."
             )
             return "SearchStone"
+
+        for bcst in context.broadcasts:
+            if bcst.content.level != self._entry_level:
+                continue
+            if bcst.content.msg_type == MessageType.ABORT:
+                ai_logger.talk(
+                    "[MapsToAlly] The rally was called off. Back to my own business."
+                )
+                return "SearchStone"
+            if bcst.content.msg_type == MessageType.INCANT:
+                if bcst.direction in BROADCAST_DIRECTION_ARRIVED:
+                    ai_logger.talk(
+                        "[MapsToAlly] The ritual is starting here! Holding still."
+                    )
+                    self.arrived = True
+                    self.waiting_incant = True
+                else:
+                    ai_logger.talk(
+                        "[MapsToAlly] The ritual started without me... too late."
+                    )
+                    return "SearchStone"
 
         if self.ticks_waited > RALLY_TIMEOUT:
             ai_logger.talk(
                 "[MapsToAlly] I lost the signal... back to searching myself."
             )
-            return "SearchStone"
+            return self._leave("SearchStone")
 
         return None
 
     def get_action(self, context: DroneContext) -> str | None:
+        """
+        Emit a pending LEAVING, stay silent if the ritual is imminent,
+        drop stones then say READY once on the rally tile, or follow
+        the RALLY direction while travelling.
+        """
+        if self._leave_target and not self._leave_emitted:
+            self._leave_emitted = True
+            payload = BroadcastProtocol.encode(
+                context.team_name, MessageType.LEAVING, self._entry_level
+            )
+            return f"Broadcast {payload}"
+
+        if self.waiting_incant:
+            return None
+
         # -- Already on the rally tile: drop stones and wait. --
         if self.arrived:
             if not context.vision:
@@ -147,6 +243,12 @@ class MapsToAlly(State):
             stone = _next_stone_to_drop(context)
             if stone:
                 return f"Set {stone}"
+            if not self.ready_sent:
+                self.ready_sent = True
+                payload = BroadcastProtocol.encode(
+                    context.team_name, MessageType.READY, self._entry_level
+                )
+                return f"Broadcast {payload}"
             return "Look"  # Keep re-scanning so update() sees is_incantation_ready
 
         # -- Still travelling: follow the latest RALLY broadcast direction. --

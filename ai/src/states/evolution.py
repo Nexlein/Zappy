@@ -18,6 +18,7 @@ from config import (
     EXPLORE_TURN_EVERY,
 )
 from look_parser import generate_path_to_tile
+from BroadcastProtocol import BroadcastProtocol
 
 
 class SearchStone(State):
@@ -130,22 +131,53 @@ class IncantationState(State):
 
     def enter(self, context: DroneContext) -> None:
         ai_logger.talk("[Incantation] Let the elevation ritual begin!")
+        self.broadcast_sent = False
         self.command_sent = False
+        self.need_abort = False
+        self.abort_sent = False
 
     def update(self, context: DroneContext) -> str | None:
+        """
+        Read the ritual verdict; on a failed group ritual, get_action emits
+        ABORT before the state exits to SearchStone.
+        """
+        if self.abort_sent:
+            return "SearchStone"
+        if self.need_abort:
+            return None
+
         if self.command_sent and context.last_command_successful is not None:
             if context.last_command_successful:
                 ai_logger.talk(
                     f"[Incantation] Yes! I successfully reached level {context.level}!"
                 )
-            else:
-                ai_logger.talk(
-                    "[Incantation] Oh no, the ritual failed. Let's try again..."
-                )
+                return "SearchStone"
+            ai_logger.talk(
+                "[Incantation] Oh no, the ritual failed. Let's try again..."
+            )
+            if context.level > SOLO_INCANTATION_LEVEL:
+                self.need_abort = True
+                return None
             return "SearchStone"
         return None
 
     def get_action(self, context: DroneContext) -> str | None:
+        """
+        Group levels: Broadcast INCANT one tick before Incantation
+        (or ABORT if the ritual just failed). Solo levels incant directly.
+        """
+        if self.need_abort and not self.abort_sent:
+            self.abort_sent = True
+            payload = BroadcastProtocol.encode(
+                context.team_name, MessageType.ABORT, context.level
+            )
+            return f"Broadcast {payload}"
+        if not self.broadcast_sent and context.level > SOLO_INCANTATION_LEVEL:
+            self.broadcast_sent = True
+            payload = BroadcastProtocol.encode(
+                context.team_name, MessageType.INCANT, context.level
+            )
+            return f"Broadcast {payload}"
         if not self.command_sent:
             self.command_sent = True
             return "Incantation"
