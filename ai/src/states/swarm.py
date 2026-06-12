@@ -17,6 +17,7 @@ from elevations import (
 )
 from config import SURVIVAL_THRESHOLD, RALLY_TIMEOUT, BCAST_INTERVAL
 from BroadcastProtocol import BroadcastProtocol, MessageType
+from ai_logger import ai_logger
 
 
 # --- Helpers ---
@@ -50,7 +51,9 @@ class BroadcastHelp(State):
     def enter(self, context: DroneContext) -> None:
         self.ticks_waited = 0
         self.tick_since_bcast = BCAST_INTERVAL  # broadcast on the first tick
-        print("[BroadcastHelp] Entering state. Broadcasting for help.")
+        ai_logger.talk(
+            "[BroadcastHelp] Help! I need my teammates to gather here! RALLY!"
+        )
 
     def update(self, context: DroneContext) -> str | None:
         self.ticks_waited += 1
@@ -63,10 +66,14 @@ class BroadcastHelp(State):
 
         # Safety exits (checked regardless of vision state).
         if context.inventory.food < SURVIVAL_THRESHOLD:
-            print("[BroadcastHelp] Low food! Falling back to ForageFood.")
+            ai_logger.talk(
+                "[BroadcastHelp] Waiting is making me hungry! I'm going to look for food."
+            )
             return "ForageFood"
         if self.ticks_waited > RALLY_TIMEOUT:
-            print("[BroadcastHelp] Rally timeout. Returning to SearchStone.")
+            ai_logger.talk(
+                "[BroadcastHelp] Nobody is coming... I will go back to looking for stones."
+            )
             return "SearchStone"
 
         return None
@@ -93,7 +100,7 @@ class BroadcastHelp(State):
         return "Look"
 
     def exit(self, context: DroneContext) -> None:
-        print("[BroadcastHelp] Leaving rally.")
+        ai_logger.talk("[BroadcastHelp] Stopping my broadcast.")
 
 
 # MapsToAlly: Navigate toward a teammate's broadcast signal.
@@ -105,7 +112,7 @@ class MapsToAlly(State):
     """
 
     def enter(self, context: DroneContext) -> None:
-        print("[MapsToAlly] Entering state. Following broadcast direction.")
+        ai_logger.talk("[MapsToAlly] I hear someone! I'm on my way to help!")
         self._entry_level = context.level
         self.ticks_waited = 0
         self.arrived = False
@@ -114,16 +121,20 @@ class MapsToAlly(State):
         self.ticks_waited += 1
 
         if context.inventory.food < SURVIVAL_THRESHOLD:
-            print("[MapsToAlly] Low food! Falling back to ForageFood.")
+            ai_logger.talk("[MapsToAlly] I'm too hungry to keep walking... Food first!")
             return "ForageFood"
 
         # Another player's incantation already leveled us up.
         if context.level > self._entry_level:
-            print("[MapsToAlly] Leveled up via another player's ritual!")
+            ai_logger.talk(
+                "[MapsToAlly] Wow, I leveled up on the way thanks to someone else!"
+            )
             return "SearchStone"
 
         if self.ticks_waited > RALLY_TIMEOUT:
-            print("[MapsToAlly] Navigation timeout. Returning to SearchStone.")
+            ai_logger.talk(
+                "[MapsToAlly] I lost the signal... back to searching myself."
+            )
             return "SearchStone"
 
         return None
@@ -166,4 +177,4 @@ class MapsToAlly(State):
         return "Look"
 
     def exit(self, context: DroneContext) -> None:
-        print("[MapsToAlly] Leaving group-up.")
+        ai_logger.talk("[MapsToAlly] I am leaving the group-up journey.")

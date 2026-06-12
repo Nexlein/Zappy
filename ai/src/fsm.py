@@ -11,6 +11,7 @@ from states.AStates import State
 from states.survival import ForageFood
 from states.evolution import SearchStone, IncantationState
 from states.swarm import BroadcastHelp, MapsToAlly
+from ai_logger import ai_logger
 
 
 class AIController:
@@ -55,11 +56,13 @@ class AIController:
         self.context.ticks_since_inventory += 1
 
         # 3. Ask the (possibly new) state for the next action
-        return self.current_state.get_action(self.context)
+        action = self.current_state.get_action(self.context)
+        ai_logger.log_state(self.current_state_name, action or "None")
+        return action
 
     def _transition_to(self, new_state_name: str) -> None:
         """Tear down the current state and set up the new one."""
-        print(f"[FSM] {self.current_state_name} -> {new_state_name}")
+        ai_logger.info(f"[FSM] {self.current_state_name} -> {new_state_name}")
 
         self.current_state.exit(self.context)
         self.current_state_name = new_state_name

@@ -14,6 +14,7 @@ from BroadcastProtocol import BroadcastProtocol
 from look_parser import parse_look_to_tiles
 from inventory_parser import update_inventory
 from typing import Any
+from ai_logger import ai_logger
 
 
 class DroneDied(Exception):
@@ -36,7 +37,7 @@ class Orchestrator:
     _context: DroneContext
 
     def __init__(self, config):
-        print("[Orchestrator] Initializing Zappy AI client...")
+        ai_logger.info("[Orchestrator] Initializing Zappy AI client...")
         client = TcpClient(host=config.host, port=config.port)
         client.connect()
         slots, (w, h) = client.handshake(config.teamName)
@@ -72,9 +73,10 @@ class Orchestrator:
                 if response is not None:
                     self._handle_response(self._pending_command, response)
         except DroneDied:
-            print("[Orchestrator] This drone has died. Exiting.")
+            ai_logger.info("[Orchestrator] This drone has died. Exiting.")
 
     def _handle_event(self, event: str):
+        ai_logger.log_event(event)
         if event.startswith("message"):
             try:
                 direction, payload = BroadcastProtocol.parse_message(event)
@@ -89,13 +91,17 @@ class Orchestrator:
         elif event.startswith("dead"):
             raise DroneDied()
         elif event.startswith("Elevation underway"):
-            print("[Orchestrator] Ritual started: drone is frozen until verdict.")
+            ai_logger.info(
+                "[Orchestrator] Ritual started: drone is frozen until verdict."
+            )
             self._context.elevation_in_progress = True
         elif event.startswith("Current level:"):
             try:
                 level = int(event.split(":")[1].strip())
             except ValueError:
-                print(f"[Orchestrator] Could not parse level from event: {event}")
+                ai_logger.error(
+                    f"[Orchestrator] Could not parse level from event: {event}"
+                )
                 return
             self._context.level = level
             self._context.elevation_in_progress = False
@@ -105,6 +111,7 @@ class Orchestrator:
                 self._pending_command = None
 
     def _handle_response(self, command: str | None, response: str):
+        ai_logger.log_receive(response)
         if (
             self._context.elevation_in_progress
             and response == "ko"
@@ -113,7 +120,9 @@ class Orchestrator:
             self._context.elevation_in_progress = False
             return
         if command is None:
-            print(f"[Orchestrator] Response with no pending command: {response}")
+            ai_logger.error(
+                f"[Orchestrator] Response with no pending command: {response}"
+            )
             return
         if command == "Incantation":
             # Failure verdict of our own ritual (success arrives as an event).
@@ -149,6 +158,7 @@ class Orchestrator:
 
 def main():
     config = parseArgs()
+    ai_logger.configure(config.teamName, config.verbose)
 
     orchestrator = Orchestrator(config)
     orchestrator.run()

@@ -8,6 +8,7 @@
 import random
 from states.AStates import State
 from context import DroneContext
+from ai_logger import ai_logger
 from config import FOOD_TARGET, EXPLORE_TURN_EVERY
 
 
@@ -20,12 +21,14 @@ class ForageFood(State):
     """
 
     def enter(self, context: DroneContext) -> None:
-        print("[ForageFood] Entering state.")
+        ai_logger.talk("[ForageFood] I am hungry! I am going to search for food.")
         self._forward_streak = 0
 
     def update(self, context: DroneContext) -> str | None:
         if context.inventory.food >= FOOD_TARGET:
-            print("[ForageFood] Buffer secure. Switching to SearchStone.")
+            ai_logger.talk(
+                "[ForageFood] I have enough food now. Time to search for stones!"
+            )
             return "SearchStone"
         return None
 
@@ -60,4 +63,4 @@ class ForageFood(State):
         return "Forward"
 
     def exit(self, context: DroneContext) -> None:
-        print("[ForageFood] Exiting state.")
+        ai_logger.talk("[ForageFood] I am full. Stopping forage.")

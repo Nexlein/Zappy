@@ -10,6 +10,7 @@ from states.AStates import State
 from context import DroneContext
 from elevations import ELEVATION_REQUIREMENTS
 from BroadcastProtocol import MessageType
+from ai_logger import ai_logger
 from config import (
     MAX_LEVEL,
     SOLO_INCANTATION_LEVEL,
@@ -30,7 +31,9 @@ class SearchStone(State):
     """
 
     def enter(self, context: DroneContext) -> None:
-        print(f"[SearchStone] Hunting for stones to reach level {context.level + 1}.")
+        ai_logger.talk(
+            f"[SearchStone] Let's gather stones to reach level {context.level + 1}!"
+        )
         self._forward_streak = 0
 
     def _get_missing_stones(self, context: DroneContext) -> dict[str, int]:
@@ -44,11 +47,15 @@ class SearchStone(State):
 
     def update(self, context: DroneContext) -> str | None:
         if context.level >= MAX_LEVEL:
-            print("[SearchStone] Already at maximum level. Switching to ForageFood.")
+            ai_logger.talk(
+                "[SearchStone] I am already max level! Let's just eat and chill."
+            )
             return "ForageFood"
 
         if context.inventory.food < SURVIVAL_THRESHOLD:
-            print("[SearchStone] Low food! Switching to ForageFood.")
+            ai_logger.talk(
+                "[SearchStone] I am getting hungry while searching for stones... I need food!"
+            )
             return "ForageFood"
 
         # React to a teammate's RALLY call (solo levels can incant alone).
@@ -58,15 +65,16 @@ class SearchStone(State):
                     bcst.content.msg_type == MessageType.RALLY
                     and bcst.content.level == context.level
                 ):
-                    print(
-                        f"[SearchStone] Heard RALLY for level {context.level}. "
-                        "Switching to MapsToAlly."
+                    ai_logger.talk(
+                        f"[SearchStone] I hear my friends calling for level {context.level}! I am coming!"
                     )
                     return "MapsToAlly"
 
         missing = self._get_missing_stones(context)
         if not missing:
-            print("[SearchStone] All required stones collected!")
+            ai_logger.talk(
+                "[SearchStone] I have found all the stones I need! I am ready!"
+            )
             # Solo levels can incant alone; higher levels need teammates.
             return (
                 "Incantation"
@@ -112,7 +120,7 @@ class SearchStone(State):
         return "Forward"
 
     def exit(self, context: DroneContext) -> None:
-        print("[SearchStone] Mining phase finished.")
+        ai_logger.talk("[SearchStone] Done looking for stones for now.")
 
 
 class IncantationState(State):
@@ -121,15 +129,19 @@ class IncantationState(State):
     """
 
     def enter(self, context: DroneContext) -> None:
-        print("[Incantation] Initiating elevation ritual…")
+        ai_logger.talk("[Incantation] Let the elevation ritual begin!")
         self.command_sent = False
 
     def update(self, context: DroneContext) -> str | None:
         if self.command_sent and context.last_command_successful is not None:
             if context.last_command_successful:
-                print(f"[Incantation] Elevation succeeded! Now level {context.level}.")
+                ai_logger.talk(
+                    f"[Incantation] Yes! I successfully reached level {context.level}!"
+                )
             else:
-                print("[Incantation] Elevation failed. Regrouping.")
+                ai_logger.talk(
+                    "[Incantation] Oh no, the ritual failed. Let's try again..."
+                )
             return "SearchStone"
         return None
 

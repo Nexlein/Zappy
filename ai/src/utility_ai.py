@@ -26,6 +26,7 @@ from BroadcastProtocol import BroadcastProtocol, MessageType
 
 
 from look_parser import generate_path_to_tile
+from ai_logger import ai_logger
 
 
 class UtilityAIController:
@@ -75,16 +76,20 @@ class UtilityAIController:
             best_behavior = "survival"
 
         # 2. Return the action for the chosen behavior
+        action = "survival"
         if best_behavior == "incantation":
-            return "Incantation"
+            action = "Incantation"
         elif best_behavior == "rally":
-            return self._get_rally_action()
+            action = self._get_rally_action()
         elif best_behavior == "follow":
-            return self._get_follow_action()
+            action = self._get_follow_action()
         elif best_behavior == "gather":
-            return self._get_gather_action()
+            action = self._get_gather_action()
         else:
-            return self._get_survival_action()
+            action = self._get_survival_action()
+
+        ai_logger.log_state(best_behavior, action)
+        return action
 
     # --- Utility Calculations ---
 

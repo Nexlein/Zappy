@@ -8,6 +8,7 @@
 from collections import deque
 from dataclasses import dataclass, field
 from tcpClient import TcpClient
+from ai_logger import ai_logger
 
 EVENT_PREFIXES = (
     "message",
@@ -34,6 +35,7 @@ class NetworkBuffer:
 
     def send_command(self, command: str) -> None:
         """Send a command to the server."""
+        ai_logger.log_send(command)
         self._client.send(command)
 
     def next_event(self) -> str | None:
