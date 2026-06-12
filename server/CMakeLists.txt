@@ -31,6 +31,7 @@ set(SERVER_SOURCES
     src/game/HandshakeHandler.cpp
     src/game/CommandDispatcher.cpp
     src/game/GuiHandlers.cpp
+    src/game/AiHandlers.cpp
 )
 
 add_executable(zappy_server ${SERVER_SOURCES})

@@ -86,6 +86,7 @@ if(ZAPPY_BUILD_SERVER)
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/game/HandshakeHandler.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/game/CommandDispatcher.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/game/GuiHandlers.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/game/AiHandlers.cpp
     )
 
     set(SERVER_TEST_SOURCES
