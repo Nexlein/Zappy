@@ -12,12 +12,17 @@
 #include "data/Resources.hpp"
 #include "data/Tile.hpp"
 
+/// Result of an Eject command. dx/dy encode the push direction (used to notify ejected players).
 struct EjectResult {
     std::vector<int> ejectedPlayerIds;
     int dx;
     int dy;
 };
 
+/**
+ * @brief Stone and player requirements for one incantation level.
+ * @see G-YEP-400_zappy.pdf for values per level.
+ */
 struct IncantationReq {
     int playerCount;
     int linemate;
@@ -28,10 +33,21 @@ struct IncantationReq {
     int thystame;
 };
 
+/**
+ * @brief Pure game state - no networking, no scheduling.
+ *
+ * Owns the map, players, eggs, and teams. The server layer calls mutation
+ * methods here after dispatching commands, then notifies GUI clients via
+ * GuiNotifier. Keeping World network-free makes it fully unit-testable.
+ *
+ * @see server/doc.md - "core/World" section.
+ * @see GuiNotifier for GUI notifications after mutations.
+ */
 class World {
     public:
     World(int width, int height, const std::vector<std::string>& teamNames, int clientNb);
 
+    /// Access a tile by position. Map is toroidal, coordinates wrap.
     Tile& at(int x, int y);
     const Tile& at(int x, int y) const;
 
@@ -52,7 +68,18 @@ class World {
     int addEgg(int playerId);
     bool hatchEgg(int eggId);
 
+    /**
+     * @brief Validate and start an incantation for @p playerId.
+     * Returns the list of participant IDs on success, nullopt if prerequisites fail.
+     * Prerequisites are checked again in finalizeIncantation() after the ritual delay.
+     */
     std::optional<std::vector<int>> startIncantation(int playerId);
+
+    /**
+     * @brief Finalize an incantation after the 300/f second delay.
+     * Re-checks prerequisites. On success, levels up all participants and consumes stones.
+     * Returns false if any participant died or moved off the tile.
+     */
     bool finalizeIncantation(const std::vector<int>& participantIds);
 
     std::optional<std::string> checkWin() const;
