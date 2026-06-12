@@ -105,7 +105,8 @@ void CommandDispatcher::_handleBroadcast(int connectionId, const std::string& ms
     });
 }
 
-void CommandDispatcher::_handleFork(int connectionId) {
+void CommandDispatcher::_handleFork(int connectionId)
+{
     int playerId = _clients.getConnection(connectionId).playerId();
 
     _scheduler.schedule(std::chrono::milliseconds(42000 / _freq), [this, connectionId, playerId] {

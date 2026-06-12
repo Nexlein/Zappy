@@ -1,5 +1,4 @@
 #include "CommandDispatcher.hpp"
-
 #include "protocol/Serializer.hpp"
 
 void CommandDispatcher::_handleMsz(int connectionId)
@@ -21,8 +20,7 @@ void CommandDispatcher::_handleMct(int connectionId)
 
 void CommandDispatcher::_handleTna(int connectionId)
 {
-    for (const auto& team : _config.teamNames)
-        _clients.send(connectionId, Serializer::tna(team));
+    for (const auto& team : _config.teamNames) _clients.send(connectionId, Serializer::tna(team));
 }
 
 void CommandDispatcher::_handlePpo(int connectionId, int playerId)
