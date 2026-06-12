@@ -26,6 +26,7 @@ set(SERVER_SOURCES
     src/protocol/Serializer.cpp
     src/network/Listener.cpp
     src/network/Connection.cpp
+    src/network/ClientManager.cpp
 )
 
 add_executable(zappy_server ${SERVER_SOURCES})
