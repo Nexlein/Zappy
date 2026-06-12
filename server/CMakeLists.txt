@@ -21,6 +21,9 @@ set(SERVER_SOURCES
     src/core/Args.cpp
     src/core/World.cpp
     src/core/Scheduler.cpp
+    src/protocol/AiParser.cpp
+    src/protocol/GuiParser.cpp
+    src/protocol/Serializer.cpp
 )
 
 add_executable(zappy_server ${SERVER_SOURCES})
