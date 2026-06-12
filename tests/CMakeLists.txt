@@ -71,6 +71,7 @@ if(ZAPPY_BUILD_SERVER)
     set(SERVER_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/core/World.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/core/Args.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/core/Scheduler.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/lib/clap/App.cpp
     )
 
@@ -78,6 +79,7 @@ if(ZAPPY_BUILD_SERVER)
         server/test_world.cpp
         server/test_args.cpp
         server/test_resources.cpp
+        server/test_scheduler.cpp
     )
 
     add_executable(zappy_server_tests ${SERVER_TEST_SOURCES} ${SERVER_SOURCES})
