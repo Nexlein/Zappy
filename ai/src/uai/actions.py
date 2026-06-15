@@ -142,13 +142,13 @@ class ActionGenerators:
 
     def _get_follow_action(self) -> str:
         direction = self.highest_rally_direction
-        
+
         if direction is not None:
             if direction != 0 and self.arrived:
                 # Leader moved or changed
                 self.arrived = False
                 self.ready_sent = False
-                
+
             if not self.arrived:
                 if direction in BROADCAST_DIRECTION_ARRIVED:
                     self.arrived = True

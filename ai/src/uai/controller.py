@@ -74,10 +74,16 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
 
             # Follower listening to Leader
             if self.is_following:
-                if decoded.msg_type == MessageType.ABORT and decoded.drone_id == self.target_leader_id:
+                if (
+                    decoded.msg_type == MessageType.ABORT
+                    and decoded.drone_id == self.target_leader_id
+                ):
                     ai_logger.talk("[UAI-Follower] Rally aborted. Resetting.")
                     self._reset_follower_state()
-                elif decoded.msg_type == MessageType.INCANT and decoded.drone_id == self.target_leader_id:
+                elif (
+                    decoded.msg_type == MessageType.INCANT
+                    and decoded.drone_id == self.target_leader_id
+                ):
                     if bcst.direction in BROADCAST_DIRECTION_ARRIVED:
                         ai_logger.talk("[UAI-Follower] Ritual starting! Freezing.")
                         self.waiting_incant = True
