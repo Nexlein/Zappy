@@ -10,7 +10,7 @@ from context import DroneContext, BroadcastMessage
 from NetworkBuffer import NetworkBuffer
 from tcpClient import TcpClient
 from argsParser import parseArgs
-from BroadcastProtocol import BroadcastProtocol
+from BroadcastProtocol import BroadcastProtocol, MessageType
 from look_parser import parse_look_to_tiles
 from inventory_parser import update_inventory
 from typing import Any
@@ -85,6 +85,15 @@ class Orchestrator:
                 return
             if decoded.team_name != self._context.team_name:
                 return
+            
+            if (
+                self._context.elevation_in_progress
+                and decoded.msg_type == MessageType.ABORT
+                and decoded.level == self._context.level
+            ):
+                ai_logger.info("[Orchestrator] Received ABORT while frozen. Unfreezing!")
+                self._context.elevation_in_progress = False
+
             self._context.broadcasts.append(BroadcastMessage(direction, decoded))
         elif event.startswith("eject"):
             self._context.vision.clear()
