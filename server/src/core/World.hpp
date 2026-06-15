@@ -67,6 +67,7 @@ class World {
 
     int addEgg(int playerId);
     bool hatchEgg(int eggId);
+    std::optional<Egg> popEggForTeam(const std::string& teamName);
 
     /**
      * @brief Validate and start an incantation for @p playerId.

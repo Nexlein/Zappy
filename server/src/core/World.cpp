@@ -150,6 +150,20 @@ bool World::hatchEgg(int eggId)
     return true;
 }
 
+std::optional<Egg> World::popEggForTeam(const std::string& teamName)
+{
+    for (auto it = _eggs.begin(); it != _eggs.end(); ++it) {
+        if (it->second.teamName == teamName) {
+            Egg egg = it->second;
+            auto& ids = at(egg.x, egg.y).eggIds;
+            ids.erase(std::remove(ids.begin(), ids.end(), egg.id), ids.end());
+            _eggs.erase(it);
+            return egg;
+        }
+    }
+    return std::nullopt;
+}
+
 static const IncantationReq INCANTATION_REQS[7] = {
     {1, 1, 0, 0, 0, 0, 0},  // lvl 1 -> lvl 2
     {2, 1, 1, 1, 0, 0, 0},  // lvl 2 -> lvl 3
