@@ -46,6 +46,7 @@ class RaylibRenderer : public ARenderer {
     Model _eggModel = {};
     Color _eggModelBaseMats[2] = {};
 
+
     std::unordered_map<std::string, Color> _teamColors;
 
     SelectionFinder::Selection _selection;

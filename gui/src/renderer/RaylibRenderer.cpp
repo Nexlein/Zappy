@@ -48,6 +48,7 @@ void RaylibRenderer::init()
         for (int i = 0; i < _eggModel.materialCount && i < 2; i++)
             _eggModelBaseMats[i] = _eggModel.materials[i].maps[MATERIAL_MAP_DIFFUSE].color;
     }
+
 }
 
 void RaylibRenderer::render()
@@ -113,6 +114,12 @@ void RaylibRenderer::_render3D()
                                    &_playerModel, _playerModelBaseMats,
                                    PLAYER_CUBE_SIZE * player.visual.scale,
                                    PLAYER_MODEL_SIZE * player.visual.scale);
+        Color teamColor = _getTeamColor(player.team);
+        for (const auto& p : player.visual.particles) {
+            Color c = {teamColor.r, teamColor.g, teamColor.b,
+                       static_cast<unsigned char>(p.alpha * 255)};
+            DrawSphere(p.pos, p.size, c);
+        }
     }
     _state->world.purgeDyingPlayers();
 
