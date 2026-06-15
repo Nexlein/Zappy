@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cctype>
 #include <string>
 
 #include "CommandDispatcher.hpp"
@@ -64,7 +66,66 @@ void CommandDispatcher::_handleLeft(int connectionId)
     });
 }
 
-void CommandDispatcher::_handleLook(int connectionId) {}
+void CommandDispatcher::_handleLook(int connectionId)
+{
+    int playerId = _clients.getConnection(connectionId).playerId();
+
+    _scheduler.schedule(std::chrono::milliseconds(7000 / _freq), [this, connectionId, playerId] {
+        auto& p = _world.getPlayer(playerId);
+        int tileCount = (p.level + 1) * (p.level + 1);
+
+        std::string r = "[";
+        for (int i = 0; i < tileCount; i++) {
+            int d = 0;
+            while ((d + 1) * (d + 1) <= i) d++;
+            int xRel = i - d * d - d;
+
+            int dx = 0, dy = 0;
+            switch (p.orientation) {
+                case Orientation::N:
+                    dx = xRel;
+                    dy = -d;
+                    break;
+                case Orientation::S:
+                    dx = -xRel;
+                    dy = d;
+                    break;
+                case Orientation::E:
+                    dx = d;
+                    dy = xRel;
+                    break;
+                case Orientation::W:
+                    dx = -d;
+                    dy = -xRel;
+                    break;
+            }
+
+            auto& tile = _world.at(p.x + dx, p.y + dy);
+
+            if (i > 0) r += ", ";
+            bool first = true;
+            for (int j = 0; j < static_cast<int>(tile.playerIds.size()); j++) {
+                if (!first) r += " ";
+                r += "player";
+                first = false;
+            }
+            for (int res = 0; res < Resources::TYPE_COUNT; res++) {
+                auto type = static_cast<ResourceType>(res);
+                std::string name = Resources::get_name(type);
+                std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+                for (int c = 0; c < tile.resources[type]; c++) {
+                    if (!first) r += " ";
+                    r += name;
+                    first = false;
+                }
+            }
+        }
+        r += "]\n";
+
+        _clients.send(connectionId, r);
+        _executeNext(connectionId);
+    });
+}
 
 void CommandDispatcher::_handleInventory(int connectionId)
 {
