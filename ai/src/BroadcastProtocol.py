@@ -36,7 +36,9 @@ class BroadcastProtocol:
         return int(direction_str), payload
 
     @staticmethod
-    def encode(team_name: str, msg_type: MessageType, level: int, drone_id: str = "") -> str:
+    def encode(
+        team_name: str, msg_type: MessageType, level: int, drone_id: str = ""
+    ) -> str:
         return f"{team_name}|{msg_type.value}|{level}|{drone_id}"
 
     @staticmethod

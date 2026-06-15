@@ -85,13 +85,15 @@ class Orchestrator:
                 return
             if decoded.team_name != self._context.team_name:
                 return
-            
+
             if (
                 self._context.elevation_in_progress
                 and decoded.msg_type == MessageType.ABORT
                 and decoded.level == self._context.level
             ):
-                ai_logger.info("[Orchestrator] Received ABORT while frozen. Unfreezing!")
+                ai_logger.info(
+                    "[Orchestrator] Received ABORT while frozen. Unfreezing!"
+                )
                 self._context.elevation_in_progress = False
 
             self._context.broadcasts.append(BroadcastMessage(direction, decoded))

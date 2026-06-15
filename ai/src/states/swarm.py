@@ -16,7 +16,12 @@ from elevations import (
     BROADCAST_DIRECTION_RIGHT,
     BROADCAST_DIRECTION_LEFT,
 )
-from config import SURVIVAL_THRESHOLD, RALLY_TIMEOUT, BCAST_INTERVAL, SOLO_INCANTATION_LEVEL
+from config import (
+    SURVIVAL_THRESHOLD,
+    RALLY_TIMEOUT,
+    BCAST_INTERVAL,
+    SOLO_INCANTATION_LEVEL,
+)
 from BroadcastProtocol import BroadcastProtocol, MessageType
 from ai_logger import ai_logger
 
@@ -142,7 +147,10 @@ class BroadcastHelp(State):
             if self.tick_since_bcast >= BCAST_INTERVAL:
                 self.tick_since_bcast = 0
                 payload = BroadcastProtocol.encode(
-                    context.team_name, MessageType.RALLY, context.level, context.drone_id
+                    context.team_name,
+                    MessageType.RALLY,
+                    context.level,
+                    context.drone_id,
                 )
                 return f"Broadcast {payload}"
 
@@ -237,7 +245,10 @@ class MapsToAlly(State):
         if self._leave_target and not self._leave_emitted:
             self._leave_emitted = True
             payload = BroadcastProtocol.encode(
-                context.team_name, MessageType.LEAVING, self._entry_level, context.drone_id
+                context.team_name,
+                MessageType.LEAVING,
+                self._entry_level,
+                context.drone_id,
             )
             return f"Broadcast {payload}"
 
@@ -254,7 +265,10 @@ class MapsToAlly(State):
             if not self.ready_sent:
                 self.ready_sent = True
                 payload = BroadcastProtocol.encode(
-                    context.team_name, MessageType.READY, self._entry_level, context.drone_id
+                    context.team_name,
+                    MessageType.READY,
+                    self._entry_level,
+                    context.drone_id,
                 )
                 return f"Broadcast {payload}"
             return "Look"  # Keep re-scanning so update() sees is_incantation_ready
