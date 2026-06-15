@@ -63,6 +63,7 @@ class WorldState {
     int height;
     std::vector<Resources> tiles;
     std::unordered_map<int, Player> players;
+    mutable std::unordered_map<int, Player> dyingPlayers;
     std::unordered_map<int, Egg> eggs;
     std::vector<std::string> teams;
 
@@ -85,4 +86,10 @@ class WorldState {
      * @brief Checks if an egg with the given ID exists in the world.
      */
     bool eggExists(int id) const { return eggs.find(id) != eggs.end(); }
+
+    void purgeDyingPlayers() const
+    {
+        for (auto it = dyingPlayers.begin(); it != dyingPlayers.end();)
+            it = it->second.visual.behaviors.empty() ? dyingPlayers.erase(it) : ++it;
+    }
 };
