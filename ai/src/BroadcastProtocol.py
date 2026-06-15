@@ -33,7 +33,7 @@ class BroadcastProtocol:
         """Parse 'message <direction>,<payload>' from server."""
         _, rest = message_line.split(" ", 1)
         direction_str, payload = rest.split(",", 1)
-        return int(direction_str), payload
+        return int(direction_str), payload.lstrip()
 
     @staticmethod
     def encode(
