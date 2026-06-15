@@ -5,6 +5,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "raylib_helpers/EntityRenderer.hpp"
+#include "raylib_helpers/GridRenderer.hpp"
 #include "raylib_helpers/RenderingHelper.hpp"
 #include "raylib_helpers/TextRenderer.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
