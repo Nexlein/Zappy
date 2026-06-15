@@ -11,8 +11,9 @@
 void CommandDispatcher::_handleForward(int connectionId)
 {
     int playerId = _clients.getConnection(connectionId).playerId();
+    int delayMs = 7000;
 
-    _scheduler.schedule(std::chrono::milliseconds(7000 / _freq), [this, connectionId, playerId] {
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
         auto& p = _world.getPlayer(playerId);
 
         int dx = 0, dy = 0;
@@ -42,8 +43,9 @@ void CommandDispatcher::_handleForward(int connectionId)
 void CommandDispatcher::_handleRight(int connectionId)
 {
     int playerId = _clients.getConnection(connectionId).playerId();
+    int delayMs = 7000;
 
-    _scheduler.schedule(std::chrono::milliseconds(7000 / _freq), [this, connectionId, playerId] {
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
         auto& p = _world.getPlayer(playerId);
 
         p.orientation = turnRight(p.orientation);
@@ -56,8 +58,9 @@ void CommandDispatcher::_handleRight(int connectionId)
 void CommandDispatcher::_handleLeft(int connectionId)
 {
     int playerId = _clients.getConnection(connectionId).playerId();
+    int delayMs = 7000;
 
-    _scheduler.schedule(std::chrono::milliseconds(7000 / _freq), [this, connectionId, playerId] {
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
         auto& p = _world.getPlayer(playerId);
         p.orientation = turnLeft(p.orientation);
         _clients.send(connectionId, "ok\n");
@@ -69,8 +72,9 @@ void CommandDispatcher::_handleLeft(int connectionId)
 void CommandDispatcher::_handleLook(int connectionId)
 {
     int playerId = _clients.getConnection(connectionId).playerId();
+    int delayMs = 7000;
 
-    _scheduler.schedule(std::chrono::milliseconds(7000 / _freq), [this, connectionId, playerId] {
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
         auto& p = _world.getPlayer(playerId);
         int tileCount = (p.level + 1) * (p.level + 1);
 
@@ -130,8 +134,9 @@ void CommandDispatcher::_handleLook(int connectionId)
 void CommandDispatcher::_handleInventory(int connectionId)
 {
     int playerId = _clients.getConnection(connectionId).playerId();
+    int delayMs = 1000;
 
-    _scheduler.schedule(std::chrono::milliseconds(1000 / _freq), [this, connectionId, playerId] {
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
         auto& p = _world.getPlayer(playerId);
 
         std::string r = "[ food " + std::to_string(p.inventory.food) + ", linemate " +
@@ -150,9 +155,10 @@ void CommandDispatcher::_handleInventory(int connectionId)
 void CommandDispatcher::_handleBroadcast(int connectionId, const std::string& msg)
 {
     int playerId = _clients.getConnection(connectionId).playerId();
+    int delayMs = 7000;
 
-    _scheduler.schedule(std::chrono::milliseconds(7000 / _freq), [this, connectionId, playerId,
-                                                                  msg] {
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId,
+                                                                     msg] {
         auto& src = _world.getPlayer(playerId);
         for (auto& [pid, dst] : _world.getPlayers()) {
             if (pid == playerId) continue;
@@ -169,8 +175,9 @@ void CommandDispatcher::_handleBroadcast(int connectionId, const std::string& ms
 void CommandDispatcher::_handleFork(int connectionId)
 {
     int playerId = _clients.getConnection(connectionId).playerId();
+    int delayMs = 42000;
 
-    _scheduler.schedule(std::chrono::milliseconds(42000 / _freq), [this, connectionId, playerId] {
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
         auto& p = _world.getPlayer(playerId);
         int eggId = _world.addEgg(playerId);
 
@@ -184,8 +191,9 @@ void CommandDispatcher::_handleFork(int connectionId)
 void CommandDispatcher::_handleEject(int connectionId)
 {
     int playerId = _clients.getConnection(connectionId).playerId();
+    int delayMs = 7000;
 
-    _scheduler.schedule(std::chrono::milliseconds(7000 / _freq), [this, connectionId, playerId] {
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
         auto result = _world.ejectPlayers(playerId);
 
         if (result.ejectedPlayerIds.empty()) {
@@ -196,11 +204,12 @@ void CommandDispatcher::_handleEject(int connectionId)
 
         for (int eid : result.ejectedPlayerIds) {
             auto& ejected = _world.getPlayer(eid);
-            int dir = broadcastDirection(ejected.x - result.dx, ejected.y - result.dy, ejected.x,
-                                         ejected.y, _world.width(), _world.height(),
-                                         ejected.orientation);
+            int dir =
+                broadcastDirection(ejected.x - result.dx, ejected.y - result.dy, ejected.x,
+                                   ejected.y, _world.width(), _world.height(), ejected.orientation);
             _clients.send(ejected.connectionId, "eject: " + std::to_string(dir) + "\n");
-            _notifier.broadcast(Serializer::ppo(ejected.id, ejected.x, ejected.y, ejected.orientation));
+            _notifier.broadcast(
+                Serializer::ppo(ejected.id, ejected.x, ejected.y, ejected.orientation));
         }
 
         _clients.send(connectionId, "ok\n");
@@ -211,9 +220,10 @@ void CommandDispatcher::_handleEject(int connectionId)
 void CommandDispatcher::_handleTake(int connectionId, ResourceType resource)
 {
     int playerId = _clients.getConnection(connectionId).playerId();
+    int delayMs = 7000;
 
     _scheduler.schedule(
-        std::chrono::milliseconds(7000 / _freq), [this, connectionId, playerId, resource] {
+        std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId, resource] {
             auto& p = _world.getPlayer(playerId);
 
             if (_world.takeResource(playerId, resource)) {
@@ -230,9 +240,10 @@ void CommandDispatcher::_handleTake(int connectionId, ResourceType resource)
 void CommandDispatcher::_handleSet(int connectionId, ResourceType resource)
 {
     int playerId = _clients.getConnection(connectionId).playerId();
+    int delayMs = 7000;
 
     _scheduler.schedule(
-        std::chrono::milliseconds(7000 / _freq), [this, connectionId, playerId, resource] {
+        std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId, resource] {
             auto& p = _world.getPlayer(playerId);
 
             if (_world.setResource(playerId, resource)) {
