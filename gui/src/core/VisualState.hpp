@@ -14,6 +14,7 @@ class VisualState {
     public:
     mutable Vector3 pos = {0.0f, 0.0f, 0.0f};
     mutable float angle = 0.0f;
+    mutable float scale = 1.0f;
     mutable std::vector<std::unique_ptr<IBehavior>> behaviors;
 
     void update(float dt) const
