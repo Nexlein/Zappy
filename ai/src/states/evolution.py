@@ -76,12 +76,7 @@ class SearchStone(State):
             ai_logger.talk(
                 "[SearchStone] I have found all the stones I need! I am ready!"
             )
-            # Solo levels can incant alone; higher levels need teammates.
-            return (
-                "Incantation"
-                if context.level <= SOLO_INCANTATION_LEVEL
-                else "BroadcastHelp"
-            )
+            return "BroadcastHelp"
 
         return None
 
@@ -167,13 +162,13 @@ class IncantationState(State):
         if self.need_abort and not self.abort_sent:
             self.abort_sent = True
             payload = BroadcastProtocol.encode(
-                context.team_name, MessageType.ABORT, context.level
+                context.team_name, MessageType.ABORT, context.level, context.drone_id
             )
             return f"Broadcast {payload}"
         if not self.broadcast_sent and context.level > SOLO_INCANTATION_LEVEL:
             self.broadcast_sent = True
             payload = BroadcastProtocol.encode(
-                context.team_name, MessageType.INCANT, context.level
+                context.team_name, MessageType.INCANT, context.level, context.drone_id
             )
             return f"Broadcast {payload}"
         if not self.command_sent:

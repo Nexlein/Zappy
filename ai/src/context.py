@@ -7,6 +7,7 @@
 
 from dataclasses import dataclass, field
 from typing import List, Optional
+import uuid
 from BroadcastProtocol import DecodedBroadcast
 
 
@@ -56,6 +57,7 @@ class DroneContext:
     map_width: int = 0
     map_height: int = 0
     available_slots: int = 0
+    drone_id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
     # Dynamic drone state
     level: int = 1

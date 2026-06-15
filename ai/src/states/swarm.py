@@ -16,7 +16,7 @@ from elevations import (
     BROADCAST_DIRECTION_RIGHT,
     BROADCAST_DIRECTION_LEFT,
 )
-from config import SURVIVAL_THRESHOLD, RALLY_TIMEOUT, BCAST_INTERVAL
+from config import SURVIVAL_THRESHOLD, RALLY_TIMEOUT, BCAST_INTERVAL, SOLO_INCANTATION_LEVEL
 from BroadcastProtocol import BroadcastProtocol, MessageType
 from ai_logger import ai_logger
 
@@ -96,6 +96,18 @@ class BroadcastHelp(State):
             ] and is_incantation_ready(context.level, tile):
                 return "Incantation"
 
+        # Yield to another drone with a higher ID if they are calling for the same level
+        if context.level > SOLO_INCANTATION_LEVEL:
+            for bcst in context.broadcasts:
+                if (
+                    bcst.content.msg_type == MessageType.RALLY
+                    and bcst.content.level == context.level
+                    and bcst.content.drone_id > context.drone_id
+                ):
+                    ai_logger.talk(
+                        f"[BroadcastHelp] Yielding to leader {bcst.content.drone_id[:4]}... transitioning to MapsToAlly."
+                    )
+                    return "MapsToAlly"
         if context.inventory.food < SURVIVAL_THRESHOLD:
             ai_logger.talk(
                 "[BroadcastHelp] Waiting is making me hungry! I'm going to look for food."
@@ -113,7 +125,7 @@ class BroadcastHelp(State):
         if self._abort_target and not self._abort_emitted:
             self._abort_emitted = True
             payload = BroadcastProtocol.encode(
-                context.team_name, MessageType.ABORT, context.level
+                context.team_name, MessageType.ABORT, context.level, context.drone_id
             )
             return f"Broadcast {payload}"
 
@@ -125,13 +137,14 @@ class BroadcastHelp(State):
         if stone:
             return f"Set {stone}"
 
-        # Periodically re-broadcast the RALLY signal.
-        if self.tick_since_bcast >= BCAST_INTERVAL:
-            self.tick_since_bcast = 0
-            payload = BroadcastProtocol.encode(
-                context.team_name, MessageType.RALLY, context.level
-            )
-            return f"Broadcast {payload}"
+        # Periodically re-broadcast the RALLY signal (only if higher than solo).
+        if context.level > SOLO_INCANTATION_LEVEL:
+            if self.tick_since_bcast >= BCAST_INTERVAL:
+                self.tick_since_bcast = 0
+                payload = BroadcastProtocol.encode(
+                    context.team_name, MessageType.RALLY, context.level, context.drone_id
+                )
+                return f"Broadcast {payload}"
 
         self.tick_since_bcast += 1
         # Re-scan so update() can check is_incantation_ready() with fresh data.
@@ -224,7 +237,7 @@ class MapsToAlly(State):
         if self._leave_target and not self._leave_emitted:
             self._leave_emitted = True
             payload = BroadcastProtocol.encode(
-                context.team_name, MessageType.LEAVING, self._entry_level
+                context.team_name, MessageType.LEAVING, self._entry_level, context.drone_id
             )
             return f"Broadcast {payload}"
 
@@ -241,7 +254,7 @@ class MapsToAlly(State):
             if not self.ready_sent:
                 self.ready_sent = True
                 payload = BroadcastProtocol.encode(
-                    context.team_name, MessageType.READY, self._entry_level
+                    context.team_name, MessageType.READY, self._entry_level, context.drone_id
                 )
                 return f"Broadcast {payload}"
             return "Look"  # Keep re-scanning so update() sees is_incantation_ready

@@ -24,6 +24,7 @@ class DecodedBroadcast:
     team_name: str
     msg_type: MessageType
     level: int
+    drone_id: str = ""
 
 
 class BroadcastProtocol:
@@ -35,17 +36,21 @@ class BroadcastProtocol:
         return int(direction_str), payload
 
     @staticmethod
-    def encode(team_name: str, msg_type: MessageType, level: int) -> str:
-        return f"{team_name}|{msg_type.value}|{level}"
+    def encode(team_name: str, msg_type: MessageType, level: int, drone_id: str = "") -> str:
+        return f"{team_name}|{msg_type.value}|{level}|{drone_id}"
 
     @staticmethod
     def decode(raw_message: str) -> DecodedBroadcast:
         try:
             parts = raw_message.split("|")
-            if len(parts) != 3:
+            if len(parts) == 3:
+                team_name, msg_type, level = parts
+                drone_id = ""
+            elif len(parts) == 4:
+                team_name, msg_type, level, drone_id = parts
+            else:
                 raise ValueError("Invalid number of fields in broadcast message")
-            team_name, msg_type, level = parts
             msg_type_enum = MessageType(msg_type)
-            return DecodedBroadcast(team_name, msg_type_enum, int(level))
+            return DecodedBroadcast(team_name, msg_type_enum, int(level), drone_id)
         except ValueError as e:
             raise ValueError("Invalid broadcast message format") from e
