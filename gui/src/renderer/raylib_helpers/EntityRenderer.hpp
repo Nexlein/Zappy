@@ -1,8 +1,9 @@
 #pragma once
 
-#include "ColorPalette.hpp"
-#include "core/GameState.hpp"
+#include <unordered_map>
+
 #include "raylib.h"
+#include "core/Resources.hpp"
 
 /**
  * @brief Helper class for rendering game entities (players, eggs, resources).
