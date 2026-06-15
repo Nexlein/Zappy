@@ -89,6 +89,7 @@ class World {
     int width() const;
     int height() const;
     const std::unordered_map<int, Player>& getPlayers() const;
+    const std::unordered_map<int, Egg>& getEggs() const;
 
     private:
     int _width;

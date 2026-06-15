@@ -133,7 +133,7 @@ int World::addEgg(int playerId)
 {
     auto& p = _players.at(playerId);
     int eid = _nextEggId++;
-    Egg egg{eid, p.x, p.y, p.teamName};
+    Egg egg{eid, p.id, p.x, p.y, p.teamName};
     _eggs[eid] = egg;
     at(p.x, p.y).eggIds.push_back(eid);
     return eid;
@@ -287,6 +287,7 @@ int World::teamPlayerCount(const std::string& team) const
 int World::width() const { return _width; }
 int World::height() const { return _height; }
 const std::unordered_map<int, Player>& World::getPlayers() const { return _players; }
+const std::unordered_map<int, Egg>& World::getEggs() const { return _eggs; }
 
 std::optional<std::string> World::checkWin() const
 {
