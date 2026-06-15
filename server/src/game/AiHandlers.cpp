@@ -265,4 +265,48 @@ void CommandDispatcher::_handleSet(int connectionId, ResourceType resource)
         });
 }
 
-void CommandDispatcher::_handleIncantation(int connectionId) {}
+void CommandDispatcher::_handleIncantation(int connectionId)
+{
+    int playerId = _clients.getConnection(connectionId).playerId();
+    int delayMs = 300000;
+
+    auto participants = _world.startIncantation(playerId);
+    if (!participants) {
+        _clients.send(connectionId, "ko\n");
+        _executeNext(connectionId);
+        return;
+    }
+
+    auto& p = _world.getPlayer(playerId);
+    int x = p.x;
+    int y = p.y;
+    int level = p.level;
+
+    _notifier.broadcast(Serializer::pic(x, y, level, *participants));
+    for (int pid : *participants)
+        _clients.send(_world.getPlayer(pid).connectionId, "Elevation underway\n");
+
+    _scheduler.schedule(
+        std::chrono::milliseconds(delayMs / _freq),
+        [this, connectionId, participants = *participants, x, y] {
+            bool success = _world.finalizeIncantation(participants);
+
+            _notifier.broadcast(Serializer::pie(x, y, success));
+
+            auto& players = _world.getPlayers();
+            for (int pid : participants) {
+                auto it = players.find(pid);
+                if (it == players.end()) continue;
+
+                if (success) {
+                    _notifier.broadcast(Serializer::plv(pid, it->second.level));
+                    _clients.send(it->second.connectionId,
+                                  "Current level: " + std::to_string(it->second.level) + "\n");
+                } else {
+                    _clients.send(it->second.connectionId, "ko\n");
+                }
+            }
+
+            _executeNext(connectionId);
+        });
+}
