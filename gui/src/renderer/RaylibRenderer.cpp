@@ -106,6 +106,16 @@ void RaylibRenderer::_render3D()
                                    PLAYER_MODEL_SIZE);
     }
 
+    for (auto& [id, player] : _state->world.dyingPlayers) {
+        player.visual.update(GetFrameTime());
+        Vector3 worldPos = player.visual.pos;
+        EntityRenderer::drawPlayer(worldPos, _getTeamColor(player.team), player.visual.angle,
+                                   &_playerModel, _playerModelBaseMats,
+                                   PLAYER_CUBE_SIZE * player.visual.scale,
+                                   PLAYER_MODEL_SIZE * player.visual.scale);
+    }
+    _state->world.purgeDyingPlayers();
+
     for (const auto& [id, egg] : _state->world.eggs) {
         Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
                                                         _state->world.height, TILE_SIZE);
