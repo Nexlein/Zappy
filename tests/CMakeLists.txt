@@ -40,6 +40,7 @@ if(ZAPPY_BUILD_GUI)
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/Args.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/MoveBehavior.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/TurnBehavior.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/DeathBehavior.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/renderer/raylib_helpers/RenderingHelper.cpp
     )
 
