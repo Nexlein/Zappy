@@ -3,9 +3,9 @@
 #include <iostream>
 #include <memory>
 
+#include "behaviors/DeathBehavior.hpp"
 #include "behaviors/MoveBehavior.hpp"
 #include "behaviors/TurnBehavior.hpp"
-#include "behaviors/DeathBehavior.hpp"
 #include "renderer/raylib_helpers/RenderingHelper.hpp"
 
 void GameState::applyEvent(const Event& e)
@@ -188,8 +188,7 @@ void GameState::applyPlayerDeath(const PlayerDeath& e)
     world.dyingPlayers[e.id] = std::move(dying);
     Player& settled = world.dyingPlayers[e.id];
     settled.visual.behaviors.push_back(
-        std::make_unique<DeathBehavior>(settled.visual, static_cast<float>(timeUnit))
-    );
+        std::make_unique<DeathBehavior>(settled.visual, static_cast<float>(timeUnit)));
 }
 
 void GameState::applyEggNew(const EggNew& e)

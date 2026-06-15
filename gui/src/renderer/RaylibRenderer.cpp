@@ -5,12 +5,12 @@
 #include <cmath>
 #include <iostream>
 
+#include "raylib_helpers/ColorPalette.hpp"
 #include "raylib_helpers/EntityRenderer.hpp"
 #include "raylib_helpers/GridRenderer.hpp"
 #include "raylib_helpers/RenderingHelper.hpp"
 #include "raylib_helpers/TextRenderer.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
-#include "raylib_helpers/ColorPalette.hpp"
 
 void RaylibRenderer::init()
 {
@@ -48,7 +48,6 @@ void RaylibRenderer::init()
         for (int i = 0; i < _eggModel.materialCount && i < 2; i++)
             _eggModelBaseMats[i] = _eggModel.materials[i].maps[MATERIAL_MAP_DIFFUSE].color;
     }
-
 }
 
 void RaylibRenderer::render()

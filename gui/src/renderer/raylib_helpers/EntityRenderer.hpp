@@ -2,8 +2,8 @@
 
 #include <unordered_map>
 
-#include "raylib.h"
 #include "core/Resources.hpp"
+#include "raylib.h"
 
 /**
  * @brief Helper class for rendering game entities (players, eggs, resources).

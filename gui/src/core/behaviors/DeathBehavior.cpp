@@ -20,11 +20,9 @@ void DeathBehavior::_spawnParticles()
 
         Particle p;
         p.pos = _visual.pos;
-        p.vel = {
-            speed * std::sin(phi) * std::cos(theta),
-            speed * std::cos(phi) * 0.6f + 0.4f,  // bias upward
-            speed * std::sin(phi) * std::sin(theta)
-        };
+        p.vel = {speed * std::sin(phi) * std::cos(theta),
+                 speed * std::cos(phi) * 0.6f + 0.4f,  // bias upward
+                 speed * std::sin(phi) * std::sin(theta)};
         p.color = WHITE;
         p.size = 0.04f + (static_cast<float>(rand()) / RAND_MAX) * 0.06f;
         p.alpha = 1.0f;
