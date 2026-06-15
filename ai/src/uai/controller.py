@@ -34,6 +34,8 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
         self.ready_sent = False
         self.waiting_incant = False
         self.follower_leaving = False
+        self.target_leader_id = ""
+        self.highest_rally_direction = None
 
         self.last_level = context.level
 
@@ -50,6 +52,8 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
         self.ready_sent = False
         self.waiting_incant = False
         self.follower_leaving = False
+        self.target_leader_id = ""
+        self.highest_rally_direction = None
 
     def _process_messages(self):
         """Process all incoming network broadcasts to update internal states."""
@@ -70,10 +74,10 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
 
             # Follower listening to Leader
             if self.is_following:
-                if decoded.msg_type == MessageType.ABORT:
+                if decoded.msg_type == MessageType.ABORT and decoded.drone_id == self.target_leader_id:
                     ai_logger.talk("[UAI-Follower] Rally aborted. Resetting.")
                     self._reset_follower_state()
-                elif decoded.msg_type == MessageType.INCANT:
+                elif decoded.msg_type == MessageType.INCANT and decoded.drone_id == self.target_leader_id:
                     if bcst.direction in BROADCAST_DIRECTION_ARRIVED:
                         ai_logger.talk("[UAI-Follower] Ritual starting! Freezing.")
                         self.waiting_incant = True
@@ -106,6 +110,12 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
                     self._reset_leader_state()
                     self.is_following = True
 
+            # Always track the highest leader for following
+            if decoded.msg_type == MessageType.RALLY:
+                if decoded.drone_id >= self.target_leader_id:
+                    self.target_leader_id = decoded.drone_id
+                    self.highest_rally_direction = bcst.direction
+
     def tick(self) -> str | None:
         if self.context.ticks_since_inventory >= 15:
             self.context.ticks_since_inventory = 0
@@ -113,6 +123,7 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
 
         self.context.ticks_since_inventory += 1
 
+        self.highest_rally_direction = None
         self._process_messages()
 
         if self.context.level >= MAX_LEVEL:

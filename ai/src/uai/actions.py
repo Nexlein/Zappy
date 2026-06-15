@@ -10,9 +10,27 @@ from config import BCAST_INTERVAL, SOLO_INCANTATION_LEVEL
 from BroadcastProtocol import BroadcastProtocol, MessageType
 from look_parser import generate_path_to_tile
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from context import DroneContext
+
 
 class ActionGenerators:
     """Generates commands based on the selected AI behavior."""
+
+    if TYPE_CHECKING:
+        context: "DroneContext"
+        _forward_streak: int
+        incant_cmd_sent: bool
+        leader_aborted: bool
+        incant_bcast_sent: bool
+        tick_since_bcast: int
+        arrived: bool
+        ready_sent: bool
+        highest_rally_direction: int | None
+
+        def tick(self) -> str | None: ...
 
     def _get_missing_stones(self) -> dict[str, int]:
         requirements = ELEVATION_REQUIREMENTS.get(self.context.level, {})
@@ -123,24 +141,25 @@ class ActionGenerators:
         return "Look"
 
     def _get_follow_action(self) -> str:
-        rally_msg = None
-        for bcst in reversed(self.context.broadcasts):
-            decoded = bcst.content
-            if (
-                decoded
-                and decoded.team_name == self.context.team_name
-                and decoded.msg_type == MessageType.RALLY
-                and decoded.level == self.context.level
-            ):
-                rally_msg = bcst
-                break
+        direction = self.highest_rally_direction
+        
+        if direction is not None:
+            if direction != 0 and self.arrived:
+                # Leader moved or changed
+                self.arrived = False
+                self.ready_sent = False
+                
+            if not self.arrived:
+                if direction in BROADCAST_DIRECTION_ARRIVED:
+                    self.arrived = True
+                elif direction in BROADCAST_DIRECTION_FORWARD:
+                    return "Forward"
+                elif direction in BROADCAST_DIRECTION_RIGHT:
+                    return "Right"
+                elif direction in BROADCAST_DIRECTION_LEFT:
+                    return "Left"
 
-        if not rally_msg:
-            return "Look"
-
-        direction = rally_msg.direction
-        if direction in BROADCAST_DIRECTION_ARRIVED:
-            self.arrived = True
+        if self.arrived:
             if not self.context.vision:
                 return "Look"
             stone = self._next_stone_to_drop()
@@ -157,10 +176,4 @@ class ActionGenerators:
                 return f"Broadcast {payload}"
             return "Look"
 
-        if direction in BROADCAST_DIRECTION_FORWARD:
-            return "Forward"
-        if direction in BROADCAST_DIRECTION_RIGHT:
-            return "Right"
-        if direction in BROADCAST_DIRECTION_LEFT:
-            return "Left"
         return "Look"

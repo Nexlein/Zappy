@@ -2,9 +2,23 @@ from elevations import ELEVATION_REQUIREMENTS, PLAYERS_REQUIRED, is_incantation_
 from config import FOOD_TARGET, SURVIVAL_THRESHOLD, SOLO_INCANTATION_LEVEL
 from BroadcastProtocol import MessageType
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from context import DroneContext
+
 
 class UtilityCalculators:
     """Calculates utilities for various AI behaviors."""
+
+    if TYPE_CHECKING:
+        context: "DroneContext"
+        incant_cmd_sent: bool
+        is_leader: bool
+        ready_count: int
+        is_following: bool
+
+        def _get_missing_stones(self) -> dict[str, int]: ...
 
     def _get_survival_utility(self) -> float:
         food = self.context.inventory.food

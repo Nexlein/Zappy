@@ -179,6 +179,7 @@ class MapsToAlly(State):
         self.waiting_incant = False
         self._leave_target = None
         self._leave_emitted = False
+        self._target_leader_id = ""
 
     def _leave(self, target: str) -> str | None:
         """Exit toward `target`, emitting LEAVING first if we said READY."""
@@ -228,6 +229,15 @@ class MapsToAlly(State):
                     )
                     return "SearchStone"
 
+        # Also switch to the highest known leader in update so we don't ignore ABORTs from them.
+        for bcst in context.broadcasts:
+            if (
+                bcst.content.msg_type == MessageType.RALLY
+                and bcst.content.level == self._entry_level
+                and bcst.content.drone_id > self._target_leader_id
+            ):
+                self._target_leader_id = bcst.content.drone_id
+
         if self.ticks_waited > RALLY_TIMEOUT:
             ai_logger.talk(
                 "[MapsToAlly] I lost the signal... back to searching myself."
@@ -255,7 +265,34 @@ class MapsToAlly(State):
         if self.waiting_incant:
             return None
 
-        # -- Already on the rally tile: drop stones and wait. --
+        # -- Process new broadcasts first to track the highest leader --
+        best_direction = None
+        for bcst in context.broadcasts:
+            if (
+                bcst.content.msg_type == MessageType.RALLY
+                and bcst.content.level == self._entry_level
+                and bcst.content.drone_id >= self._target_leader_id
+            ):
+                self._target_leader_id = bcst.content.drone_id
+                best_direction = bcst.direction
+
+        if best_direction is not None:
+            if best_direction != 0 and self.arrived:
+                # The highest leader is not here! We must have arrived at an abandoned tile.
+                self.arrived = False
+                self.ready_sent = False
+
+            if not self.arrived:
+                if best_direction in BROADCAST_DIRECTION_ARRIVED:
+                    self.arrived = True
+                elif best_direction in BROADCAST_DIRECTION_FORWARD:
+                    return "Forward"
+                elif best_direction in BROADCAST_DIRECTION_RIGHT:
+                    return "Right"
+                elif best_direction in BROADCAST_DIRECTION_LEFT:
+                    return "Left"
+
+        # -- Already on the rally tile (or just arrived): drop stones and wait. --
         if self.arrived:
             if not context.vision:
                 return "Look"
@@ -273,31 +310,7 @@ class MapsToAlly(State):
                 return f"Broadcast {payload}"
             return "Look"  # Keep re-scanning so update() sees is_incantation_ready
 
-        # -- Still travelling: follow the latest RALLY broadcast direction. --
-        for bcst in context.broadcasts:
-            if (
-                bcst.content.msg_type == MessageType.RALLY
-                and bcst.content.level == self._entry_level
-            ):
-                direction = bcst.direction
-
-                if direction in BROADCAST_DIRECTION_ARRIVED:
-                    self.arrived = True
-                    return "Look"
-
-                # Ahead or slightly diagonal ahead.
-                if direction in BROADCAST_DIRECTION_FORWARD:
-                    return "Forward"
-
-                # To the right, behind-right, or directly behind.
-                if direction in BROADCAST_DIRECTION_RIGHT:
-                    return "Right"
-
-                # To the left or behind-left.
-                if direction in BROADCAST_DIRECTION_LEFT:
-                    return "Left"
-
-        # No RALLY heard this tick — stay put and wait for the next broadcast.
+        # No RALLY heard this tick and not arrived — stay put and wait for the next broadcast.
         return "Look"
 
     def exit(self, context: DroneContext) -> None:
