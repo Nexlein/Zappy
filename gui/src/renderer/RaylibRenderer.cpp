@@ -10,6 +10,7 @@
 #include "raylib_helpers/RenderingHelper.hpp"
 #include "raylib_helpers/TextRenderer.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
+#include "raylib_helpers/ColorPalette.hpp"
 
 void RaylibRenderer::init()
 {
