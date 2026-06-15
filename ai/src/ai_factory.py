@@ -5,8 +5,8 @@
 ## AI Controller Factory
 ##
 
-from fsm import AIController
-from utility_ai import UtilityAIController
+from fsm.controller import AIController
+from uai.controller import UtilityAIController
 from context import DroneContext
 
 
