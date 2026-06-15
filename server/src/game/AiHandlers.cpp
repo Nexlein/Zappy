@@ -8,6 +8,47 @@
 #include "protocol/Serializer.hpp"
 #include "utils/broadcastDirection.hpp"
 
+struct LookVectors {
+    int fx;
+    int fy;
+    int rx;
+    int ry;
+};
+
+static LookVectors _lookForwardRight(Orientation o)
+{
+    switch (o) {
+        case Orientation::N:
+            return {0, -1, 1, 0};
+        case Orientation::S:
+            return {0, 1, -1, 0};
+        case Orientation::E:
+            return {1, 0, 0, 1};
+        case Orientation::W:
+            return {-1, 0, 0, -1};
+    }
+    return {0, -1, 1, 0};
+}
+
+static std::string _tileContent(const Tile& tile)
+{
+    std::string s;
+    for (size_t i = 0; i < tile.playerIds.size(); i++) {
+        if (!s.empty()) s += " ";
+        s += "player";
+    }
+    for (int res = 0; res < Resources::TYPE_COUNT; res++) {
+        auto type = static_cast<ResourceType>(res);
+        std::string name = Resources::get_name(type);
+        std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+        for (int c = 0; c < tile.resources[type]; c++) {
+            if (!s.empty()) s += " ";
+            s += name;
+        }
+    }
+    return s;
+}
+
 void CommandDispatcher::_handleForward(int connectionId)
 {
     int playerId = _clients.getConnection(connectionId).playerId();
@@ -76,53 +117,20 @@ void CommandDispatcher::_handleLook(int connectionId)
 
     _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
         auto& p = _world.getPlayer(playerId);
+        auto look = _lookForwardRight(p.orientation);
         int tileCount = (p.level + 1) * (p.level + 1);
 
         std::string r = "[";
         for (int i = 0; i < tileCount; i++) {
             int d = 0;
             while ((d + 1) * (d + 1) <= i) d++;
-            int xRel = i - d * d - d;
+            int xRel = i - 1 * d - d;
 
-            int dx = 0, dy = 0;
-            switch (p.orientation) {
-                case Orientation::N:
-                    dx = xRel;
-                    dy = -d;
-                    break;
-                case Orientation::S:
-                    dx = -xRel;
-                    dy = d;
-                    break;
-                case Orientation::E:
-                    dx = d;
-                    dy = xRel;
-                    break;
-                case Orientation::W:
-                    dx = -d;
-                    dy = -xRel;
-                    break;
-            }
-
-            auto& tile = _world.at(p.x + dx, p.y + dy);
+            int dx = d * look.fx + xRel * look.rx;
+            int dy = d * look.fy + xRel * look.ry;
 
             if (i > 0) r += ", ";
-            bool first = true;
-            for (int j = 0; j < static_cast<int>(tile.playerIds.size()); j++) {
-                if (!first) r += " ";
-                r += "player";
-                first = false;
-            }
-            for (int res = 0; res < Resources::TYPE_COUNT; res++) {
-                auto type = static_cast<ResourceType>(res);
-                std::string name = Resources::get_name(type);
-                std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-                for (int c = 0; c < tile.resources[type]; c++) {
-                    if (!first) r += " ";
-                    r += name;
-                    first = false;
-                }
-            }
+            r += _tileContent(_world.at(p.x + dx, p.y + dy));
         }
         r += "]\n";
 
