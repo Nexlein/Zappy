@@ -51,14 +51,22 @@ void HandshakeHandler::_promoteToGui(int connectionId)
 
 void HandshakeHandler::_promoteToAi(int connectionId, const std::string& teamName)
 {
-    std::uniform_int_distribution<int> dx(0, _config.width - 1);
-    std::uniform_int_distribution<int> dy(0, _config.height - 1);
     std::uniform_int_distribution<int> dori(0, 3);
-
     static std::mt19937 rng{std::random_device{}()};
-    int x = dx(rng);
-    int y = dy(rng);
     auto orientation = static_cast<Orientation>(dori(rng));
+
+    auto egg = _world.popEggForTeam(teamName);
+
+    int x, y;
+    if (egg) {
+        x = egg->x;
+        y = egg->y;
+    } else {
+        std::uniform_int_distribution<int> dx(0, _config.width - 1);
+        std::uniform_int_distribution<int> dy(0, _config.height - 1);
+        x = dx(rng);
+        y = dy(rng);
+    }
 
     int playerId = _world.addPlayer(connectionId, teamName, x, y, orientation);
     _clients.getConnection(connectionId).setType(ClientType::AI);
@@ -69,6 +77,7 @@ void HandshakeHandler::_promoteToAi(int connectionId, const std::string& teamNam
     _clients.send(connectionId,
                   std::to_string(_config.width) + " " + std::to_string(_config.height) + "\n");
 
+    if (egg) _notifier.broadcast(Serializer::ebo(egg->id));
     _notifier.onPlayerNew(_world.getPlayer(playerId));
 }
 
