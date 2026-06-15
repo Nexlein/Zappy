@@ -120,7 +120,32 @@ void CommandDispatcher::_handleFork(int connectionId)
     });
 }
 
-void CommandDispatcher::_handleEject(int connectionId) {}
+void CommandDispatcher::_handleEject(int connectionId)
+{
+    int playerId = _clients.getConnection(connectionId).playerId();
+
+    _scheduler.schedule(std::chrono::milliseconds(7000 / _freq), [this, connectionId, playerId] {
+        auto result = _world.ejectPlayers(playerId);
+
+        if (result.ejectedPlayerIds.empty()) {
+            _clients.send(connectionId, "ko\n");
+            _executeNext(connectionId);
+            return;
+        }
+
+        for (int eid : result.ejectedPlayerIds) {
+            auto& ejected = _world.getPlayer(eid);
+            int dir = broadcastDirection(ejected.x - result.dx, ejected.y - result.dy, ejected.x,
+                                         ejected.y, _world.width(), _world.height(),
+                                         ejected.orientation);
+            _clients.send(ejected.connectionId, "eject: " + std::to_string(dir) + "\n");
+            _notifier.broadcast(Serializer::ppo(ejected.id, ejected.x, ejected.y, ejected.orientation));
+        }
+
+        _clients.send(connectionId, "ok\n");
+        _executeNext(connectionId);
+    });
+}
 
 void CommandDispatcher::_handleTake(int connectionId, ResourceType resource)
 {
