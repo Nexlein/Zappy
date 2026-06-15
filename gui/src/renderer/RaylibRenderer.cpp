@@ -226,9 +226,6 @@ void RaylibRenderer::_drawSelectedToolip()
                 builder.addLine("  Inventory:", textColor);
                 _addResourceLines(builder, player.inventory, "    ", textColor);
             }
-
-            // temp
-            builder.addLine("  Orientation: " + to_string(player.orientation), textColor);
             break;
         }
 
