@@ -106,24 +106,20 @@ class ActionGenerators:
         return "Forward"
 
     def _get_reproduce_action(self) -> str | None:
-        # Step 0 — verdict of the previous Fork (FSM "tick C" equivalent).
         if self.reproduce_fork_sent:
             if self.context.last_command_successful:
                 self.forks_done += 1
             self._reset_reproduce_state()
             return None
 
-        # Step 1 — authoritative slot refresh (handshake value is stale).
         if not self.reproduce_connect_sent:
             self.reproduce_connect_sent = True
             return "Connect_nbr"
 
-        # Step 2 — slot-gated decision.
         if self.context.available_slots == 0:
             self.reproduce_fork_sent = True
             return "Fork"
 
-        # An egg is already idle: don't pile up. End the attempt for this cycle.
         self._reset_reproduce_state()
         return None
 

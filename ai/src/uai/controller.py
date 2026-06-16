@@ -46,9 +46,6 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
         self.last_level = context.level
 
     def _reset_reproduce_state(self):
-        # Ends the current attempt: clears the sequence and suppresses reproduce
-        # for the rest of this well-fed cycle (reproduce_attempted), so we don't
-        # idle-lock re-selecting it. Cleared again on the next hunger dip.
         self.reproduce_connect_sent = False
         self.reproduce_fork_sent = False
         self.reproduce_attempted = True
