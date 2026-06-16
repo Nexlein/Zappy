@@ -1,5 +1,11 @@
 from elevations import ELEVATION_REQUIREMENTS, PLAYERS_REQUIRED, is_incantation_ready
-from config import FOOD_TARGET, SURVIVAL_THRESHOLD, SOLO_INCANTATION_LEVEL
+from config import (
+    FOOD_TARGET,
+    SURVIVAL_THRESHOLD,
+    SOLO_INCANTATION_LEVEL,
+    FORK_FOOD_THRESHOLD,
+    MAX_FORKS_PER_DRONE,
+)
 from BroadcastProtocol import MessageType
 
 from typing import TYPE_CHECKING
@@ -12,11 +18,14 @@ class UtilityCalculators:
     """Calculates utilities for various AI behaviors."""
 
     if TYPE_CHECKING:
+        forks_done: int
         context: "DroneContext"
         incant_cmd_sent: bool
         is_leader: bool
         ready_count: int
         is_following: bool
+        reproduce_fork_sent: bool
+        reproduce_attempted: bool
 
         def _get_missing_stones(self) -> dict[str, int]: ...
 
@@ -59,6 +68,29 @@ class UtilityCalculators:
 
         stone_ratio = num_missing / total_needed
         return 0.8 * stone_ratio * (1.0 - u_survival)
+
+    def _get_reproduce_utility(self, u_survival: float) -> float:
+        # Hard guards (same as the FSM Reproduce state).
+        if self.forks_done >= MAX_FORKS_PER_DRONE:
+            return 0.0
+        if self.context.inventory.food < FORK_FOOD_THRESHOLD:
+            return 0.0
+
+        # A Fork is in flight: stick to this behavior until its verdict, like
+        # incantation does with incant_cmd_sent.
+        if self.reproduce_fork_sent:
+            return 1.0
+
+        # One attempt per well-fed cycle: once we've refreshed slots and decided
+        # (forked or bailed), stop selecting reproduce so we don't idle-lock.
+        # reproduce_attempted is reset when the drone gets hungry again.
+        if self.reproduce_attempted:
+            return 0.0
+
+        # Well-fed window: just above gather (max 0.8) so a fed drone reproduces
+        # before chasing stones, but below follow/rally (0.85+) so helping a live
+        # incantation always wins. Mirrors the FSM forage -> reproduce -> stones.
+        return 0.82 * (1.0 - u_survival)
 
     def _get_rally_utility(self, u_survival: float) -> float:
         if self.context.level <= SOLO_INCANTATION_LEVEL:

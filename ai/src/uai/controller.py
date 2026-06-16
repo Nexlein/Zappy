@@ -1,6 +1,6 @@
 from context import DroneContext
 from elevations import PLAYERS_REQUIRED, BROADCAST_DIRECTION_ARRIVED
-from config import BCAST_INTERVAL, MAX_LEVEL
+from config import BCAST_INTERVAL, MAX_LEVEL, FORK_FOOD_THRESHOLD
 from BroadcastProtocol import BroadcastProtocol, MessageType
 from ai_logger import ai_logger
 
@@ -37,7 +37,21 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
         self.target_leader_id = ""
         self.highest_rally_direction = None
 
+        # Reproduction state
+        self.forks_done = 0
+        self.reproduce_connect_sent = False
+        self.reproduce_fork_sent = False
+        self.reproduce_attempted = False
+
         self.last_level = context.level
+
+    def _reset_reproduce_state(self):
+        # Ends the current attempt: clears the sequence and suppresses reproduce
+        # for the rest of this well-fed cycle (reproduce_attempted), so we don't
+        # idle-lock re-selecting it. Cleared again on the next hunger dip.
+        self.reproduce_connect_sent = False
+        self.reproduce_fork_sent = False
+        self.reproduce_attempted = True
 
     def _reset_leader_state(self):
         self.ready_count = 0
@@ -159,12 +173,20 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
         if self.waiting_incant:
             return None  # Frozen
 
+        # New hunger cycle: clear the reproduce suppressor + any half-done
+        # sequence, so the next well-fed window gets a fresh fork attempt.
+        if self.context.inventory.food < FORK_FOOD_THRESHOLD:
+            self.reproduce_attempted = False
+            self.reproduce_connect_sent = False
+            self.reproduce_fork_sent = False
+
         # Compute Utilities
         u_survival = self._get_survival_utility()
         u_incantation = self._get_incantation_utility()
         u_rally = self._get_rally_utility(u_survival)
         u_follow = self._get_follow_utility(u_survival)
         u_gather = self._get_gather_utility(u_survival)
+        u_reproduce = self._get_reproduce_utility(u_survival)
 
         utilities = {
             "survival": u_survival,
@@ -172,6 +194,7 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
             "rally": u_rally,
             "follow": u_follow,
             "gather": u_gather,
+            "reproduce": u_reproduce,
         }
 
         best_behavior = max(utilities.items(), key=lambda item: item[1])[0]
@@ -204,6 +227,8 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
             action = self._get_follow_action()
         elif best_behavior == "gather":
             action = self._get_gather_action()
+        elif best_behavior == "reproduce":
+            action = self._get_reproduce_action()
         else:
             action = self._get_survival_action()
 

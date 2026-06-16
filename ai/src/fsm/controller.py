@@ -11,6 +11,7 @@ from fsm.states.AStates import State
 from fsm.states.survival import ForageFood
 from fsm.states.evolution import SearchStone, IncantationState
 from fsm.states.swarm import BroadcastHelp, MapsToAlly
+from fsm.states.reproduce import Reproduce
 from ai_logger import ai_logger
 
 
@@ -32,6 +33,7 @@ class AIController:
             "BroadcastHelp": BroadcastHelp(),
             "MapsToAlly": MapsToAlly(),
             "Incantation": IncantationState(),
+            "Reproduce": Reproduce(),
         }
 
         self.current_state_name = "ForageFood"

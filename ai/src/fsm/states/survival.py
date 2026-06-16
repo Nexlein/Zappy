@@ -27,9 +27,9 @@ class ForageFood(State):
     def update(self, context: DroneContext) -> str | None:
         if context.inventory.food >= FOOD_TARGET:
             ai_logger.talk(
-                "[ForageFood] I have enough food now. Time to search for stones!"
+                "[ForageFood] I have enough food now. Time to consider the team!"
             )
-            return "SearchStone"
+            return "Reproduce"
         return None
 
     def get_action(self, context: DroneContext) -> str | None:
