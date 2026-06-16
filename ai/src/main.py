@@ -10,7 +10,7 @@ from context import DroneContext, BroadcastMessage
 from NetworkBuffer import NetworkBuffer
 from tcpClient import TcpClient
 from argsParser import parseArgs
-from BroadcastProtocol import BroadcastProtocol
+from BroadcastProtocol import BroadcastProtocol, MessageType
 from look_parser import parse_look_to_tiles
 from inventory_parser import update_inventory
 from typing import Any
@@ -85,6 +85,17 @@ class Orchestrator:
                 return
             if decoded.team_name != self._context.team_name:
                 return
+
+            if (
+                self._context.elevation_in_progress
+                and decoded.msg_type == MessageType.ABORT
+                and decoded.level == self._context.level
+            ):
+                ai_logger.info(
+                    "[Orchestrator] Received ABORT while frozen. Unfreezing!"
+                )
+                self._context.elevation_in_progress = False
+
             self._context.broadcasts.append(BroadcastMessage(direction, decoded))
         elif event.startswith("eject"):
             self._context.vision.clear()
@@ -105,6 +116,7 @@ class Orchestrator:
                 return
             self._context.level = level
             self._context.elevation_in_progress = False
+            self._context.vision.clear()
             if self._pending_command == "Incantation":
                 # Our own ritual's success reply, routed here as an event.
                 self._context.last_command_successful = True
@@ -141,6 +153,8 @@ class Orchestrator:
                     setattr(tile, resource, max(0, getattr(tile, resource, 0) - 1))
                 inv = self._context.inventory
                 setattr(inv, resource, getattr(inv, resource, 0) + 1)
+            elif response == "ko":
+                self._context.vision.clear()
         elif command.startswith("Set"):
             if response == "ok":
                 resource = command.removeprefix("Set ").strip()
@@ -149,6 +163,8 @@ class Orchestrator:
                 if self._context.vision:
                     tile = self._context.vision[0]
                     setattr(tile, resource, getattr(tile, resource, 0) + 1)
+            elif response == "ko":
+                self._context.vision.clear()
         elif command in ("Forward", "Right", "Left"):
             if response == "ok":
                 self._context.vision.clear()
