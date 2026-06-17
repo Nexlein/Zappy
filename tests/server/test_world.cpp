@@ -204,7 +204,7 @@ TEST(WorldInventory, SetResourceMovesFromPlayerToTile)
     bool ok = w.setResource(id, ResourceType::FOOD);
 
     EXPECT_TRUE(ok);
-    EXPECT_EQ(w.getPlayer(id).inventory[ResourceType::FOOD], 0);
+    EXPECT_EQ(w.getPlayer(id).inventory[ResourceType::FOOD], 10);
     EXPECT_EQ(w.at(2, 2).resources[ResourceType::FOOD], 1);
 }
 

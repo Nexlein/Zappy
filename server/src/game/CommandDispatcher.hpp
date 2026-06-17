@@ -2,6 +2,7 @@
 
 #include <deque>
 #include <unordered_map>
+#include <vector>
 
 #include "core/Scheduler.hpp"
 #include "core/World.hpp"
@@ -18,11 +19,17 @@ class CommandDispatcher {
     void onNewConnection(int connectionId);
     void dispatch(int connectionId, const std::string& line);
     void onDisconnect(int connectionId);
+    std::vector<int> drainPendingDisconnects();
 
     private:
     void _dispatchAi(int connectionId, const std::string& line);
     void _dispatchGui(int connectionId, const std::string& line);
     void _executeNext(int connectionId);
+
+    void _startStarvationTimer(int connectionId, int playerId);
+
+    /// one food is consumed every 126 time units (1 unit = 1/freq seconds)
+    static constexpr int STARVATION_INTERVAL_MS = 126000;
 
     // GUI command handlers
     void _handleMsz(int connectionId);
@@ -58,4 +65,5 @@ class CommandDispatcher {
 
     std::unordered_map<int, std::deque<Ai::Command>> _queues;
     std::unordered_map<int, bool> _hasActive;
+    std::vector<int> _pendingDisconnects;
 };

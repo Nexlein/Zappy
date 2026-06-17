@@ -7,8 +7,12 @@
 #include "protocol/Serializer.hpp"
 
 HandshakeHandler::HandshakeHandler(ClientManager& clients, World& world, GuiNotifier& notifier,
-                                   const ServerConfig& config)
-    : _clients(clients), _world(world), _notifier(notifier), _config(config)
+                                   const ServerConfig& config, PromotedCallback onPromoted)
+    : _clients(clients),
+      _world(world),
+      _notifier(notifier),
+      _config(config),
+      _onPromoted(onPromoted)
 {
 }
 
@@ -56,7 +60,7 @@ void HandshakeHandler::_promoteToGui(int connectionId)
 
 void HandshakeHandler::_promoteToAi(int connectionId, const std::string& teamName)
 {
-    std::uniform_int_distribution<int> dori(0, 3);
+    std::uniform_int_distribution<int> dori(1, 4);
     static std::mt19937 rng{std::random_device{}()};
     auto orientation = static_cast<Orientation>(dori(rng));
 
@@ -84,6 +88,7 @@ void HandshakeHandler::_promoteToAi(int connectionId, const std::string& teamNam
 
     if (egg) _notifier.broadcast(Serializer::ebo(egg->id));
     _notifier.onPlayerNew(_world.getPlayer(playerId));
+    _onPromoted(connectionId, playerId);
 }
 
 void HandshakeHandler::_reject(int connectionId)

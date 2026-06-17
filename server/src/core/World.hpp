@@ -51,7 +51,7 @@ class World {
     Tile& at(int x, int y);
     const Tile& at(int x, int y) const;
 
-    void spawnResources();
+    std::vector<std::pair<int, int>> spawnResources();
 
     int addPlayer(int connectionId, const std::string& teamName, int x, int y,
                   Orientation orientation);

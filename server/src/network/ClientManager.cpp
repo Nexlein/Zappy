@@ -2,6 +2,8 @@
 
 #include <sys/socket.h>
 
+#include <cerrno>
+#include <cstring>
 #include <stdexcept>
 
 ClientManager::ClientManager(Listener& listener) : _listener(listener) {}
@@ -22,8 +24,10 @@ PollResult ClientManager::poll(int timeoutMs)
 {
     _rebuildPollFds();
 
-    if (::poll(_pollFds.data(), static_cast<nfds_t>(_pollFds.size()), timeoutMs) < 0)
-        throw std::runtime_error("poll() failed");
+    int ret = ::poll(_pollFds.data(), static_cast<nfds_t>(_pollFds.size()), timeoutMs);
+    while (ret < 0 && errno == EINTR)
+        ret = ::poll(_pollFds.data(), static_cast<nfds_t>(_pollFds.size()), timeoutMs);
+    if (ret < 0) throw std::runtime_error(std::string("poll() failed: ") + strerror(errno));
 
     PollResult result;
     if (_pollFds[0].revents & POLLIN) _acceptNew(result);
@@ -38,7 +42,7 @@ void ClientManager::_acceptNew(PollResult& result)
     int id = _nextId++;
     _connections.emplace(std::piecewise_construct, std::forward_as_tuple(id),
                          std::forward_as_tuple(fd));
-    result.newFds.push_back(id);
+    result.newConnections.push_back(id);
 }
 
 void ClientManager::_handleEvents(const pollfd& pfd, PollResult& result)
@@ -48,19 +52,19 @@ void ClientManager::_handleEvents(const pollfd& pfd, PollResult& result)
     int id = _fdToId.at(pfd.fd);
     auto& conn = _connections.at(id);
 
-    if (pfd.revents & (POLLHUP | POLLERR)) {
-        disconnect(id);
-        return;
-    }
     if (pfd.revents & POLLIN) {
         char buf[4096];
         ssize_t n = ::recv(pfd.fd, buf, sizeof(buf), 0);
         if (n <= 0) {
-            disconnect(id);
+            result.disconnectedIds.push_back(id);
             return;
         }
         conn.appendRead({buf, static_cast<size_t>(n)});
         while (auto line = conn.nextLine()) result.lines.emplace_back(id, std::move(*line));
+    }
+    if (pfd.revents & (POLLHUP | POLLERR)) {
+        result.disconnectedIds.push_back(id);
+        return;
     }
     if (pfd.revents & POLLOUT) conn.flushWrite();
 }
@@ -71,7 +75,13 @@ void ClientManager::send(int connectionId, const std::string& msg)
     if (it != _connections.end()) it->second.queueWrite(msg);
 }
 
-void ClientManager::disconnect(int connectionId) { _connections.erase(connectionId); }
+void ClientManager::disconnect(int connectionId)
+{
+    auto it = _connections.find(connectionId);
+    if (it == _connections.end()) return;
+    it->second.flushWrite();
+    _connections.erase(it);
+}
 
 Connection& ClientManager::getConnection(int connectionId)
 {
