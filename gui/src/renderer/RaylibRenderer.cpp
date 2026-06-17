@@ -10,7 +10,6 @@
 #include "raylib_helpers/EntityRenderer.hpp"
 #include "raylib_helpers/GridRenderer.hpp"
 #include "raylib_helpers/RenderingHelper.hpp"
-#include "raylib_helpers/TextRenderer.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
 
 void RaylibRenderer::init()
@@ -157,12 +156,33 @@ void RaylibRenderer::_drawBehaviorParticles(const VisualState& visual)
 
 void RaylibRenderer::_render2D()
 {
-    for (const auto& [id, player] : _state->world.players) {
-        Vector3 worldPos = player.visual.pos;
-        worldPos.y = PLAYER_CUBE_SIZE * 1.5f;  // Above cube
-        TextRenderer::drawTextAt3DPosition(worldPos, _camera,
-                                           "Player #" + std::to_string(player.id),
-                                           _getScaledFontSize(18), BLACK);
+    // group players by tile
+    std::unordered_map<int, std::vector<const Player*>> byTile;
+    for (const auto& [id, player] : _state->world.players)
+        byTile[player.y * _state->world.width + player.x].push_back(&player);
+
+    for (auto& [key, group] : byTile) {
+        std::sort(group.begin(), group.end(),
+                  [](const Player* a, const Player* b) { return a->level > b->level; });
+
+        const Player* first = group[0];
+        Vector3 worldPos = RenderingHelper::tileToWorld(first->x, first->y, _state->world.width,
+                                                        _state->world.height, TILE_SIZE);
+        worldPos.y = PLAYER_MODEL_SIZE * 2.0f;
+        Vector2 screenPos = GetWorldToScreen(worldPos, _camera);
+
+        auto builder = TooltipRenderer::create()
+                           .setAnchor(TooltipRenderer::Anchor::BottomCenter)
+                           .setBackgroundColor(BLACK)
+                           .setBackgroundAlpha(100)
+                           .setBorderThickness(0)
+                           .setPadding(4)
+                           .setFontSize(_getScaledFontSize(14));
+
+        for (const Player* p : group)
+            builder.addLine("Player lvl " + std::to_string(p->level), _getTeamColor(p->team));
+
+        builder.draw(screenPos);
     }
 
     _drawSelectedToolip();
