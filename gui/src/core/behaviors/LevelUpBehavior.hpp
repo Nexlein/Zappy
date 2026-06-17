@@ -4,11 +4,11 @@
 #include "core/VisualState.hpp"
 
 /**
- * @brief Handles the death animation for a player.
+ * @brief Plays a rising particle burst when a player levels up.
  */
-class DeathBehavior : public ABehavior {
+class LevelUpBehavior : public ABehavior {
     public:
-    DeathBehavior(VisualState& visual, float server_tick_rate);
+    LevelUpBehavior(VisualState& visual, float server_tick_rate);
 
     void update(float dt) override;
     bool isDone() const override;
@@ -17,7 +17,7 @@ class DeathBehavior : public ABehavior {
     void _spawnParticles();
 
     VisualState& _visual;
-    float _duration;  // in seconds, 10 ticks / server_tick_rate
+    float _duration;  // in seconds, 20 ticks / server_tick_rate
     float _elapsed = 0.0f;
     bool _spawned = false;
 };

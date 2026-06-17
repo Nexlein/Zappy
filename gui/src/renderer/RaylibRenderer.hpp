@@ -65,6 +65,7 @@ class RaylibRenderer : public ARenderer {
     void _updateSelection(float deltaTime);
 
     void _performRaycast();
+    void _drawBehaviorParticles(const VisualState& visual);
 
     void _addResourceLines(TooltipRenderer::Builder& builder, const Resources& res,
                            const std::string& indent, Color color);

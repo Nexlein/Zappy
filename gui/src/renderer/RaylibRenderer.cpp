@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iostream>
 
+#include "core/behaviors/ABehavior.hpp"
 #include "raylib_helpers/ColorPalette.hpp"
 #include "raylib_helpers/EntityRenderer.hpp"
 #include "raylib_helpers/GridRenderer.hpp"
@@ -104,6 +105,7 @@ void RaylibRenderer::_render3D()
         EntityRenderer::drawPlayer(worldPos, _getTeamColor(player.team), player.visual.angle,
                                    &_playerModel, _playerModelBaseMats, PLAYER_CUBE_SIZE,
                                    PLAYER_MODEL_SIZE);
+        _drawBehaviorParticles(player.visual);
     }
 
     for (auto& [id, player] : _state->world.dyingPlayers) {
@@ -113,12 +115,7 @@ void RaylibRenderer::_render3D()
                                    &_playerModel, _playerModelBaseMats,
                                    PLAYER_CUBE_SIZE * player.visual.scale,
                                    PLAYER_MODEL_SIZE * player.visual.scale);
-        Color teamColor = _getTeamColor(player.team);
-        for (const auto& p : player.visual.particles) {
-            Color c = {teamColor.r, teamColor.g, teamColor.b,
-                       static_cast<unsigned char>(p.alpha * 255)};
-            DrawSphere(p.pos, p.size, c);
-        }
+        _drawBehaviorParticles(player.visual);
     }
     _state->world.purgeDyingPlayers();
 
@@ -140,6 +137,19 @@ void RaylibRenderer::_render3D()
     }
 
     _drawSelectionHighlight();
+}
+
+void RaylibRenderer::_drawBehaviorParticles(const VisualState& visual)
+{
+    for (const auto& b : visual.behaviors) {
+        const auto* ab = dynamic_cast<const ABehavior*>(b.get());
+        if (!ab) continue;
+        for (const auto& p : ab->getParticles()) {
+            if (!p.active) continue;
+            Color c = {p.color.r, p.color.g, p.color.b, static_cast<unsigned char>(p.alpha * 255)};
+            DrawSphere(p.pos, p.size, c);
+        }
+    }
 }
 
 void RaylibRenderer::_render2D()
