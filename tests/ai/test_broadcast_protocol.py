@@ -56,7 +56,7 @@ class TestDecode(unittest.TestCase):
 
     def test_too_many_fields_raises(self):
         with self.assertRaises(ValueError):
-            BroadcastProtocol.decode("team5|RALLY|3|extra")
+            BroadcastProtocol.decode("team5|RALLY|3|extra|extra2")
 
     def test_empty_raises(self):
         with self.assertRaises(ValueError):

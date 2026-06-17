@@ -39,7 +39,9 @@ class BroadcastProtocol:
     def encode(
         team_name: str, msg_type: MessageType, level: int, drone_id: str = ""
     ) -> str:
-        return f"{team_name}|{msg_type.value}|{level}|{drone_id}"
+        if drone_id:
+            return f"{team_name}|{msg_type.value}|{level}|{drone_id}"
+        return f"{team_name}|{msg_type.value}|{level}"
 
     @staticmethod
     def decode(raw_message: str) -> DecodedBroadcast:

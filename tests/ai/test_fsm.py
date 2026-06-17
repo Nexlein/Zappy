@@ -8,8 +8,8 @@
 import unittest
 from unittest.mock import MagicMock
 from context import DroneContext
-from fsm import AIController
-from states.AStates import State
+from fsm.controller import AIController
+from fsm.states.AStates import State
 
 
 class TestAIController(unittest.TestCase):
