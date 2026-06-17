@@ -41,7 +41,7 @@ class TestForageFood(unittest.TestCase):
     def test_update_food_high(self):
         self.context.inventory.food = 15
         res = self.state.update(self.context)
-        self.assertEqual(res, "Reproduce")
+        self.assertEqual(res, "SearchStone")
 
     def test_get_action_empty_vision(self):
         self.context.vision = []
@@ -208,7 +208,7 @@ class TestBroadcastHelp(unittest.TestCase):
         self.state.ticks_waited = 301  # Greater than RALLY_TIMEOUT (300)
         res = self.state.update(self.context)
         self.assertIsNone(res)
-        self.assertEqual(self.state._abort_target, "SearchStone")
+        self.assertEqual(self.state._abort_target, "Reproduce")
 
     def test_update_incantation_ready(self):
         self.state.enter(self.context)

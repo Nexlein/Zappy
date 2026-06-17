@@ -1,8 +1,12 @@
 #include "GameState.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <memory>
 
+#include "behaviors/DeathBehavior.hpp"
+#include "behaviors/ForkBehavior.hpp"
+#include "behaviors/LevelUpBehavior.hpp"
 #include "behaviors/MoveBehavior.hpp"
 #include "behaviors/TurnBehavior.hpp"
 #include "renderer/raylib_helpers/RenderingHelper.hpp"
@@ -101,20 +105,28 @@ void GameState::applyPlayerPosition(const PlayerPosition& e)
         player.orientation = e.orientation;
 
         float duration = timeUnit > 0 ? 7.0f / timeUnit : 0.1f;
-        player.visual.behaviors.clear();
-        player.visual.behaviors.push_back(std::make_unique<MoveBehavior>(
+        // remove only move/turn behaviors, preserve others (e.g. LevelUpBehavior)
+        auto& behaviors = player.visual.behaviors;
+        behaviors.erase(std::remove_if(behaviors.begin(), behaviors.end(),
+                                       [](const auto& b) {
+                                           return dynamic_cast<MoveBehavior*>(b.get()) ||
+                                                  dynamic_cast<TurnBehavior*>(b.get());
+                                       }),
+                        behaviors.end());
+        behaviors.push_back(std::make_unique<MoveBehavior>(
             player.visual, fromX, fromY, e.x, e.y, world.width, world.height, tileSize, duration));
-        player.visual.behaviors.push_back(std::make_unique<TurnBehavior>(
-            player.visual, player.visual.angle, toAngle(e.orientation), duration));
+        behaviors.push_back(std::make_unique<TurnBehavior>(player.visual, player.visual.angle,
+                                                           toAngle(e.orientation), duration));
     }
 }
 
 void GameState::applyPlayerLevel(const PlayerLevel& e)
 {
     auto it = world.players.find(e.id);
-    if (it != world.players.end()) {
-        it->second.level = e.level;
-    }
+    if (it == world.players.end()) return;
+    it->second.level = e.level;
+    it->second.visual.behaviors.push_back(
+        std::make_unique<LevelUpBehavior>(it->second.visual, static_cast<float>(timeUnit)));
 }
 
 void GameState::applyPlayerInventory(const PlayerInventory& e)
@@ -177,7 +189,18 @@ void GameState::applyPlayerResourceTake(const PlayerResourceTake& e)
     }
 }
 
-void GameState::applyPlayerDeath(const PlayerDeath& e) { world.players.erase(e.id); }
+void GameState::applyPlayerDeath(const PlayerDeath& e)
+{
+    auto it = world.players.find(e.id);
+    if (it == world.players.end()) return;
+    Player dying = std::move(it->second);
+    world.players.erase(it);
+    dying.visual.behaviors.clear();
+    world.dyingPlayers[e.id] = std::move(dying);
+    Player& settled = world.dyingPlayers[e.id];
+    settled.visual.behaviors.push_back(
+        std::make_unique<DeathBehavior>(settled.visual, static_cast<float>(timeUnit)));
+}
 
 void GameState::applyEggNew(const EggNew& e)
 {
@@ -186,7 +209,11 @@ void GameState::applyEggNew(const EggNew& e)
         return;
     }
     Egg egg{.id = e.eggId, .x = e.x, .y = e.y, .team = it->second.team};
-    world.eggs[e.eggId] = egg;
+    egg.visual.pos = RenderingHelper::tileToWorld(e.x, e.y, world.width, world.height, tileSize);
+    world.eggs[e.eggId] = std::move(egg);
+    Egg& settled = world.eggs[e.eggId];
+    settled.visual.behaviors.push_back(
+        std::make_unique<ForkBehavior>(settled.visual, static_cast<float>(timeUnit)));
 }
 
 void GameState::applyEggHatch(const EggHatch& e)

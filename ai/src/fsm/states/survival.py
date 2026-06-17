@@ -29,7 +29,7 @@ class ForageFood(State):
             ai_logger.talk(
                 "[ForageFood] I have enough food now. Time to consider the team!"
             )
-            return "Reproduce"
+            return "SearchStone"
         return None
 
     def get_action(self, context: DroneContext) -> str | None:

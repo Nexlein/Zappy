@@ -33,20 +33,20 @@ SOLO_INCANTATION_LEVEL = 1
 # Food count required before a drone is allowed to Fork. Aligned on FOOD_TARGET:
 # ForageFood stops at FOOD_TARGET, so a higher value would be unreachable and the
 # fork path would be dead. Acts as a re-check that food held during the decision.
-FORK_FOOD_THRESHOLD = FOOD_TARGET
+FORK_FOOD_THRESHOLD = 10
 
 # Lifetime budget of forks per drone. Caps how much one drone can grow the team
 # (slot-gating already serialises growth; this is the hard ceiling).
-MAX_FORKS_PER_DRONE = 2
+MAX_FORKS_PER_DRONE = 10
 
 # ── Swarm ---
 
 # Max ticks BroadcastHelp waits for allies before giving up and retrying solo.
 # The SURVIVAL_THRESHOLD is the primary abort condition; this is a safety net.
-RALLY_TIMEOUT = 300
+RALLY_TIMEOUT = 100
 
 # Ticks between successive RALLY broadcasts.
-BCAST_INTERVAL = 10
+BCAST_INTERVAL = 2
 
 # ── Network ---
 

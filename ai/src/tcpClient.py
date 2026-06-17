@@ -63,7 +63,10 @@ class TcpClient:
             raise ConnectionError(f"unexpected handshake message: {message}")
         self.send(team_name)
 
-        available_slots = int(self.receive())
+        slots_str = self.receive()
+        if slots_str == "ko":
+            raise ConnectionRefusedError("Team is full")
+        available_slots = int(slots_str)
 
         dimensions = self.receive()
         x, y = dimensions.split()

@@ -76,14 +76,33 @@ Visual behavior system. Each `IBehavior` subclass owns a piece of per-entity vis
 
 ```
 IBehavior (pure virtual: update, isDone)
-└── MoveBehavior  — smoothstep lerp of visual.pos between tiles, handles toroidal wrap
+├── MoveBehavior    — smoothstep lerp of visual.pos between tiles, handles toroidal wrap
+├── TurnBehavior    — smoothstep lerp of visual.angle with 0/360 wraparound
+└── ABehavior       — abstract base for particle-emitting behaviors; owns mutable _particles + getParticles()
+    ├── DeathBehavior    — smoothstep shrink of visual.scale (1.0→0.05) + omnidirectional particle burst (10 ticks / freq)
+    └── LevelUpBehavior  — staggered upward particle burst, yellow/orange palette (20 ticks / freq)
 ```
 
 **Design:**
 - Logical state (`x`, `y`, `orientation`) stays server-authoritative in `Player`
-- Visual state (`visual.pos`, `visual.angle`) is driven by behaviors
-- New behaviors: subclass `IBehavior`, push onto `player.visual.behaviors` from relevant `GameState::apply*`
-- Add `.cpp` to `CMakeLists.txt`
+- Visual state (`visual.pos`, `visual.angle`, `visual.scale`) is driven by behaviors
+- Particles are owned per-behavior in `ABehavior::_particles` — isolated, no cross-contamination
+- `applyPlayerPosition` erases only `MoveBehavior`/`TurnBehavior` — other behaviors (e.g. `LevelUpBehavior`) survive movement events
+- New behaviors: subclass `IBehavior` or `ABehavior`, push onto `player.visual.behaviors` from relevant `GameState::apply*`, add `.cpp` to both `gui/CMakeLists.txt` and `tests/CMakeLists.txt`
+
+**Death flow:**
+- `applyPlayerDeath` moves `Player` from `world.players` → `world.dyingPlayers`, pushes `DeathBehavior` onto the settled entry's visual
+- `DeathBehavior` spawns 14 particles (immediate, no delay), updates shrink + physics each frame
+- Renderer draws dying players (scaled) + behavior particles via `_drawBehaviorParticles`, then calls `world.purgeDyingPlayers()`
+- `world.dyingPlayers` and `purgeDyingPlayers()` are `mutable` — visual-only lifecycle
+
+**LevelUp flow:**
+- `applyPlayerLevel` pushes `LevelUpBehavior` alongside existing behaviors (no clear)
+- Particles staggered with random delay up to 60% of duration; each activates at `_visual.pos` at delay expiry (follows player movement)
+- Behavior removes itself and clears `_particles` when done
+
+**Renderer particle draw:**
+- `_drawBehaviorParticles(visual)` — iterates `visual.behaviors`, casts to `ABehavior*`, draws active particles via `DrawSphere`
 
 ### core/Args
 CLI argument parser with validation.
@@ -185,12 +204,12 @@ TooltipRenderer::create()
 - Map aesthetics: skybox, ground texture, decorative elements
 - Incantation visual feedback (glow, particle effect, frozen player indicator)
 - Broadcast visual feedback (directional wave or floating message)
-- Death visual (dissolve, fade, or brief marker on tile)
+- ~~Death visual~~ — **done**: shrink + team-colored particle burst via `DeathBehavior`
 - Win screen / end game display when a team reaches 6 players at level 8
 - Fork visual (egg appearing animation on tile when player forks)
 - Level-up visual (burst/flash effect on all players participating in a successful elevation)
 - ~~Smooth movement animation~~ — **done**: `MoveBehavior` smoothstep-lerps position, toroidal wrap slides to edge then teleports
-- Turn animation — `TurnBehavior` to smoothstep-lerp `visual.angle` with 0/360 wraparound
+- ~~Turn animation~~ — **done**: `TurnBehavior` smoothstep-lerps `visual.angle` with 0/360 wraparound
 - Incantation progress bar on the tile (300/f duration, visual countdown until success or failure)
 - Player history trail — faint path showing recent movement of selected player (style TBD based on overall visual direction)
 - Spectate / follow mode — camera locks onto and follows a selected player (3rd person or overhead, TBD)
@@ -277,7 +296,11 @@ gui/
 │   │   ├── App.hpp/cpp
 │   │   └── behaviors/
 │   │       ├── IBehavior.hpp
-│   │       └── MoveBehavior.hpp/cpp
+│   │       ├── ABehavior.hpp
+│   │       ├── MoveBehavior.hpp/cpp
+│   │       ├── TurnBehavior.hpp/cpp
+│   │       ├── DeathBehavior.hpp/cpp
+│   │       └── LevelUpBehavior.hpp/cpp
 │   ├── network/
 │   │   ├── TcpSocket.hpp/cpp
 │   │   └── ProtocolParser.hpp/cpp

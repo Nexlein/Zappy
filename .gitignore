@@ -41,3 +41,6 @@ ai/logs/
 # Test outputs
 Testing/
 *.log
+
+# text files
+*.txt

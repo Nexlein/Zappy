@@ -40,6 +40,9 @@ if(ZAPPY_BUILD_GUI)
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/Args.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/MoveBehavior.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/TurnBehavior.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/DeathBehavior.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/ForkBehavior.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/LevelUpBehavior.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/renderer/raylib_helpers/RenderingHelper.cpp
     )
 
@@ -79,6 +82,14 @@ if(ZAPPY_BUILD_SERVER)
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/protocol/AiParser.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/protocol/GuiParser.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/protocol/Serializer.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/network/Listener.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/network/Connection.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/network/ClientManager.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/game/GuiNotifier.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/game/HandshakeHandler.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/game/CommandDispatcher.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/game/GuiHandlers.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/game/AiHandlers.cpp
     )
 
     set(SERVER_TEST_SOURCES
@@ -89,6 +100,9 @@ if(ZAPPY_BUILD_SERVER)
         server/test_aiparser.cpp
         server/test_guiparser.cpp
         server/test_serializer.cpp
+        server/test_listener.cpp
+        server/test_connection.cpp
+        server/test_client_manager.cpp
     )
 
     add_executable(zappy_server_tests ${SERVER_TEST_SOURCES} ${SERVER_SOURCES})

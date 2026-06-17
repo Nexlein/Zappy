@@ -28,13 +28,16 @@ class SelectionFinder {
      * @param ray Mouse ray from camera.
      * @param state Game state to check entities against.
      * @param tileSize Size of each tile in world units.
-     * @param playerHeight Height of player cubes.
-     * @param eggHeight Height of egg cubes.
+     * @param playerModel Player model for mesh-accurate raycasting.
+     * @param playerModelSize Player model scale scalar.
+     * @param eggModel Egg model for mesh-accurate raycasting.
+     * @param eggModelSize Egg model scale scalar.
      * @param selectionDuration Timer duration for selection (seconds).
      * @return Selection struct with closest hit entity.
      */
     static Selection findFromRay(const Ray& ray, const GameState& state, float tileSize,
-                                 float playerHeight = 0.4f, float eggHeight = 0.2f,
+                                 const Model& playerModel, float playerModelSize,
+                                 const Model& eggModel, float eggModelSize,
                                  float selectionDuration = 3.0f);
     /**
      * @brief Returns an empty selection (type None).

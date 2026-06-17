@@ -59,7 +59,7 @@ class AIController:
 
         # 3. Ask the (possibly new) state for the next action
         action = self.current_state.get_action(self.context)
-        ai_logger.log_state(self.current_state_name, action or "None")
+        ai_logger.log_state(self.current_state_name, action or "None", self.context)
         return action
 
     def _transition_to(self, new_state_name: str) -> None:
