@@ -1,4 +1,4 @@
-from utils.stones import is_incantation_ready
+from utils.stones import is_incantation_ready, get_missing_stones
 from utils.config_loader import (
     get_survival_config,
     get_evolution_config,
@@ -24,8 +24,6 @@ class UtilityCalculators:
         is_following: bool
         reproduce_fork_sent: bool
         reproduce_attempted: bool
-
-        def _get_missing_stones(self) -> dict[str, int]: ...
 
     def _get_survival_utility(self) -> float:
         surv_cfg = get_survival_config()
@@ -66,7 +64,7 @@ class UtilityCalculators:
         return 0.0
 
     def _get_gather_utility(self, u_survival: float) -> float:
-        missing = self._get_missing_stones()
+        missing = get_missing_stones(self.context.level, self.context.inventory)
         if not missing:
             return 0.0
         num_missing = sum(missing.values())
@@ -95,7 +93,7 @@ class UtilityCalculators:
         return 0.82 * (1.0 - u_survival)
 
     def _get_rally_utility(self, u_survival: float) -> float:
-        if self._get_missing_stones():
+        if get_missing_stones(self.context.level, self.context.inventory):
             return 0.0
 
         if self.is_following:
@@ -111,7 +109,7 @@ class UtilityCalculators:
         if self.is_following:
             return 0.85 * (1.0 - u_survival)
 
-        missing = self._get_missing_stones()
+        missing = get_missing_stones(self.context.level, self.context.inventory)
         if not missing:
             # We have all stones, but if someone with a higher ID called, we follow them!
             for bcst in self.context.broadcasts:
