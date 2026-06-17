@@ -42,6 +42,12 @@ class TcpClient:
     def recv_chunk(self) -> str:
         if self._socket is None:
             raise RuntimeError("not connected")
+
+        if self._buffer:
+            res = self._buffer
+            self._buffer = ""
+            return res
+
         readable, _, _ = select.select([self._socket], [], [], 0)
         if not readable:
             return ""

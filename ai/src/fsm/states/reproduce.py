@@ -1,0 +1,76 @@
+##
+## EPITECH PROJECT, 2026
+## Zappy
+## File description:
+## The Reproduction Layer (population growth)
+##
+
+from fsm.states.AStates import State
+from context import DroneContext
+from config import FORK_FOOD_THRESHOLD, MAX_FORKS_PER_DRONE
+from ai_logger import ai_logger
+
+
+class Reproduce(State):
+    """
+    Reproduction state — grow the team for the high-level incantations.
+
+    Slot-gated policy: only lay an egg if no idle egg already waits for a
+    client, so growth self-serialises (after a Fork, available_slots stays at 1
+    until the spawned client occupies the egg, blocking further forks).
+
+    Sequence (one command per tick — pending_command gates the controller, so
+    each reply is processed before the next update/get_action):
+      1. Connect_nbr  — refresh available_slots (handshake value is stale).
+      2. decide       — slots > 0 ? an egg is idle, bail out. slots == 0 ? fork.
+      3. Fork         — orchestrator spawns the client + reaps it later.
+
+    forks_done lives on the instance (states are singletons in the controller),
+    giving each drone a lifetime fork budget.
+    """
+
+    def __init__(self) -> None:
+        self.forks_done = 0
+
+    def enter(self, context: DroneContext) -> None:
+        self._connect_sent = False
+        self._fork_sent = False
+        ai_logger.talk("[Reproduce] Well fed — should I grow the team?")
+
+    def update(self, context: DroneContext) -> str | None:
+        if self.forks_done >= MAX_FORKS_PER_DRONE:
+            return "SearchStone"
+        if context.inventory.food < FORK_FOOD_THRESHOLD:
+            return "SearchStone"
+
+        # Fork verdict: count the egg only on success, then leave.
+        if self._fork_sent:
+            if context.last_command_successful:
+                self.forks_done += 1
+                ai_logger.talk(
+                    f"[Reproduce] Egg laid! ({self.forks_done}/{MAX_FORKS_PER_DRONE})"
+                )
+            return "SearchStone"
+
+        # After the refresh: an idle egg already exists — don't pile up.
+        if self._connect_sent and context.available_slots > 0:
+            ai_logger.talk(
+                f"[Reproduce] {context.available_slots} slot(s) already free, "
+                "leaving them to be filled."
+            )
+            return "SearchStone"
+
+        return None
+
+    def get_action(self, context: DroneContext) -> str | None:
+        if not self._connect_sent:
+            self._connect_sent = True
+            return "Connect_nbr"
+        if not self._fork_sent and context.available_slots == 0:
+            self._fork_sent = True
+            ai_logger.talk("[Reproduce] No idle egg — forking!")
+            return "Fork"
+        return None
+
+    def exit(self, context: DroneContext) -> None:
+        ai_logger.talk("[Reproduce] Done reproducing for now.")

@@ -9,12 +9,15 @@ from ai_factory import create_ai_controller
 from context import DroneContext, BroadcastMessage
 from NetworkBuffer import NetworkBuffer
 from tcpClient import TcpClient
-from argsParser import parseArgs
-from BroadcastProtocol import BroadcastProtocol
+from argsParser import parseArgs, Config
+from BroadcastProtocol import BroadcastProtocol, MessageType
 from look_parser import parse_look_to_tiles
 from inventory_parser import update_inventory
 from typing import Any
 from ai_logger import ai_logger
+import subprocess
+import sys
+import signal
 
 
 class DroneDied(Exception):
@@ -35,6 +38,7 @@ class Orchestrator:
     _net: NetworkBuffer
     _controller: Any
     _context: DroneContext
+    _config: Config
 
     def __init__(self, config):
         ai_logger.info("[Orchestrator] Initializing Zappy AI client...")
@@ -46,6 +50,7 @@ class Orchestrator:
         self._context.available_slots = slots
         self._context.map_width = w
         self._context.map_height = h
+        self._config = config
 
         self._net = NetworkBuffer(client)
         self._controller = create_ai_controller(config.strategy, self._context)
@@ -85,6 +90,17 @@ class Orchestrator:
                 return
             if decoded.team_name != self._context.team_name:
                 return
+
+            if (
+                self._context.elevation_in_progress
+                and decoded.msg_type == MessageType.ABORT
+                and decoded.level == self._context.level
+            ):
+                ai_logger.info(
+                    "[Orchestrator] Received ABORT while frozen. Unfreezing!"
+                )
+                self._context.elevation_in_progress = False
+
             self._context.broadcasts.append(BroadcastMessage(direction, decoded))
         elif event.startswith("eject"):
             self._context.vision.clear()
@@ -105,6 +121,7 @@ class Orchestrator:
                 return
             self._context.level = level
             self._context.elevation_in_progress = False
+            self._context.vision.clear()
             if self._pending_command == "Incantation":
                 # Our own ritual's success reply, routed here as an event.
                 self._context.last_command_successful = True
@@ -129,9 +146,15 @@ class Orchestrator:
             self._context.elevation_in_progress = False
             self._context.last_command_successful = response != "ko"
         elif command == "Look":
-            self._context.vision = parse_look_to_tiles(response)
+            try:
+                self._context.vision = parse_look_to_tiles(response)
+            except ValueError as e:
+                ai_logger.error(f"[Orchestrator] Look parse error: {e}")
         elif command == "Inventory":
-            update_inventory(self._context.inventory, response)
+            try:
+                update_inventory(self._context.inventory, response)
+            except ValueError as e:
+                ai_logger.error(f"[Orchestrator] Inventory parse error: {e}")
             self._context.ticks_since_inventory = 0
         elif command.startswith("Take"):
             if response == "ok":
@@ -141,6 +164,8 @@ class Orchestrator:
                     setattr(tile, resource, max(0, getattr(tile, resource, 0) - 1))
                 inv = self._context.inventory
                 setattr(inv, resource, getattr(inv, resource, 0) + 1)
+            elif response == "ko":
+                self._context.vision.clear()
         elif command.startswith("Set"):
             if response == "ok":
                 resource = command.removeprefix("Set ").strip()
@@ -149,9 +174,28 @@ class Orchestrator:
                 if self._context.vision:
                     tile = self._context.vision[0]
                     setattr(tile, resource, getattr(tile, resource, 0) + 1)
+            elif response == "ko":
+                self._context.vision.clear()
         elif command in ("Forward", "Right", "Left"):
             if response == "ok":
                 self._context.vision.clear()
+        elif command == "Connect_nbr" and response.isdigit():
+            self._context.available_slots = int(response)
+        elif command == "Fork" and response == "ok":
+            subprocess.Popen(
+                [
+                    sys.executable,
+                    sys.argv[0],
+                    "-p",
+                    str(self._config.port),
+                    "-n",
+                    self._config.teamName,
+                    "-h",
+                    self._config.host,
+                    "-s",
+                    self._config.strategy,
+                ]
+            )
         self._context.last_command_successful = response != "ko"
         self._pending_command = None
 
@@ -159,6 +203,8 @@ class Orchestrator:
 def main():
     config = parseArgs()
     ai_logger.configure(config.teamName, config.verbose)
+
+    signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
     orchestrator = Orchestrator(config)
     orchestrator.run()

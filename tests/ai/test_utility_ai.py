@@ -7,7 +7,7 @@
 
 import unittest
 from context import DroneContext, Tile, BroadcastMessage
-from utility_ai import UtilityAIController
+from uai.controller import UtilityAIController
 from BroadcastProtocol import BroadcastProtocol
 
 
@@ -51,7 +51,7 @@ class TestUtilityAIController(unittest.TestCase):
         self.assertEqual(action, "Forward")
 
     def test_gather_utility_and_action(self):
-        self.context.inventory.food = 15  # Safe food (target level)
+        self.context.inventory.food = 14  # Safe food but below fork threshold
         self.context.level = 1
         self.context.inventory.linemate = 0  # Missing linemate
         self.context.vision = [Tile(linemate=1)]

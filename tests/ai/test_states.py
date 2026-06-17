@@ -7,11 +7,11 @@
 
 import unittest
 from context import DroneContext, Tile
-from states.survival import ForageFood
-from states.evolution import SearchStone
-from states.swarm import BroadcastHelp, MapsToAlly
+from fsm.states.survival import ForageFood
+from fsm.states.evolution import SearchStone
+from fsm.states.swarm import BroadcastHelp, MapsToAlly
 from context import BroadcastMessage
-from states.evolution import IncantationState
+from fsm.states.evolution import IncantationState
 from BroadcastProtocol import DecodedBroadcast, MessageType
 
 
@@ -41,7 +41,7 @@ class TestForageFood(unittest.TestCase):
     def test_update_food_high(self):
         self.context.inventory.food = 15
         res = self.state.update(self.context)
-        self.assertEqual(res, "SearchStone")
+        self.assertEqual(res, "Reproduce")
 
     def test_get_action_empty_vision(self):
         self.context.vision = []
@@ -96,7 +96,7 @@ class TestSearchStone(unittest.TestCase):
         self.context.level = 1
         self.context.inventory.linemate = 1
         res = self.state.update(self.context)
-        self.assertEqual(res, "Incantation")
+        self.assertEqual(res, "BroadcastHelp")
 
     def test_update_all_stones_collected_level_2(self):
         self.context.level = 2
@@ -199,20 +199,23 @@ class TestBroadcastHelp(unittest.TestCase):
         self.state.enter(self.context)
         self.context.inventory.food = 2  # Less than SURVIVAL_THRESHOLD (5)
         res = self.state.update(self.context)
-        self.assertEqual(res, "ForageFood")
+        self.assertIsNone(res)
+        self.assertEqual(self.state._abort_target, "ForageFood")
 
     def test_update_timeout(self):
         self.state.enter(self.context)
         self.context.inventory.food = 15  # Food secure
-        self.state.ticks_waited = 101  # Greater than RALLY_TIMEOUT (100)
+        self.state.ticks_waited = 301  # Greater than RALLY_TIMEOUT (300)
         res = self.state.update(self.context)
-        self.assertEqual(res, "SearchStone")
+        self.assertIsNone(res)
+        self.assertEqual(self.state._abort_target, "SearchStone")
 
     def test_update_incantation_ready(self):
         self.state.enter(self.context)
         self.context.inventory.food = 15  # Food secure
         self.context.vision = [Tile(player=2, linemate=1, deraumere=1, sibur=1)]
         self.context.level = 2
+        self.state.ready_count = 1  # Faking 1 teammate ready
         res = self.state.update(self.context)
         self.assertEqual(res, "Incantation")
 
@@ -236,7 +239,7 @@ class TestMapsToAlly(unittest.TestCase):
     def test_update_timeout(self):
         self.state.enter(self.context)
         self.context.inventory.food = 15  # Food secure
-        self.state.ticks_waited = 101  # Greater than RALLY_TIMEOUT (100)
+        self.state.ticks_waited = 301  # Greater than RALLY_TIMEOUT (300)
         res = self.state.update(self.context)
         self.assertEqual(res, "SearchStone")
 
