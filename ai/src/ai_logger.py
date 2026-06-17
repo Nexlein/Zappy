@@ -97,6 +97,12 @@ class AILogger:
         with open(metrics_file, "w") as f:
             json.dump(metrics, f, indent=4)
 
+    def warning(self, msg: str):
+        self.logger.warning("warning", extra={"event": f"WARNING: {msg}"})
+
+    def error(self, msg: str):
+        self.logger.error("error", extra={"event": f"ERROR: {msg}"})
+
     def log_state(self, state: str, action: str, level: int | str, food: int | str):
         msg = f"Lvl:{level} | Food:{food} | State:{state} | Action:{action}"
 

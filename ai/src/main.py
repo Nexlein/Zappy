@@ -216,12 +216,37 @@ class Orchestrator:
 
 def main():
     config = parseArgs()
-    ai_logger.configure(config.teamName, config.verbose)
+
+    config_dict = {
+        "port": config.port,
+        "teamName": config.teamName,
+        "host": config.host,
+        "strategy": config.strategy,
+    }
+    ai_logger.configure(config.teamName, config_dict)
 
     signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
     orchestrator = Orchestrator(config)
-    orchestrator.run()
+
+    try:
+        orchestrator.run()
+    finally:
+        ai_logger.dump_metrics()
+
+        # Auto generate charts
+        log_dir = ai_logger.get_log_dir()
+        if log_dir:
+            import os
+
+            report_script = os.path.join(
+                os.path.dirname(__file__), "generate_charts.py"
+            )
+            subprocess.run(
+                [sys.executable, report_script, log_dir],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
 
 
 if __name__ == "__main__":
