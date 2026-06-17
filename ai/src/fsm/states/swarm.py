@@ -134,9 +134,9 @@ class BroadcastHelp(State):
             self._abort_target = "ForageFood"
         elif self.ticks_waited > RALLY_TIMEOUT:
             ai_logger.talk(
-                "[BroadcastHelp] Nobody is coming... I will go back to looking for stones."
+                "[BroadcastHelp] Nobody is coming... I need to grow the team."
             )
-            self._abort_target = "SearchStone"
+            self._abort_target = "Reproduce"
 
         return None
 
@@ -173,13 +173,7 @@ class BroadcastHelp(State):
                 return f"Broadcast {payload}"
 
         self.tick_since_bcast += 1
-
-        if (
-            self.ready_count + 1 >= PLAYERS_REQUIRED[context.level]
-            or self.tick_since_bcast % 3 == 0
-        ):
-            return "Look"
-        return None
+        return "Look"
 
     def exit(self, context: DroneContext) -> None:
         ai_logger.talk("[BroadcastHelp] Stopping my broadcast.")
@@ -253,13 +247,19 @@ class MapsToAlly(State):
                     return "SearchStone"
 
         # Also switch to the highest known leader in update so we don't ignore ABORTs from them.
+        heard_leader = False
         for bcst in context.broadcasts:
             if (
                 bcst.content.msg_type == MessageType.RALLY
                 and bcst.content.level == self._entry_level
-                and bcst.content.drone_id > self._target_leader_id
             ):
-                self._target_leader_id = bcst.content.drone_id
+                if bcst.content.drone_id > self._target_leader_id:
+                    self._target_leader_id = bcst.content.drone_id
+                if bcst.content.drone_id == self._target_leader_id:
+                    heard_leader = True
+
+        if heard_leader:
+            self.ticks_waited = 0
 
         if self.ticks_waited > RALLY_TIMEOUT:
             ai_logger.talk(
@@ -326,10 +326,10 @@ class MapsToAlly(State):
                     context.drone_id,
                 )
                 return f"Broadcast {payload}"
-            return None  # Wait for INCANT
+            return "Look"  # Wait for INCANT
 
         # No RALLY heard this tick and not arrived — stay put and wait for the next broadcast.
-        return None
+        return "Look"
 
     def exit(self, context: DroneContext) -> None:
         ai_logger.talk("[MapsToAlly] I am leaving the group-up journey.")
