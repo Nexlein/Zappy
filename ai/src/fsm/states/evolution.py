@@ -97,16 +97,21 @@ class SearchStone(State):
                 return f"Take {stone}"
 
         # Check vision for needed stones ahead
+        best_path = None
         for i, tile in enumerate(context.vision):
             if i == 0:
                 continue
             for stone in missing_stones:
                 if getattr(tile, stone, 0) > 0:
-                    self._forward_streak = 0
                     path = generate_path_to_tile(i)
-                    if path:
-                        context.path_queue.extend(path)
-                        return context.path_queue.pop(0)
+                    if best_path is None or len(path) < len(best_path):
+                        best_path = path
+                    break
+
+        if best_path:
+            self._forward_streak = 0
+            context.path_queue.extend(best_path)
+            return context.path_queue.pop(0)
 
         # Nothing useful here — explore.
         # Rotate every 5 steps to avoid getting stuck in a straight line.

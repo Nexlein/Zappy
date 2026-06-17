@@ -45,15 +45,19 @@ class ForageFood(State):
             return "Take food"
 
         # Check vision for food ahead
+        best_path = None
         for i, tile in enumerate(context.vision):
             if i == 0:
                 continue
             if tile.food > 0:
-                self._forward_streak = 0
                 path = generate_path_to_tile(i)
-                if path:
-                    context.path_queue.extend(path)
-                    return context.path_queue.pop(0)
+                if best_path is None or len(path) < len(best_path):
+                    best_path = path
+
+        if best_path:
+            self._forward_streak = 0
+            context.path_queue.extend(best_path)
+            return context.path_queue.pop(0)
 
         # No food visible — explore.
         # Rotate every 5 steps to avoid getting stuck in a straight line.

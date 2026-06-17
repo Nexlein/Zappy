@@ -1,6 +1,7 @@
 import random
 from elevations import (
     ELEVATION_REQUIREMENTS,
+    PLAYERS_REQUIRED,
     BROADCAST_DIRECTION_ARRIVED,
     BROADCAST_DIRECTION_FORWARD,
     BROADCAST_DIRECTION_RIGHT,
@@ -57,6 +58,24 @@ class ActionGenerators:
                 return stone
         return None
 
+    def _next_stone_to_take(self) -> str | None:
+        if not self.context.vision:
+            return None
+        tile = self.context.vision[0]
+        reqs = ELEVATION_REQUIREMENTS.get(self.context.level, {})
+        all_stones = [
+            "linemate",
+            "deraumere",
+            "sibur",
+            "mendiane",
+            "phiras",
+            "thystame",
+        ]
+        for stone in all_stones:
+            if getattr(tile, stone, 0) > reqs.get(stone, 0):
+                return stone
+        return None
+
     def _get_survival_action(self) -> str:
         if self.context.path_queue:
             return self.context.path_queue.pop(0)
@@ -65,15 +84,19 @@ class ActionGenerators:
         if self.context.vision[0].food > 0:
             self._forward_streak = 0
             return "Take food"
+        best_path = None
         for i, tile in enumerate(self.context.vision):
             if i == 0:
                 continue
             if tile.food > 0:
-                self._forward_streak = 0
                 path = generate_path_to_tile(i)
-                if path:
-                    self.context.path_queue.extend(path)
-                    return self.context.path_queue.pop(0)
+                if best_path is None or len(path) < len(best_path):
+                    best_path = path
+
+        if best_path:
+            self._forward_streak = 0
+            self.context.path_queue.extend(best_path)
+            return self.context.path_queue.pop(0)
         self._forward_streak += 1
         if self._forward_streak % 5 == 0:
             return random.choice(["Right", "Left"])
@@ -90,16 +113,21 @@ class ActionGenerators:
             if getattr(current_tile, stone, 0) > 0:
                 self._forward_streak = 0
                 return f"Take {stone}"
+        best_path = None
         for i, tile in enumerate(self.context.vision):
             if i == 0:
                 continue
             for stone in missing:
                 if getattr(tile, stone, 0) > 0:
-                    self._forward_streak = 0
                     path = generate_path_to_tile(i)
-                    if path:
-                        self.context.path_queue.extend(path)
-                        return self.context.path_queue.pop(0)
+                    if best_path is None or len(path) < len(best_path):
+                        best_path = path
+                    break
+
+        if best_path:
+            self._forward_streak = 0
+            self.context.path_queue.extend(best_path)
+            return self.context.path_queue.pop(0)
         self._forward_streak += 1
         if self._forward_streak % 5 == 0:
             return random.choice(["Right", "Left"])
@@ -144,25 +172,40 @@ class ActionGenerators:
             return "Incantation"
         return None
 
-    def _get_rally_action(self) -> str:
+    def _get_rally_action(self) -> str | None:
         if not self.context.vision:
             return "Look"
-        stone = self._next_stone_to_drop()
-        if stone:
-            return f"Set {stone}"
-        if self.tick_since_bcast >= BCAST_INTERVAL:
-            self.tick_since_bcast = 0
-            payload = BroadcastProtocol.encode(
-                self.context.team_name,
-                MessageType.RALLY,
-                self.context.level,
-                self.context.drone_id,
-            )
-            return f"Broadcast {payload}"
-        self.tick_since_bcast += 1
-        return "Look"
 
-    def _get_follow_action(self) -> str:
+        if self.ready_count + 1 >= PLAYERS_REQUIRED.get(self.context.level, 0):
+            stone_to_take = self._next_stone_to_take()
+            if stone_to_take:
+                return f"Take {stone_to_take}"
+
+            stone = self._next_stone_to_drop()
+            if stone:
+                return f"Set {stone}"
+
+        if self.context.level > SOLO_INCANTATION_LEVEL:
+            if self.tick_since_bcast >= BCAST_INTERVAL:
+                self.tick_since_bcast = 0
+                payload = BroadcastProtocol.encode(
+                    self.context.team_name,
+                    MessageType.RALLY,
+                    self.context.level,
+                    self.context.drone_id,
+                )
+                return f"Broadcast {payload}"
+
+        self.tick_since_bcast += 1
+
+        if (
+            self.ready_count + 1 >= PLAYERS_REQUIRED.get(self.context.level, 0)
+            or self.tick_since_bcast % 3 == 0
+        ):
+            return "Look"
+        return None
+
+    def _get_follow_action(self) -> str | None:
         direction = self.highest_rally_direction
 
         if direction is not None:
@@ -182,11 +225,6 @@ class ActionGenerators:
                     return "Left"
 
         if self.arrived:
-            if not self.context.vision:
-                return "Look"
-            stone = self._next_stone_to_drop()
-            if stone:
-                return f"Set {stone}"
             if not self.ready_sent:
                 self.ready_sent = True
                 payload = BroadcastProtocol.encode(
@@ -196,6 +234,6 @@ class ActionGenerators:
                     self.context.drone_id,
                 )
                 return f"Broadcast {payload}"
-            return "Look"
+            return None
 
-        return "Look"
+        return None
