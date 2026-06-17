@@ -235,5 +235,10 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
         else:
             action = self._get_survival_action()
 
-        ai_logger.log_state(best_behavior, action or "None", self.context)
+        ai_logger.log_state(
+            best_behavior,
+            action or "None",
+            self.context.level,
+            self.context.inventory.food,
+        )
         return action

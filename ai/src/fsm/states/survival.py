@@ -6,7 +6,7 @@
 ##
 
 import random
-from fsm.states.AStates import State
+from fsm.states.AState import State
 from context import DroneContext
 from config import FOOD_TARGET, EXPLORE_TURN_EVERY
 

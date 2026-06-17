@@ -7,7 +7,7 @@
 
 from context import DroneContext
 from config import INVENTORY_REFRESH_INTERVAL
-from fsm.states.AStates import State
+from fsm.states.AState import State
 from fsm.states.survival import ForageFood
 from fsm.states.evolution import SearchStone, IncantationState
 from fsm.states.swarm import BroadcastHelp, MapsToAlly

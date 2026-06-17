@@ -5,7 +5,7 @@
 ## The Reproduction Layer (population growth)
 ##
 
-from fsm.states.AStates import State
+from fsm.states.AState import State
 from context import DroneContext
 from config import FORK_FOOD_THRESHOLD, MAX_FORKS_PER_DRONE
 
