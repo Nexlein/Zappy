@@ -114,7 +114,7 @@ def generate_charts(run_folder):
                     data = json.loads(line)
                     cmd = data.get("command")
                     if cmd:
-                        # group 'Take <resource>' into 'Take' for cleaner charts, or keep full
+                        # group 'Take <resource>' into 'Take'
                         base_cmd = cmd.split(" ")[0]
                         command_counts[base_cmd] += 1
                 except json.JSONDecodeError:
