@@ -11,6 +11,7 @@
 #include "data/Player.hpp"
 #include "data/Resources.hpp"
 #include "data/Tile.hpp"
+#include "interfaces/IWorldObserver.hpp"
 
 /// Result of an Eject command. dx/dy encode the push direction (used to notify ejected players).
 struct EjectResult {
@@ -81,7 +82,7 @@ class World {
      * Re-checks prerequisites. On success, levels up all participants and consumes stones.
      * Returns false if any participant died or moved off the tile.
      */
-    bool finalizeIncantation(const std::vector<int>& participantIds);
+    bool finalizeIncantation(int x, int y, const std::vector<int>& participantIds);
 
     std::optional<std::string> checkWin() const;
 
@@ -90,6 +91,8 @@ class World {
     int height() const;
     const std::unordered_map<int, Player>& getPlayers() const;
     const std::unordered_map<int, Egg>& getEggs() const;
+
+    void addWorldObserver(IWorldObserver* observer);
 
     private:
     int _width;
@@ -101,4 +104,6 @@ class World {
     std::mt19937 _rng{std::random_device{}()};
     int _nextPlayerId = 0;
     int _nextEggId = 0;
+    bool _gameEnded = false;
+    std::vector<IWorldObserver*> _observers;
 };
