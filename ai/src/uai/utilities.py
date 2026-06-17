@@ -1,5 +1,11 @@
 from elevations import ELEVATION_REQUIREMENTS, PLAYERS_REQUIRED, is_incantation_ready
-from config import FOOD_TARGET, SURVIVAL_THRESHOLD, SOLO_INCANTATION_LEVEL
+from config import (
+    FOOD_TARGET,
+    SURVIVAL_THRESHOLD,
+    SOLO_INCANTATION_LEVEL,
+    FORK_FOOD_THRESHOLD,
+    MAX_FORKS_PER_DRONE,
+)
 from BroadcastProtocol import MessageType
 
 from typing import TYPE_CHECKING
@@ -12,11 +18,14 @@ class UtilityCalculators:
     """Calculates utilities for various AI behaviors."""
 
     if TYPE_CHECKING:
+        forks_done: int
         context: "DroneContext"
         incant_cmd_sent: bool
         is_leader: bool
         ready_count: int
         is_following: bool
+        reproduce_fork_sent: bool
+        reproduce_attempted: bool
 
         def _get_missing_stones(self) -> dict[str, int]: ...
 
@@ -60,13 +69,26 @@ class UtilityCalculators:
         stone_ratio = num_missing / total_needed
         return 0.8 * stone_ratio * (1.0 - u_survival)
 
+    def _get_reproduce_utility(self, u_survival: float) -> float:
+        if self.forks_done >= MAX_FORKS_PER_DRONE:
+            return 0.0
+        if self.context.inventory.food < FORK_FOOD_THRESHOLD:
+            return 0.0
+
+        if self.reproduce_fork_sent:
+            return 1.0
+
+        if self.reproduce_attempted:
+            return 0.0
+
+        return 0.82 * (1.0 - u_survival)
+
     def _get_rally_utility(self, u_survival: float) -> float:
         if self.context.level <= SOLO_INCANTATION_LEVEL:
             return 0.0
         if self._get_missing_stones():
             return 0.0
 
-        # If we heard a rally from someone else and yielded, we don't rally
         if self.is_following:
             return 0.0
 

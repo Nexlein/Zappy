@@ -29,8 +29,12 @@ class ActionGenerators:
         arrived: bool
         ready_sent: bool
         highest_rally_direction: int | None
+        forks_done: int
+        reproduce_connect_sent: bool
+        reproduce_fork_sent: bool
 
         def tick(self) -> str | None: ...
+        def _reset_reproduce_state(self) -> None: ...
 
     def _get_missing_stones(self) -> dict[str, int]:
         requirements = ELEVATION_REQUIREMENTS.get(self.context.level, {})
@@ -100,6 +104,24 @@ class ActionGenerators:
         if self._forward_streak % 5 == 0:
             return random.choice(["Right", "Left"])
         return "Forward"
+
+    def _get_reproduce_action(self) -> str | None:
+        if self.reproduce_fork_sent:
+            if self.context.last_command_successful:
+                self.forks_done += 1
+            self._reset_reproduce_state()
+            return None
+
+        if not self.reproduce_connect_sent:
+            self.reproduce_connect_sent = True
+            return "Connect_nbr"
+
+        if self.context.available_slots == 0:
+            self.reproduce_fork_sent = True
+            return "Fork"
+
+        self._reset_reproduce_state()
+        return None
 
     def _get_incantation_action(self) -> str | None:
         # Check if previous incantation failed
