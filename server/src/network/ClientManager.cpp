@@ -2,6 +2,8 @@
 
 #include <sys/socket.h>
 
+#include <cerrno>
+#include <cstring>
 #include <stdexcept>
 
 ClientManager::ClientManager(Listener& listener) : _listener(listener) {}
@@ -22,8 +24,11 @@ PollResult ClientManager::poll(int timeoutMs)
 {
     _rebuildPollFds();
 
-    if (::poll(_pollFds.data(), static_cast<nfds_t>(_pollFds.size()), timeoutMs) < 0)
-        throw std::runtime_error("poll() failed");
+    int ret = ::poll(_pollFds.data(), static_cast<nfds_t>(_pollFds.size()), timeoutMs);
+    while (ret < 0 && errno == EINTR)
+        ret = ::poll(_pollFds.data(), static_cast<nfds_t>(_pollFds.size()), timeoutMs);
+    if (ret < 0)
+        throw std::runtime_error(std::string("poll() failed: ") + strerror(errno));
 
     PollResult result;
     if (_pollFds[0].revents & POLLIN) _acceptNew(result);
