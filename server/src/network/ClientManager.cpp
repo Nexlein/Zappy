@@ -52,10 +52,6 @@ void ClientManager::_handleEvents(const pollfd& pfd, PollResult& result)
     int id = _fdToId.at(pfd.fd);
     auto& conn = _connections.at(id);
 
-    if (pfd.revents & (POLLHUP | POLLERR)) {
-        result.disconnectedIds.push_back(id);
-        return;
-    }
     if (pfd.revents & POLLIN) {
         char buf[4096];
         ssize_t n = ::recv(pfd.fd, buf, sizeof(buf), 0);
@@ -66,6 +62,10 @@ void ClientManager::_handleEvents(const pollfd& pfd, PollResult& result)
         conn.appendRead({buf, static_cast<size_t>(n)});
         while (auto line = conn.nextLine()) result.lines.emplace_back(id, std::move(*line));
     }
+    if (pfd.revents & (POLLHUP | POLLERR)) {
+        result.disconnectedIds.push_back(id);
+        return;
+    }
     if (pfd.revents & POLLOUT) conn.flushWrite();
 }
 
@@ -75,7 +75,13 @@ void ClientManager::send(int connectionId, const std::string& msg)
     if (it != _connections.end()) it->second.queueWrite(msg);
 }
 
-void ClientManager::disconnect(int connectionId) { _connections.erase(connectionId); }
+void ClientManager::disconnect(int connectionId)
+{
+    auto it = _connections.find(connectionId);
+    if (it == _connections.end()) return;
+    it->second.flushWrite();
+    _connections.erase(it);
+}
 
 Connection& ClientManager::getConnection(int connectionId)
 {
