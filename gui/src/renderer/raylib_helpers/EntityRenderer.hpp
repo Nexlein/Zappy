@@ -1,7 +1,8 @@
 #pragma once
 
-#include "ColorPalette.hpp"
-#include "core/GameState.hpp"
+#include <unordered_map>
+
+#include "core/Resources.hpp"
 #include "raylib.h"
 
 /**

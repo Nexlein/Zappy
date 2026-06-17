@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include "core/Orientation.hpp"
+#include "ColorPalette.hpp"
 
 std::unordered_map<std::tuple<int, int, int>, EntityRenderer::ResourceCacheEntry,
                    EntityRenderer::TupleHash>

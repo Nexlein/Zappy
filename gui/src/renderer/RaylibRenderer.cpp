@@ -5,6 +5,9 @@
 #include <cmath>
 #include <iostream>
 
+#include "raylib_helpers/ColorPalette.hpp"
+#include "raylib_helpers/EntityRenderer.hpp"
+#include "raylib_helpers/GridRenderer.hpp"
 #include "raylib_helpers/RenderingHelper.hpp"
 #include "raylib_helpers/TextRenderer.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
@@ -102,6 +105,22 @@ void RaylibRenderer::_render3D()
                                    &_playerModel, _playerModelBaseMats, PLAYER_CUBE_SIZE,
                                    PLAYER_MODEL_SIZE);
     }
+
+    for (auto& [id, player] : _state->world.dyingPlayers) {
+        player.visual.update(GetFrameTime());
+        Vector3 worldPos = player.visual.pos;
+        EntityRenderer::drawPlayer(worldPos, _getTeamColor(player.team), player.visual.angle,
+                                   &_playerModel, _playerModelBaseMats,
+                                   PLAYER_CUBE_SIZE * player.visual.scale,
+                                   PLAYER_MODEL_SIZE * player.visual.scale);
+        Color teamColor = _getTeamColor(player.team);
+        for (const auto& p : player.visual.particles) {
+            Color c = {teamColor.r, teamColor.g, teamColor.b,
+                       static_cast<unsigned char>(p.alpha * 255)};
+            DrawSphere(p.pos, p.size, c);
+        }
+    }
+    _state->world.purgeDyingPlayers();
 
     for (const auto& [id, egg] : _state->world.eggs) {
         Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
@@ -226,9 +245,6 @@ void RaylibRenderer::_drawSelectedToolip()
                 builder.addLine("  Inventory:", textColor);
                 _addResourceLines(builder, player.inventory, "    ", textColor);
             }
-
-            // temp
-            builder.addLine("  Orientation: " + to_string(player.orientation), textColor);
             break;
         }
 

@@ -5,9 +5,6 @@
 
 #include "ARenderer.hpp"
 #include "raylib.h"
-#include "raylib_helpers/ColorPalette.hpp"
-#include "raylib_helpers/EntityRenderer.hpp"
-#include "raylib_helpers/GridRenderer.hpp"
 #include "raylib_helpers/SelectionFinder.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
 
