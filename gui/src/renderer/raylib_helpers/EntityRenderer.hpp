@@ -29,26 +29,6 @@ class EntityRenderer {
                         const Color* baseMats = nullptr, float modelSize = 0.3f);
 
     /**
-     * @brief Draws a wireframe highlight around a player cube.
-     * @param worldPos World position of the player.
-     * @param size Size of the player cube.
-     * @param color Color of the highlight wireframe.
-     * @param lineThickness Thickness of the wireframe lines.
-     */
-    static void drawPlayerHighlight(const Vector3& worldPos, float size, Color color,
-                                    float lineThickness = 1.0f);
-
-    /**
-     * @brief Draws a wireframe highlight around an egg cube.
-     * @param worldPos World position of the egg.
-     * @param size Size of the egg cube.
-     * @param color Color of the highlight wireframe.
-     * @param lineThickness Thickness of the wireframe lines.
-     */
-    static void drawEggHighlight(const Vector3& worldPos, float size, Color color,
-                                 float lineThickness = 1.0f);
-
-    /**
      * @brief Draws all resources for a tile with position caching.
      * @param resources The resources to draw.
      * @param tileX Tile X coordinate.
@@ -78,7 +58,5 @@ class EntityRenderer {
     static std::unordered_map<std::tuple<int, int, int>, ResourceCacheEntry, TupleHash>
         _resourcePositions;
 
-    static void _drawCubeWireframeThick(const Vector3& worldPos, float size, Color color,
-                                        float thickness);
     static void _restoreModelBaseColors(Model& model, const Color* baseMats, int count = 6);
 };
