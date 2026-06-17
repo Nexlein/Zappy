@@ -11,7 +11,9 @@ struct Particle {
     Vector3 vel;
     Color color;
     float size;
-    float alpha;  // 1.0 → 0.0
+    float alpha;   // 1.0 → 0.0
+    float delay;   // seconds before particle activates
+    bool active = false;
 };
 
 /**
@@ -24,7 +26,6 @@ class VisualState {
     mutable float angle = 0.0f;
     mutable float scale = 1.0f;
     mutable std::vector<std::unique_ptr<IBehavior>> behaviors;
-    mutable std::vector<Particle> particles;
 
     void update(float dt) const
     {
