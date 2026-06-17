@@ -16,7 +16,6 @@ class Config:
     teamName: str
     host: str
     strategy: str
-    verbose: bool = False
 
 
 def parseArgs() -> Config:
@@ -28,7 +27,6 @@ def parseArgs() -> Config:
         print("-n name\t\tname of the team")
         print("-h machine\tname of the machine; localhost by default")
         print("-s strategy\tAI strategy: fsm or utility; fsm by default")
-        print("-v, --verbose\tEnable verbose output")
         sys.exit(0)
 
     parser = ArgumentParser(description="Zappy AI Client", add_help=False)
@@ -57,12 +55,6 @@ def parseArgs() -> Config:
         choices=["fsm", "utility"],
         help="AI strategy: fsm or utility (default: fsm)",
     )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="store_true",
-        help="Enable verbose output",
-    )
 
     args = parser.parse_args()
     return Config(
@@ -70,5 +62,4 @@ def parseArgs() -> Config:
         teamName=args.name,
         host=args.host,
         strategy=args.strategy,
-        verbose=args.verbose,
     )
