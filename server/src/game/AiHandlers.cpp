@@ -55,7 +55,10 @@ void CommandDispatcher::_handleForward(int connectionId)
     int delayMs = 7000;
 
     _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
-        if (!_world.getPlayers().count(playerId)) { _executeNext(connectionId); return; }
+        if (!_world.getPlayers().count(playerId)) {
+            _executeNext(connectionId);
+            return;
+        }
         auto& p = _world.getPlayer(playerId);
 
         int dx = 0, dy = 0;
@@ -88,7 +91,10 @@ void CommandDispatcher::_handleRight(int connectionId)
     int delayMs = 7000;
 
     _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
-        if (!_world.getPlayers().count(playerId)) { _executeNext(connectionId); return; }
+        if (!_world.getPlayers().count(playerId)) {
+            _executeNext(connectionId);
+            return;
+        }
         auto& p = _world.getPlayer(playerId);
 
         p.orientation = turnRight(p.orientation);
@@ -104,7 +110,10 @@ void CommandDispatcher::_handleLeft(int connectionId)
     int delayMs = 7000;
 
     _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
-        if (!_world.getPlayers().count(playerId)) { _executeNext(connectionId); return; }
+        if (!_world.getPlayers().count(playerId)) {
+            _executeNext(connectionId);
+            return;
+        }
         auto& p = _world.getPlayer(playerId);
         p.orientation = turnLeft(p.orientation);
         _clients.send(connectionId, "ok\n");
@@ -119,7 +128,10 @@ void CommandDispatcher::_handleLook(int connectionId)
     int delayMs = 7000;
 
     _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
-        if (!_world.getPlayers().count(playerId)) { _executeNext(connectionId); return; }
+        if (!_world.getPlayers().count(playerId)) {
+            _executeNext(connectionId);
+            return;
+        }
         auto& p = _world.getPlayer(playerId);
         auto look = _lookForwardRight(p.orientation);
         int tileCount = (p.level + 1) * (p.level + 1);
@@ -149,7 +161,10 @@ void CommandDispatcher::_handleInventory(int connectionId)
     int delayMs = 1000;
 
     _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
-        if (!_world.getPlayers().count(playerId)) { _executeNext(connectionId); return; }
+        if (!_world.getPlayers().count(playerId)) {
+            _executeNext(connectionId);
+            return;
+        }
         auto& p = _world.getPlayer(playerId);
 
         std::string r = "[ food " + std::to_string(p.inventory.food) + ", linemate " +
@@ -172,7 +187,10 @@ void CommandDispatcher::_handleBroadcast(int connectionId, const std::string& ms
 
     _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId,
                                                                      msg] {
-        if (!_world.getPlayers().count(playerId)) { _executeNext(connectionId); return; }
+        if (!_world.getPlayers().count(playerId)) {
+            _executeNext(connectionId);
+            return;
+        }
         auto& src = _world.getPlayer(playerId);
         for (auto& [pid, dst] : _world.getPlayers()) {
             if (pid == playerId) continue;
@@ -192,7 +210,10 @@ void CommandDispatcher::_handleFork(int connectionId)
     int delayMs = 42000;
 
     _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
-        if (!_world.getPlayers().count(playerId)) { _executeNext(connectionId); return; }
+        if (!_world.getPlayers().count(playerId)) {
+            _executeNext(connectionId);
+            return;
+        }
         auto& p = _world.getPlayer(playerId);
         int eggId = _world.addEgg(playerId);
 
@@ -209,7 +230,10 @@ void CommandDispatcher::_handleEject(int connectionId)
     int delayMs = 7000;
 
     _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
-        if (!_world.getPlayers().count(playerId)) { _executeNext(connectionId); return; }
+        if (!_world.getPlayers().count(playerId)) {
+            _executeNext(connectionId);
+            return;
+        }
         auto result = _world.ejectPlayers(playerId);
 
         if (result.ejectedPlayerIds.empty()) {
@@ -240,7 +264,10 @@ void CommandDispatcher::_handleTake(int connectionId, ResourceType resource)
 
     _scheduler.schedule(
         std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId, resource] {
-            if (!_world.getPlayers().count(playerId)) { _executeNext(connectionId); return; }
+            if (!_world.getPlayers().count(playerId)) {
+                _executeNext(connectionId);
+                return;
+            }
             auto& p = _world.getPlayer(playerId);
 
             if (_world.takeResource(playerId, resource)) {
@@ -261,7 +288,10 @@ void CommandDispatcher::_handleSet(int connectionId, ResourceType resource)
 
     _scheduler.schedule(
         std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId, resource] {
-            if (!_world.getPlayers().count(playerId)) { _executeNext(connectionId); return; }
+            if (!_world.getPlayers().count(playerId)) {
+                _executeNext(connectionId);
+                return;
+            }
             auto& p = _world.getPlayer(playerId);
 
             if (_world.setResource(playerId, resource)) {
@@ -313,8 +343,7 @@ void CommandDispatcher::_handleIncantation(int connectionId)
                     _notifier.broadcast(Serializer::plv(pid, it->second.level));
                     _clients.send(it->second.connectionId,
                                   "Current level: " + std::to_string(it->second.level) + "\n");
-                    if (it->second.level == 8 && winTeam.empty())
-                        winTeam = it->second.teamName;
+                    if (it->second.level == 8 && winTeam.empty()) winTeam = it->second.teamName;
                 } else {
                     _clients.send(it->second.connectionId, "ko\n");
                 }
@@ -324,8 +353,7 @@ void CommandDispatcher::_handleIncantation(int connectionId)
                 int count = 0;
                 for (auto& [pid, p] : players)
                     if (p.teamName == winTeam && p.level == 8) ++count;
-                if (count >= 6)
-                    _notifier.broadcast(Serializer::seg(winTeam));
+                if (count >= 6) _notifier.broadcast(Serializer::seg(winTeam));
             }
 
             _executeNext(connectionId);

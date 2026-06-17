@@ -8,7 +8,11 @@
 
 HandshakeHandler::HandshakeHandler(ClientManager& clients, World& world, GuiNotifier& notifier,
                                    const ServerConfig& config, PromotedCallback onPromoted)
-    : _clients(clients), _world(world), _notifier(notifier), _config(config), _onPromoted(onPromoted)
+    : _clients(clients),
+      _world(world),
+      _notifier(notifier),
+      _config(config),
+      _onPromoted(onPromoted)
 {
 }
 
