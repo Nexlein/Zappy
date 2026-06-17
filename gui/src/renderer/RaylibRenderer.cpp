@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
-#include <iostream>
 
 #include "core/behaviors/ABehavior.hpp"
 #include "raylib_helpers/ColorPalette.hpp"
@@ -28,26 +27,22 @@ void RaylibRenderer::init()
     _selection = SelectionFinder::getEmptySelection();
 
     SetTraceLogLevel(LOG_ERROR);
-    _playerModel = LoadModel("gui/assets/rimuru.glb");
+    _playerModel = LoadModel(PLAYER_MODEL_PATH.data());
     SetTraceLogLevel(LOG_WARNING);
-    if (_playerModel.meshCount == 0) {
-        std::cerr << "[WARNING] GUI failed to load player model" << std::endl;
-    } else {
-        for (int i = 0; i < _playerModel.materialCount && i < 6; i++)
-            _playerModelBaseMats[i] = _playerModel.materials[i].maps[MATERIAL_MAP_DIFFUSE].color;
-    }
+    if (_playerModel.meshCount == 0)
+        throw std::runtime_error("Failed to load player model: " + std::string(PLAYER_MODEL_PATH));
+    for (int i = 0; i < _playerModel.materialCount && i < 6; i++)
+        _playerModelBaseMats[i] = _playerModel.materials[i].maps[MATERIAL_MAP_DIFFUSE].color;
 
     SetTraceLogLevel(LOG_ERROR);
-    _eggModel = LoadModel("gui/assets/egg.glb");
+    _eggModel = LoadModel(EGG_MODEL_PATH.data());
     SetTraceLogLevel(LOG_WARNING);
-    if (_eggModel.meshCount == 0) {
-        std::cerr << "[WARNING] GUI failed to load egg model" << std::endl;
-    } else {
-        // set mat0 to a grayish white color
-        _eggModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = {235, 235, 235, 255};
-        for (int i = 0; i < _eggModel.materialCount && i < 2; i++)
-            _eggModelBaseMats[i] = _eggModel.materials[i].maps[MATERIAL_MAP_DIFFUSE].color;
-    }
+    if (_eggModel.meshCount == 0)
+        throw std::runtime_error("Failed to load egg model: " + std::string(EGG_MODEL_PATH));
+    // set mat0 to a grayish white color
+    _eggModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = {235, 235, 235, 255};
+    for (int i = 0; i < _eggModel.materialCount && i < 2; i++)
+        _eggModelBaseMats[i] = _eggModel.materials[i].maps[MATERIAL_MAP_DIFFUSE].color;
 }
 
 void RaylibRenderer::render()
@@ -102,8 +97,7 @@ void RaylibRenderer::_render3D()
         player.visual.update(GetFrameTime());
         Vector3 worldPos = player.visual.pos;
         EntityRenderer::drawPlayer(worldPos, _getTeamColor(player.team), player.visual.angle,
-                                   &_playerModel, _playerModelBaseMats, PLAYER_CUBE_SIZE,
-                                   PLAYER_MODEL_SIZE);
+                                   _playerModel, _playerModelBaseMats, PLAYER_MODEL_SIZE);
         _drawBehaviorParticles(player.visual);
     }
 
@@ -111,8 +105,7 @@ void RaylibRenderer::_render3D()
         player.visual.update(GetFrameTime());
         Vector3 worldPos = player.visual.pos;
         EntityRenderer::drawPlayer(worldPos, _getTeamColor(player.team), player.visual.angle,
-                                   &_playerModel, _playerModelBaseMats,
-                                   PLAYER_CUBE_SIZE * player.visual.scale,
+                                   _playerModel, _playerModelBaseMats,
                                    PLAYER_MODEL_SIZE * player.visual.scale);
         _drawBehaviorParticles(player.visual);
     }
@@ -123,8 +116,7 @@ void RaylibRenderer::_render3D()
         Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
                                                         _state->world.height, TILE_SIZE);
         EntityRenderer::drawEgg(worldPos, _getTeamColor(egg.team), _eggModel, egg.rotation,
-                                _eggModelBaseMats, EGG_CUBE_SIZE * egg.visual.scale,
-                                EGG_MODEL_SIZE * egg.visual.scale);
+                                _eggModelBaseMats, EGG_MODEL_SIZE * egg.visual.scale);
         _drawBehaviorParticles(egg.visual);
     }
 
@@ -156,31 +148,25 @@ void RaylibRenderer::_drawBehaviorParticles(const VisualState& visual)
 
 void RaylibRenderer::_render2D()
 {
-    // group players by tile
-    std::unordered_map<int, std::vector<const Player*>> byTile;
-    for (const auto& [id, player] : _state->world.players)
-        byTile[player.y * _state->world.width + player.x].push_back(&player);
-
-    for (auto& [key, group] : byTile) {
+    for (auto& group : _groupPlayersByVisualProximity()) {
         std::sort(group.begin(), group.end(),
                   [](const Player* a, const Player* b) { return a->level > b->level; });
 
-        const Player* first = group[0];
-        Vector3 worldPos = RenderingHelper::tileToWorld(first->x, first->y, _state->world.width,
-                                                        _state->world.height, TILE_SIZE);
+        Vector3 worldPos = group[0]->visual.pos;
         worldPos.y = PLAYER_MODEL_SIZE * 2.0f;
         Vector2 screenPos = GetWorldToScreen(worldPos, _camera);
 
         auto builder = TooltipRenderer::create()
                            .setAnchor(TooltipRenderer::Anchor::BottomCenter)
-                           .setBackgroundColor(BLACK)
-                           .setBackgroundAlpha(100)
-                           .setBorderThickness(0)
+                           .setBackgroundColor({180, 180, 180, 255})
+                           .setBackgroundAlpha(160)
+                           .setBorderColor(BLACK)
+                           .setBorderThickness(1)
                            .setPadding(4)
-                           .setFontSize(_getScaledFontSize(14));
+                           .setFontSize(_getScaledFontSize(12));
 
         for (const Player* p : group)
-            builder.addLine("Player lvl " + std::to_string(p->level), _getTeamColor(p->team));
+            builder.addLine("Level " + std::to_string(p->level), _getTeamColor(p->team));
 
         builder.draw(screenPos);
     }
@@ -416,4 +402,37 @@ void RaylibRenderer::_addResourceLines(TooltipRenderer::Builder& builder, const 
         if (qty <= 0) continue;
         builder.addLine(indent + res.get_name(i) + ": " + std::to_string(qty), color);
     }
+}
+
+std::vector<std::vector<const Player*>> RaylibRenderer::_groupPlayersByVisualProximity() const
+{
+    constexpr float thresh = TILE_SIZE / 4.0f;
+    constexpr float threshSq = thresh * thresh;
+
+    std::vector<const Player*> all;
+    all.reserve(_state->world.players.size());
+    for (const auto& [id, player] : _state->world.players)
+        all.push_back(&player);
+
+    std::vector<bool> assigned(all.size(), false);
+    std::vector<std::vector<const Player*>> groups;
+
+    for (size_t i = 0; i < all.size(); i++) {
+        if (assigned[i]) continue;
+        std::vector<const Player*> group = {all[i]};
+        assigned[i] = true;
+        const Vector3& pi = all[i]->visual.pos;
+        for (size_t j = i + 1; j < all.size(); j++) {
+            if (assigned[j]) continue;
+            const Vector3& pj = all[j]->visual.pos;
+            float dx = pi.x - pj.x;
+            float dz = pi.z - pj.z;
+            if (dx * dx + dz * dz < threshSq) {
+                group.push_back(all[j]);
+                assigned[j] = true;
+            }
+        }
+        groups.push_back(std::move(group));
+    }
+    return groups;
 }
