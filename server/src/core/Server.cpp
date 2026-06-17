@@ -34,7 +34,7 @@ void Server::_logStartup() const
     std::cout << "\n";
 }
 
-int Server::run()
+void Server::run()
 {
     _scheduleRespawn();
     _logStartup();

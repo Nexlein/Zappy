@@ -12,7 +12,7 @@ class Server {
     public:
     Server(const ServerConfig& config);
 
-    int run();
+    void run();
 
     private:
     void _scheduleRespawn();
