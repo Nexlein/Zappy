@@ -6,8 +6,8 @@ int main(int argc, char** argv)
     Args args(argc, argv);
     if (!args.isValid() || args.isHelpRequested()) return args.exitCode();
 
-    ServerConfig config = args.getConfig();
-    Server server(config);
+    Server server(args.getConfig());
+    server.run();
 
-    return server.run();
+    return 0;
 }
