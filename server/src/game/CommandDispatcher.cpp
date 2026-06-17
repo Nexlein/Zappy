@@ -37,7 +37,13 @@ void CommandDispatcher::dispatch(int connectionId, const std::string& line)
 void CommandDispatcher::onDisconnect(int connectionId)
 {
     auto& conn = _clients.getConnection(connectionId);
-    if (conn.type() == ClientType::GUI) _notifier.removeGui(connectionId);
+    if (conn.type() == ClientType::GUI) {
+        _notifier.removeGui(connectionId);
+    } else if (conn.type() == ClientType::AI) {
+        int playerId = conn.playerId();
+        _notifier.onPlayerDeath(playerId);
+        _world.removePlayer(playerId);
+    }
     _queues.erase(connectionId);
     _hasActive.erase(connectionId);
 }
