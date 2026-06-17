@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "behaviors/DeathBehavior.hpp"
+#include "behaviors/ForkBehavior.hpp"
 #include "behaviors/LevelUpBehavior.hpp"
 #include "behaviors/MoveBehavior.hpp"
 #include "behaviors/TurnBehavior.hpp"
@@ -208,7 +209,11 @@ void GameState::applyEggNew(const EggNew& e)
         return;
     }
     Egg egg{.id = e.eggId, .x = e.x, .y = e.y, .team = it->second.team};
-    world.eggs[e.eggId] = egg;
+    egg.visual.pos = RenderingHelper::tileToWorld(e.x, e.y, world.width, world.height, tileSize);
+    world.eggs[e.eggId] = std::move(egg);
+    Egg& settled = world.eggs[e.eggId];
+    settled.visual.behaviors.push_back(
+        std::make_unique<ForkBehavior>(settled.visual, static_cast<float>(timeUnit)));
 }
 
 void GameState::applyEggHatch(const EggHatch& e)

@@ -43,6 +43,7 @@ struct Egg {
     int y;
     std::string team;
     float rotation = static_cast<float>(rand() % 360);
+    VisualState visual = {};
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Egg& egg)

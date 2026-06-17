@@ -119,11 +119,14 @@ void RaylibRenderer::_render3D()
     }
     _state->world.purgeDyingPlayers();
 
-    for (const auto& [id, egg] : _state->world.eggs) {
+    for (auto& [id, egg] : _state->world.eggs) {
+        egg.visual.update(GetFrameTime());
         Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
                                                         _state->world.height, TILE_SIZE);
         EntityRenderer::drawEgg(worldPos, _getTeamColor(egg.team), _eggModel, egg.rotation,
-                                _eggModelBaseMats, EGG_CUBE_SIZE, EGG_MODEL_SIZE);
+                                _eggModelBaseMats, EGG_CUBE_SIZE * egg.visual.scale,
+                                EGG_MODEL_SIZE * egg.visual.scale);
+        _drawBehaviorParticles(egg.visual);
     }
 
     for (int x = 0; x < _state->world.width; x++) {
