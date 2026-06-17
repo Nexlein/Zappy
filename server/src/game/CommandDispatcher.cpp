@@ -137,9 +137,16 @@ void CommandDispatcher::_startStarvationTimer(int connectionId, int playerId)
                                 _notifier.onPlayerDeath(playerId);
                                 _world.removePlayer(playerId);
                                 _clients.send(connectionId, "dead\n");
-                                _clients.disconnect(connectionId);
+                                _pendingDisconnects.push_back(connectionId);
                             } else {
                                 _startStarvationTimer(connectionId, playerId);
                             }
                         });
+}
+
+std::vector<int> CommandDispatcher::drainPendingDisconnects()
+{
+    std::vector<int> result;
+    std::swap(result, _pendingDisconnects);
+    return result;
 }

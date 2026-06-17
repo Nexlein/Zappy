@@ -2,6 +2,7 @@
 
 #include <deque>
 #include <unordered_map>
+#include <vector>
 
 #include "core/Scheduler.hpp"
 #include "core/World.hpp"
@@ -18,6 +19,7 @@ class CommandDispatcher {
     void onNewConnection(int connectionId);
     void dispatch(int connectionId, const std::string& line);
     void onDisconnect(int connectionId);
+    std::vector<int> drainPendingDisconnects();
 
     private:
     void _dispatchAi(int connectionId, const std::string& line);
@@ -63,4 +65,5 @@ class CommandDispatcher {
 
     std::unordered_map<int, std::deque<Ai::Command>> _queues;
     std::unordered_map<int, bool> _hasActive;
+    std::vector<int> _pendingDisconnects;
 };
