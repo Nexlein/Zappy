@@ -67,6 +67,7 @@ class World {
 
     int addEgg(int playerId);
     bool hatchEgg(int eggId);
+    std::optional<Egg> popEggForTeam(const std::string& teamName);
 
     /**
      * @brief Validate and start an incantation for @p playerId.
@@ -83,6 +84,12 @@ class World {
     bool finalizeIncantation(const std::vector<int>& participantIds);
 
     std::optional<std::string> checkWin() const;
+
+    int teamPlayerCount(const std::string& team) const;
+    int width() const;
+    int height() const;
+    const std::unordered_map<int, Player>& getPlayers() const;
+    const std::unordered_map<int, Egg>& getEggs() const;
 
     private:
     int _width;

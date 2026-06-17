@@ -8,6 +8,7 @@
  */
 struct Egg {
     int id;
+    int parentPlayerId;
     int x;
     int y;
     std::string teamName;

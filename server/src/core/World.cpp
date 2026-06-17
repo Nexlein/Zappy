@@ -133,7 +133,7 @@ int World::addEgg(int playerId)
 {
     auto& p = _players.at(playerId);
     int eid = _nextEggId++;
-    Egg egg{eid, p.x, p.y, p.teamName};
+    Egg egg{eid, p.id, p.x, p.y, p.teamName};
     _eggs[eid] = egg;
     at(p.x, p.y).eggIds.push_back(eid);
     return eid;
@@ -148,6 +148,20 @@ bool World::hatchEgg(int eggId)
     ids.erase(std::remove(ids.begin(), ids.end(), eggId), ids.end());
     _eggs.erase(it);
     return true;
+}
+
+std::optional<Egg> World::popEggForTeam(const std::string& teamName)
+{
+    for (auto it = _eggs.begin(); it != _eggs.end(); ++it) {
+        if (it->second.teamName == teamName) {
+            Egg egg = it->second;
+            auto& ids = at(egg.x, egg.y).eggIds;
+            ids.erase(std::remove(ids.begin(), ids.end(), egg.id), ids.end());
+            _eggs.erase(it);
+            return egg;
+        }
+    }
+    return std::nullopt;
 }
 
 static const IncantationReq INCANTATION_REQS[7] = {
@@ -261,6 +275,19 @@ bool World::finalizeIncantation(const std::vector<int>& participantIds)
 
     return true;
 }
+
+int World::teamPlayerCount(const std::string& team) const
+{
+    int count = 0;
+    for (auto& [id, p] : _players)
+        if (p.teamName == team) count++;
+    return count;
+}
+
+int World::width() const { return _width; }
+int World::height() const { return _height; }
+const std::unordered_map<int, Player>& World::getPlayers() const { return _players; }
+const std::unordered_map<int, Egg>& World::getEggs() const { return _eggs; }
 
 std::optional<std::string> World::checkWin() const
 {
