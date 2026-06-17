@@ -40,16 +40,20 @@ void Server::run()
     _logStartup();
 
     while (true) {
-        int timeout = _scheduler.msUntilNext();
-        PollResult pr = _clients.poll(timeout);
+        try {
+            int timeout = _scheduler.msUntilNext();
+            PollResult pr = _clients.poll(timeout);
 
-        for (int id : pr.disconnectedIds) {
-            _dispatcher.onDisconnect(id);
-            _clients.disconnect(id);
+            for (int id : pr.disconnectedIds) {
+                _dispatcher.onDisconnect(id);
+                _clients.disconnect(id);
+            }
+            for (int id : pr.newConnections) _dispatcher.onNewConnection(id);
+            for (auto& [connId, line] : pr.lines) _dispatcher.dispatch(connId, line);
+
+            _scheduler.tick();
+        } catch (const std::exception& e) {
+            std::cerr << "[error] " << e.what() << "\n";
         }
-        for (int id : pr.newConnections) _dispatcher.onNewConnection(id);
-        for (auto& [connId, line] : pr.lines) _dispatcher.dispatch(connId, line);
-
-        _scheduler.tick();
     }
 }
