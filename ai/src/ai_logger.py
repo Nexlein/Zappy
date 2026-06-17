@@ -11,7 +11,7 @@ import os
 import json
 from datetime import datetime
 
-logging.addLevelName(25, "AI_TALK")
+logging.addLevelName(25, "AI_STATE")
 
 
 class JsonFormatter(logging.Formatter):
@@ -22,24 +22,49 @@ class JsonFormatter(logging.Formatter):
             "pid": os.getpid(),
             "message": record.getMessage(),
         }
-        if hasattr(record, "command"):
-            log_obj["command"] = getattr(record, "command")
-        if hasattr(record, "latency_ms"):
-            log_obj["latency_ms"] = getattr(record, "latency_ms")
-        if hasattr(record, "state"):
-            log_obj["state"] = getattr(record, "state")
-        if hasattr(record, "action"):
-            log_obj["action"] = getattr(record, "action")
-        if hasattr(record, "response"):
-            log_obj["response"] = getattr(record, "response")
-        if hasattr(record, "event"):
-            log_obj["event"] = getattr(record, "event")
+        for attr in [
+            "command",
+            "latency_ms",
+            "state",
+            "action",
+            "response",
+            "event",
+            "level_num",
+            "food",
+        ]:
+            if hasattr(record, attr):
+                log_obj[attr] = getattr(record, attr)
         return json.dumps(log_obj)
 
 
-class NoTalkFilter(logging.Filter):
-    def filter(self, record):
-        return record.levelno != 25
+class ColorFormatter(logging.Formatter):
+    def __init__(self, team_name, logger_ref):
+        super().__init__()
+        self.team_name = team_name
+        self.logger_ref = logger_ref
+
+    def format(self, record):
+        time_str = datetime.fromtimestamp(record.created).strftime("%H:%M:%S")
+        drone_id = self.logger_ref.drone_id if self.logger_ref.drone_id else os.getpid()
+
+        CYAN = "\033[96m"
+        GREEN = "\033[92m"
+        YELLOW = "\033[93m"
+        MAGENTA = "\033[95m"
+        RESET = "\033[0m"
+
+        prefix = f"{CYAN}{time_str} | [{self.team_name}-{drone_id}]{RESET}"
+
+        if record.levelno == 25:
+            lvl = getattr(record, "level_num", "?")
+            food = getattr(record, "food", "?")
+            if isinstance(food, int):
+                food = f"{food:02d}"
+            state = getattr(record, "state", "Unknown")
+            action = getattr(record, "action", "None")
+            return f"{prefix} Lvl:{YELLOW}{lvl}{RESET} | Food:{YELLOW}{food}{RESET} | State:{GREEN}{state:12}{RESET} | Action:{MAGENTA}{action}{RESET}"
+
+        return f"{prefix} {record.getMessage()}"
 
 
 class AILogger:
@@ -47,25 +72,23 @@ class AILogger:
         self.logger = logging.getLogger("ZappyAI")
         self.logger.setLevel(logging.DEBUG)
 
-        # Terminal handler (StreamHandler)
         self.ch = logging.StreamHandler()
-        # Default to showing AI_TALK and above
         self.ch.setLevel(25)
-
-        formatter = logging.Formatter(
-            "%(asctime)s | %(levelname)-7s | %(message)s", datefmt="%H:%M:%S"
-        )
-        self.ch.setFormatter(formatter)
+        self.ch.setFormatter(logging.Formatter("%(message)s"))
 
         if not self.logger.handlers:
             self.logger.addHandler(self.ch)
 
         self.last_command_time = 0.0
         self.last_command = ""
+        self.last_state_log = ""
+        self.drone_id: str | None = None
 
     def configure(self, team_name: str, verbose: bool):
         if verbose:
             self.ch.setLevel(logging.DEBUG)
+
+        self.ch.setFormatter(ColorFormatter(team_name, self))
 
         log_dir = os.path.join(os.path.dirname(__file__), "..", "logs")
         os.makedirs(log_dir, exist_ok=True)
@@ -76,17 +99,38 @@ class AILogger:
         fh = logging.FileHandler(os.path.join(log_dir, log_filename), mode="w")
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(JsonFormatter())
-        fh.addFilter(NoTalkFilter())  # Filter out AI_TALK from JSON file
 
         self.logger.addHandler(fh)
 
-    def talk(self, msg: str):
-        self.logger.log(25, msg)
+    def info(self, msg: str):
+        self.logger.info(msg)
 
-    def log_state(self, state: str, action: str):
-        self.logger.info(
-            f"[{state}] {action}", extra={"state": state, "action": action}
-        )
+    def warning(self, msg: str):
+        self.logger.warning(msg)
+
+    def error(self, msg: str):
+        self.logger.error(msg)
+
+    def talk(self, msg: str):
+        self.logger.info(msg)
+
+    def log_state(self, state: str, action: str, context=None):
+        lvl = context.level if context else "?"
+        food = context.inventory.food if context else "?"
+        msg = f"Lvl:{lvl} | Food:{food} | State:{state} | Action:{action}"
+
+        if msg != self.last_state_log:
+            self.logger.log(
+                25,
+                msg,
+                extra={
+                    "state": state,
+                    "action": action,
+                    "level_num": lvl,
+                    "food": food,
+                },
+            )
+            self.last_state_log = msg
 
     def log_send(self, message: str):
         self.last_command_time = time.perf_counter()
@@ -114,14 +158,9 @@ class AILogger:
                 f"[NETWORK IN] Recv: {repr(response)}", extra={"response": response}
             )
 
-    def log_event(self, event: str):
-        self.logger.warning(f"[EVENT] {event}", extra={"event": event})
-
-    def info(self, msg: str):
-        self.logger.info(msg)
-
-    def error(self, msg: str):
-        self.logger.error(msg)
+    def log_event(self, event: str, parsed_info: str = None):
+        human_readable = parsed_info if parsed_info else event
+        self.logger.warning(f"[EVENT] {human_readable}", extra={"event": event})
 
 
 ai_logger = AILogger()
