@@ -16,8 +16,8 @@ class EntityRenderer {
      * @param teamColor Color for the player's team.
      * @param modelSize Size scalar for the model.
      */
-    static void drawPlayer(Vector3& worldPos, Color teamColor, float rotation,
-                           Model& model, const Color* baseMats, float modelSize = 0.4f);
+    static void drawPlayer(Vector3& worldPos, Color teamColor, float rotation, Model& model,
+                           const Color* baseMats, float modelSize = 0.4f);
 
     /**
      * @brief Draws an egg at the given world position.

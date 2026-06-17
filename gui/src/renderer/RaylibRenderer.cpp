@@ -376,9 +376,9 @@ void RaylibRenderer::_performRaycast()
     if (!_state) return;
 
     Ray ray = GetMouseRay(GetMousePosition(), _camera);
-    _selection = SelectionFinder::findFromRay(ray, *_state, TILE_SIZE, _playerModel,
-                                              PLAYER_MODEL_SIZE, _eggModel, EGG_MODEL_SIZE,
-                                              SELECTION_TIMER);
+    _selection =
+        SelectionFinder::findFromRay(ray, *_state, TILE_SIZE, _playerModel, PLAYER_MODEL_SIZE,
+                                     _eggModel, EGG_MODEL_SIZE, SELECTION_TIMER);
 
     if (_selection.type == SelectionFinder::EntityType::None) {
         _selection = SelectionFinder::getEmptySelection();
@@ -413,8 +413,7 @@ std::vector<std::vector<const Player*>> RaylibRenderer::_groupPlayersByVisualPro
 
     std::vector<const Player*> all;
     all.reserve(_state->world.players.size());
-    for (const auto& [id, player] : _state->world.players)
-        all.push_back(&player);
+    for (const auto& [id, player] : _state->world.players) all.push_back(&player);
 
     std::vector<bool> assigned(all.size(), false);
     std::vector<std::vector<const Player*>> groups;

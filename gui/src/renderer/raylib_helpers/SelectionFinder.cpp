@@ -3,8 +3,8 @@
 #include <cfloat>
 #include <cmath>
 
-#include "raymath.h"
 #include "RenderingHelper.hpp"
+#include "raymath.h"
 
 SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const GameState& state,
                                                         float tileSize, const Model& playerModel,
@@ -18,9 +18,9 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
     // Check players using mesh-accurate raycasting
     for (const auto& [id, player] : state.world.players) {
         Vector3 pos = player.visual.pos;
-        Matrix transform = MatrixMultiply(
-            MatrixScale(playerModelSize, playerModelSize, playerModelSize),
-            MatrixTranslate(pos.x, pos.y, pos.z));
+        Matrix transform =
+            MatrixMultiply(MatrixScale(playerModelSize, playerModelSize, playerModelSize),
+                           MatrixTranslate(pos.x, pos.y, pos.z));
 
         for (int m = 0; m < playerModel.meshCount; m++) {
             RayCollision collision = GetRayCollisionMesh(ray, playerModel.meshes[m], transform);
@@ -37,9 +37,8 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
     for (const auto& [id, egg] : state.world.eggs) {
         Vector3 pos = RenderingHelper::tileToWorld(egg.x, egg.y, state.world.width,
                                                    state.world.height, tileSize);
-        Matrix transform = MatrixMultiply(
-            MatrixScale(eggModelSize, eggModelSize, eggModelSize),
-            MatrixTranslate(pos.x, pos.y, pos.z));
+        Matrix transform = MatrixMultiply(MatrixScale(eggModelSize, eggModelSize, eggModelSize),
+                                          MatrixTranslate(pos.x, pos.y, pos.z));
 
         for (int m = 0; m < eggModel.meshCount; m++) {
             RayCollision collision = GetRayCollisionMesh(ray, eggModel.meshes[m], transform);
