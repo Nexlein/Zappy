@@ -5,7 +5,6 @@
 #include "CommandDispatcher.hpp"
 #include "core/data/Orientation.hpp"
 #include "core/data/Resources.hpp"
-#include "protocol/Serializer.hpp"
 #include "utils/broadcastDirection.hpp"
 
 struct LookVectors {
@@ -78,9 +77,7 @@ void CommandDispatcher::_handleForward(int connectionId)
         }
         _world.movePlayer(playerId, p.x + dx, p.y + dy);
 
-        auto& moved = _world.getPlayer(playerId);
         _clients.send(connectionId, "ok\n");
-        _notifier.broadcast(Serializer::ppo(moved.id, moved.x, moved.y, moved.orientation));
         _executeNext(connectionId);
     });
 }
@@ -99,7 +96,6 @@ void CommandDispatcher::_handleRight(int connectionId)
 
         p.orientation = turnRight(p.orientation);
         _clients.send(connectionId, "ok\n");
-        _notifier.broadcast(Serializer::ppo(p.id, p.x, p.y, p.orientation));
         _executeNext(connectionId);
     });
 }
@@ -117,7 +113,6 @@ void CommandDispatcher::_handleLeft(int connectionId)
         auto& p = _world.getPlayer(playerId);
         p.orientation = turnLeft(p.orientation);
         _clients.send(connectionId, "ok\n");
-        _notifier.broadcast(Serializer::ppo(p.id, p.x, p.y, p.orientation));
         _executeNext(connectionId);
     });
 }
@@ -198,7 +193,6 @@ void CommandDispatcher::_handleBroadcast(int connectionId, const std::string& ms
                                          _world.height(), dst.orientation);
             _clients.send(dst.connectionId, "message " + std::to_string(dir) + "," + msg + "\n");
         }
-        _notifier.broadcast(Serializer::pbc(playerId, msg));
         _clients.send(connectionId, "ok\n");
         _executeNext(connectionId);
     });
@@ -214,11 +208,6 @@ void CommandDispatcher::_handleFork(int connectionId)
             _executeNext(connectionId);
             return;
         }
-        auto& p = _world.getPlayer(playerId);
-        int eggId = _world.addEgg(playerId);
-
-        _notifier.broadcast(Serializer::pfk(playerId));
-        _notifier.broadcast(Serializer::enw(eggId, playerId, p.x, p.y));
         _clients.send(connectionId, "ok\n");
         _executeNext(connectionId);
     });
@@ -248,8 +237,6 @@ void CommandDispatcher::_handleEject(int connectionId)
                 broadcastDirection(ejected.x - result.dx, ejected.y - result.dy, ejected.x,
                                    ejected.y, _world.width(), _world.height(), ejected.orientation);
             _clients.send(ejected.connectionId, "eject: " + std::to_string(dir) + "\n");
-            _notifier.broadcast(
-                Serializer::ppo(ejected.id, ejected.x, ejected.y, ejected.orientation));
         }
 
         _clients.send(connectionId, "ok\n");
@@ -262,23 +249,18 @@ void CommandDispatcher::_handleTake(int connectionId, ResourceType resource)
     int playerId = _clients.getConnection(connectionId).playerId();
     int delayMs = 7000;
 
-    _scheduler.schedule(
-        std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId, resource] {
-            if (!_world.getPlayers().count(playerId)) {
-                _executeNext(connectionId);
-                return;
-            }
-            auto& p = _world.getPlayer(playerId);
-
-            if (_world.takeResource(playerId, resource)) {
-                _clients.send(connectionId, "ok\n");
-                _notifier.broadcast(Serializer::pgt(playerId, static_cast<int>(resource)));
-                _notifier.broadcast(Serializer::bct(p.x, p.y, _world.at(p.x, p.y).resources));
-            } else {
-                _clients.send(connectionId, "ko\n");
-            }
-            _executeNext(connectionId);
-        });
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq),
+                        [this, connectionId, playerId, resource] {
+                            if (!_world.getPlayers().count(playerId)) {
+                                _executeNext(connectionId);
+                                return;
+                            }
+                            if (_world.takeResource(playerId, resource))
+                                _clients.send(connectionId, "ok\n");
+                            else
+                                _clients.send(connectionId, "ko\n");
+                            _executeNext(connectionId);
+                        });
 }
 
 void CommandDispatcher::_handleSet(int connectionId, ResourceType resource)
@@ -286,23 +268,19 @@ void CommandDispatcher::_handleSet(int connectionId, ResourceType resource)
     int playerId = _clients.getConnection(connectionId).playerId();
     int delayMs = 7000;
 
-    _scheduler.schedule(
-        std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId, resource] {
-            if (!_world.getPlayers().count(playerId)) {
-                _executeNext(connectionId);
-                return;
-            }
-            auto& p = _world.getPlayer(playerId);
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq),
+                        [this, connectionId, playerId, resource] {
+                            if (!_world.getPlayers().count(playerId)) {
+                                _executeNext(connectionId);
+                                return;
+                            }
 
-            if (_world.setResource(playerId, resource)) {
-                _clients.send(connectionId, "ok\n");
-                _notifier.broadcast(Serializer::pdr(playerId, static_cast<int>(resource)));
-                _notifier.broadcast(Serializer::bct(p.x, p.y, _world.at(p.x, p.y).resources));
-            } else {
-                _clients.send(connectionId, "ko\n");
-            }
-            _executeNext(connectionId);
-        });
+                            if (_world.setResource(playerId, resource))
+                                _clients.send(connectionId, "ok\n");
+                            else
+                                _clients.send(connectionId, "ko\n");
+                            _executeNext(connectionId);
+                        });
 }
 
 void CommandDispatcher::_handleIncantation(int connectionId)
@@ -320,40 +298,26 @@ void CommandDispatcher::_handleIncantation(int connectionId)
     auto& p = _world.getPlayer(playerId);
     int x = p.x;
     int y = p.y;
-    int level = p.level;
 
-    _notifier.broadcast(Serializer::pic(x, y, level, *participants));
     for (int pid : *participants)
         _clients.send(_world.getPlayer(pid).connectionId, "Elevation underway\n");
 
     _scheduler.schedule(
         std::chrono::milliseconds(delayMs / _freq),
         [this, connectionId, participants = *participants, x, y] {
-            bool success = _world.finalizeIncantation(participants);
-
-            _notifier.broadcast(Serializer::pie(x, y, success));
+            bool success = _world.finalizeIncantation(x, y, participants);
 
             auto& players = _world.getPlayers();
-            std::string winTeam;
             for (int pid : participants) {
                 auto it = players.find(pid);
                 if (it == players.end()) continue;
 
                 if (success) {
-                    _notifier.broadcast(Serializer::plv(pid, it->second.level));
                     _clients.send(it->second.connectionId,
                                   "Current level: " + std::to_string(it->second.level) + "\n");
-                    if (it->second.level == 8 && winTeam.empty()) winTeam = it->second.teamName;
                 } else {
                     _clients.send(it->second.connectionId, "ko\n");
                 }
-            }
-
-            if (!winTeam.empty()) {
-                int count = 0;
-                for (auto& [pid, p] : players)
-                    if (p.teamName == winTeam && p.level == 8) ++count;
-                if (count >= 6) _notifier.broadcast(Serializer::seg(winTeam));
             }
 
             _executeNext(connectionId);

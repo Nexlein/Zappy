@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-#include "protocol/Serializer.hpp"
-
 Server::Server(const ServerConfig& config)
     : _config(config),
       _listener(config.port),
@@ -12,15 +10,14 @@ Server::Server(const ServerConfig& config)
       _notifier(_clients),
       _dispatcher(_clients, _world, _notifier, _config, _scheduler)
 {
+    _world.addWorldObserver(&_notifier);
     _world.spawnResources();
 }
 
 void Server::_scheduleRespawn()
 {
     _scheduler.schedule(std::chrono::milliseconds(RESPAWN_INTERVAL_MS / _config.freq), [this] {
-        auto changed = _world.spawnResources();
-        for (auto [x, y] : changed)
-            _notifier.broadcast(Serializer::bct(x, y, _world.at(x, y).resources));
+        _world.spawnResources();
         _scheduleRespawn();
     });
 }

@@ -87,7 +87,6 @@ void HandshakeHandler::_promoteToAi(int connectionId, const std::string& teamNam
                   std::to_string(_config.width) + " " + std::to_string(_config.height) + "\n");
 
     if (egg) _notifier.broadcast(Serializer::ebo(egg->id));
-    _notifier.onPlayerNew(_world.getPlayer(playerId));
     _onPromoted(connectionId, playerId);
 }
 
