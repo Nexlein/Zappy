@@ -16,27 +16,27 @@ void LevelUpBehavior::_spawnParticles()
         {255, 220, 0, 255},  // yellow
         {255, 180, 0, 255},  // amber
         {255, 130, 0, 255},  // orange
-        {255, 80,  0, 255},  // deep orange
+        {255, 80, 0, 255},   // deep orange
     };
 
     _particles.clear();
     Vector3 base = {_visual.pos.x, _visual.pos.y + 0.3f, _visual.pos.z};
 
     for (int i = 0; i < PARTICLE_COUNT; i++) {
-        float angle  = (static_cast<float>(rand()) / RAND_MAX) * 2.0f * PI;
+        float angle = (static_cast<float>(rand()) / RAND_MAX) * 2.0f * PI;
         float spread = (static_cast<float>(rand()) / RAND_MAX) * 0.25f;
-        float speed  = 2.5f + (static_cast<float>(rand()) / RAND_MAX) * 2.5f;
+        float speed = 2.5f + (static_cast<float>(rand()) / RAND_MAX) * 2.5f;
 
         Particle p;
-        p.pos      = base;
-        p.vel.x    = std::cos(angle) * spread * speed;
-        p.vel.y    = speed;
-        p.vel.z    = std::sin(angle) * spread * speed;
-        p.color    = COLORS[rand() % 4];
-        p.size     = 0.04f + (static_cast<float>(rand()) / RAND_MAX) * 0.05f;
-        p.alpha    = 0.0f;
-        p.delay    = (static_cast<float>(rand()) / RAND_MAX) * (_duration * 0.6f);
-        p.active   = false;
+        p.pos = base;
+        p.vel.x = std::cos(angle) * spread * speed;
+        p.vel.y = speed;
+        p.vel.z = std::sin(angle) * spread * speed;
+        p.color = COLORS[rand() % 4];
+        p.size = 0.04f + (static_cast<float>(rand()) / RAND_MAX) * 0.05f;
+        p.alpha = 0.0f;
+        p.delay = (static_cast<float>(rand()) / RAND_MAX) * (_duration * 0.6f);
+        p.active = false;
         _particles.push_back(p);
     }
 }
@@ -54,8 +54,8 @@ void LevelUpBehavior::update(float dt)
         if (!p.active) {
             if (_elapsed >= p.delay) {
                 p.active = true;
-                p.pos    = {_visual.pos.x, _visual.pos.y + 0.3f, _visual.pos.z};
-                p.alpha  = 1.0f;
+                p.pos = {_visual.pos.x, _visual.pos.y + 0.3f, _visual.pos.z};
+                p.alpha = 1.0f;
             }
             continue;
         }

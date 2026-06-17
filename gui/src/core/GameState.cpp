@@ -106,16 +106,16 @@ void GameState::applyPlayerPosition(const PlayerPosition& e)
         float duration = timeUnit > 0 ? 7.0f / timeUnit : 0.1f;
         // remove only move/turn behaviors, preserve others (e.g. LevelUpBehavior)
         auto& behaviors = player.visual.behaviors;
-        behaviors.erase(
-            std::remove_if(behaviors.begin(), behaviors.end(), [](const auto& b) {
-                return dynamic_cast<MoveBehavior*>(b.get()) || dynamic_cast<TurnBehavior*>(b.get());
-            }),
-            behaviors.end()
-        );
+        behaviors.erase(std::remove_if(behaviors.begin(), behaviors.end(),
+                                       [](const auto& b) {
+                                           return dynamic_cast<MoveBehavior*>(b.get()) ||
+                                                  dynamic_cast<TurnBehavior*>(b.get());
+                                       }),
+                        behaviors.end());
         behaviors.push_back(std::make_unique<MoveBehavior>(
             player.visual, fromX, fromY, e.x, e.y, world.width, world.height, tileSize, duration));
-        behaviors.push_back(std::make_unique<TurnBehavior>(
-            player.visual, player.visual.angle, toAngle(e.orientation), duration));
+        behaviors.push_back(std::make_unique<TurnBehavior>(player.visual, player.visual.angle,
+                                                           toAngle(e.orientation), duration));
     }
 }
 
@@ -125,8 +125,7 @@ void GameState::applyPlayerLevel(const PlayerLevel& e)
     if (it == world.players.end()) return;
     it->second.level = e.level;
     it->second.visual.behaviors.push_back(
-        std::make_unique<LevelUpBehavior>(it->second.visual, static_cast<float>(timeUnit))
-    );
+        std::make_unique<LevelUpBehavior>(it->second.visual, static_cast<float>(timeUnit)));
 }
 
 void GameState::applyPlayerInventory(const PlayerInventory& e)

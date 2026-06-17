@@ -11,8 +11,8 @@ struct Particle {
     Vector3 vel;
     Color color;
     float size;
-    float alpha;   // 1.0 → 0.0
-    float delay;   // seconds before particle activates
+    float alpha;  // 1.0 → 0.0
+    float delay;  // seconds before particle activates
     bool active = false;
 };
 
