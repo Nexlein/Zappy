@@ -165,14 +165,6 @@ void RaylibRenderer::_render2D()
                                            _getScaledFontSize(18), BLACK);
     }
 
-    for (const auto& [id, egg] : _state->world.eggs) {
-        Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
-                                                        _state->world.height, TILE_SIZE);
-        worldPos.y = EGG_CUBE_SIZE * 1.5f;  // Above cube
-        TextRenderer::drawTextAt3DPosition(worldPos, _camera, "Egg #" + std::to_string(egg.id),
-                                           _getScaledFontSize(18), BLACK);
-    }
-
     _drawSelectedToolip();
 }
 
