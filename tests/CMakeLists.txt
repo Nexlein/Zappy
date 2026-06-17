@@ -103,6 +103,7 @@ if(ZAPPY_BUILD_SERVER)
         server/test_listener.cpp
         server/test_connection.cpp
         server/test_client_manager.cpp
+        server/test_gui_notifier.cpp
     )
 
     add_executable(zappy_server_tests ${SERVER_TEST_SOURCES} ${SERVER_SOURCES})
