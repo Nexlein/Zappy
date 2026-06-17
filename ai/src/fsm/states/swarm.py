@@ -45,6 +45,19 @@ def _next_stone_to_drop(context: DroneContext) -> str | None:
     return None
 
 
+def _next_stone_to_take(context: DroneContext) -> str | None:
+    """Return the name of the first excess stone to remove from the tile."""
+    if not context.vision:
+        return None
+    tile = context.vision[0]
+    reqs = ELEVATION_REQUIREMENTS.get(context.level, {})
+    all_stones = ["linemate", "deraumere", "sibur", "mendiane", "phiras", "thystame"]
+    for stone in all_stones:
+        if getattr(tile, stone, 0) > reqs.get(stone, 0):
+            return stone
+    return None
+
+
 # BroadcastHelp: Yell across the map and wait for allies to arrive.
 class BroadcastHelp(State):
     """
@@ -112,7 +125,8 @@ class BroadcastHelp(State):
                     ai_logger.talk(
                         f"[BroadcastHelp] Yielding to leader {bcst.content.drone_id[:4]}... transitioning to MapsToAlly."
                     )
-                    return "MapsToAlly"
+                    self._abort_target = "MapsToAlly"
+                    return None
         if context.inventory.food < SURVIVAL_THRESHOLD:
             ai_logger.talk(
                 "[BroadcastHelp] Waiting is making me hungry! I'm going to look for food."
@@ -137,10 +151,14 @@ class BroadcastHelp(State):
         if not context.vision:
             return "Look"
 
-        # Drop any stone still missing from the tile.
-        stone = _next_stone_to_drop(context)
-        if stone:
-            return f"Set {stone}"
+        if self.ready_count + 1 >= PLAYERS_REQUIRED[context.level]:
+            stone_to_take = _next_stone_to_take(context)
+            if stone_to_take:
+                return f"Take {stone_to_take}"
+
+            stone = _next_stone_to_drop(context)
+            if stone:
+                return f"Set {stone}"
 
         # Periodically re-broadcast the RALLY signal (only if higher than solo).
         if context.level > SOLO_INCANTATION_LEVEL:
@@ -155,8 +173,13 @@ class BroadcastHelp(State):
                 return f"Broadcast {payload}"
 
         self.tick_since_bcast += 1
-        # Re-scan so update() can check is_incantation_ready() with fresh data.
-        return "Look"
+
+        if (
+            self.ready_count + 1 >= PLAYERS_REQUIRED[context.level]
+            or self.tick_since_bcast % 3 == 0
+        ):
+            return "Look"
+        return None
 
     def exit(self, context: DroneContext) -> None:
         ai_logger.talk("[BroadcastHelp] Stopping my broadcast.")
@@ -292,13 +315,8 @@ class MapsToAlly(State):
                 elif best_direction in BROADCAST_DIRECTION_LEFT:
                     return "Left"
 
-        # -- Already on the rally tile (or just arrived): drop stones and wait. --
+        # -- Already on the rally tile (or just arrived): wait for the leader. --
         if self.arrived:
-            if not context.vision:
-                return "Look"
-            stone = _next_stone_to_drop(context)
-            if stone:
-                return f"Set {stone}"
             if not self.ready_sent:
                 self.ready_sent = True
                 payload = BroadcastProtocol.encode(
@@ -308,10 +326,10 @@ class MapsToAlly(State):
                     context.drone_id,
                 )
                 return f"Broadcast {payload}"
-            return "Look"  # Keep re-scanning so update() sees is_incantation_ready
+            return None  # Wait for INCANT
 
         # No RALLY heard this tick and not arrived — stay put and wait for the next broadcast.
-        return "Look"
+        return None
 
     def exit(self, context: DroneContext) -> None:
         ai_logger.talk("[MapsToAlly] I am leaving the group-up journey.")

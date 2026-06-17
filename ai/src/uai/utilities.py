@@ -84,8 +84,6 @@ class UtilityCalculators:
         return 0.82 * (1.0 - u_survival)
 
     def _get_rally_utility(self, u_survival: float) -> float:
-        if self.context.level <= SOLO_INCANTATION_LEVEL:
-            return 0.0
         if self._get_missing_stones():
             return 0.0
 
