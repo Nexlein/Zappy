@@ -46,7 +46,6 @@ void CommandDispatcher::onDisconnect(int connectionId)
     } else if (conn.type() == ClientType::AI) {
         int playerId = conn.playerId();
         if (_world.getPlayers().count(playerId)) {
-            _notifier.onPlayerDeath(playerId);
             _world.removePlayer(playerId);
         }
     }
@@ -134,7 +133,6 @@ void CommandDispatcher::_startStarvationTimer(int connectionId, int playerId)
                             auto& p = _world.getPlayer(playerId);
                             p.inventory.food--;
                             if (p.inventory.food <= 0) {
-                                _notifier.onPlayerDeath(playerId);
                                 _world.removePlayer(playerId);
                                 _clients.send(connectionId, "dead\n");
                                 _pendingDisconnects.push_back(connectionId);
