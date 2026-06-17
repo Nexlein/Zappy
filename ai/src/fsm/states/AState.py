@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from context import DroneContext
 
 
-class State(ABC):
+class AState(ABC):
     """Abstract base class for all Zappy AI state behaviours."""
 
     @abstractmethod

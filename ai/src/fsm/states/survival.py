@@ -6,15 +6,15 @@
 ##
 
 import random
-from fsm.states.AState import State
+from fsm.states.AState import AState
 from context import DroneContext
-from config import FOOD_TARGET, EXPLORE_TURN_EVERY
+from utils.config_loader import get_survival_config
 
 
 from look_parser import generate_path_to_tile
 
 
-class ForageFood(State):
+class ForageFood(AState):
     """
     Survival state — Priority 1: Keep the food buffer above the safety threshold.
     """
@@ -23,7 +23,8 @@ class ForageFood(State):
         self._forward_streak = 0
 
     def update(self, context: DroneContext) -> str | None:
-        if context.inventory.food >= FOOD_TARGET:
+        surv_cfg = get_survival_config()
+        if context.inventory.food >= surv_cfg.get("FOOD_TARGET", 15):
             return "SearchStone"
         return None
 
@@ -57,7 +58,9 @@ class ForageFood(State):
         # No food visible — explore.
         # Rotate every 5 steps to avoid getting stuck in a straight line.
         self._forward_streak += 1
-        if self._forward_streak % EXPLORE_TURN_EVERY == 0:
+        surv_cfg = get_survival_config()
+        explore_turn_every = surv_cfg.get("EXPLORE_TURN_EVERY", 5)
+        if self._forward_streak % explore_turn_every == 0:
             return random.choice(["Right", "Left"])
         return "Forward"
 

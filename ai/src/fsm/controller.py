@@ -6,8 +6,8 @@
 ##
 
 from context import DroneContext
-from config import INVENTORY_REFRESH_INTERVAL
-from fsm.states.AState import State
+from utils.config_loader import get_survival_config
+from fsm.states.AState import AState
 from fsm.states.survival import ForageFood
 from fsm.states.evolution import SearchStone, IncantationState
 from fsm.states.swarm import BroadcastHelp, MapsToAlly
@@ -27,7 +27,7 @@ class AIController:
     def __init__(self, initial_context: DroneContext):
         self.context = initial_context
 
-        self.states: dict[str, State] = {
+        self.states: dict[str, AState] = {
             "ForageFood": ForageFood(),
             "SearchStone": SearchStone(),
             "BroadcastHelp": BroadcastHelp(),
@@ -52,7 +52,10 @@ class AIController:
             self._transition_to(next_state_name)
 
         # 2. Periodic inventory refresh: preempts the action, not the update.
-        if self.context.ticks_since_inventory >= INVENTORY_REFRESH_INTERVAL:
+        inventory_refresh_interval = get_survival_config().get(
+            "INVENTORY_REFRESH_INTERVAL", 15
+        )
+        if self.context.ticks_since_inventory >= inventory_refresh_interval:
             self.context.ticks_since_inventory = 0
             return "Inventory"
         self.context.ticks_since_inventory += 1

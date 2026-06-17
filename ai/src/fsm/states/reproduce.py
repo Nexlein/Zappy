@@ -5,12 +5,12 @@
 ## The Reproduction Layer (population growth)
 ##
 
-from fsm.states.AState import State
+from fsm.states.AState import AState
 from context import DroneContext
-from config import FORK_FOOD_THRESHOLD, MAX_FORKS_PER_DRONE
+from utils.config_loader import get_reproduction_config
 
 
-class Reproduce(State):
+class Reproduce(AState):
     """
     Reproduction state — grow the team for the high-level incantations.
 
@@ -36,9 +36,10 @@ class Reproduce(State):
         self._fork_sent = False
 
     def update(self, context: DroneContext) -> str | None:
-        if self.forks_done >= MAX_FORKS_PER_DRONE:
+        repr_cfg = get_reproduction_config()
+        if self.forks_done >= repr_cfg.get("MAX_FORKS_PER_DRONE", 10):
             return "SearchStone"
-        if context.inventory.food < FORK_FOOD_THRESHOLD:
+        if context.inventory.food < repr_cfg.get("FORK_FOOD_THRESHOLD", 10):
             return "SearchStone"
 
         # Fork verdict: count the egg only on success, then leave.
