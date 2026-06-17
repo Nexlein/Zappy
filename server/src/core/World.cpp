@@ -1,6 +1,7 @@
 #include "World.hpp"
 
 #include <algorithm>
+#include <set>
 
 World::World(int width, int height, const std::vector<std::string>& teamNames)
     : _width(width), _height(height), _teamNames(teamNames)
@@ -22,8 +23,10 @@ const Tile& World::at(int x, int y) const
     return _tiles[ny * _width + nx];
 }
 
-void World::spawnResources()
+std::vector<std::pair<int, int>> World::spawnResources()
 {
+    std::set<int> changedIndices;
+
     for (int i = 0; i < Resources::TYPE_COUNT; i++) {
         auto type = static_cast<ResourceType>(i);
 
@@ -34,8 +37,18 @@ void World::spawnResources()
 
         int deficit = target - current;
         std::uniform_int_distribution<int> dist(0, (int)_tiles.size() - 1);
-        for (int j = 0; j < deficit; j++) _tiles[dist(_rng)].resources[type]++;
+        for (int j = 0; j < deficit; j++) {
+            int idx = dist(_rng);
+            _tiles[idx].resources[type]++;
+            changedIndices.insert(idx);
+        }
     }
+
+    std::vector<std::pair<int, int>> changed;
+    changed.reserve(changedIndices.size());
+    for (int idx : changedIndices)
+        changed.emplace_back(idx % _width, idx / _width);
+    return changed;
 }
 
 int World::addPlayer(int connectionId, const std::string& teamName, int x, int y,
