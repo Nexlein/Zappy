@@ -42,9 +42,21 @@ class Orchestrator:
 
     def __init__(self, config):
         ai_logger.info("[Orchestrator] Initializing Zappy AI client...")
-        client = TcpClient(host=config.host, port=config.port)
-        client.connect()
-        slots, (w, h) = client.handshake(config.teamName)
+        import time
+
+        while True:
+            try:
+                client = TcpClient(host=config.host, port=config.port)
+                client.connect()
+                slots, (w, h) = client.handshake(config.teamName)
+                break
+            except (ConnectionError, ConnectionRefusedError, ValueError) as e:
+                ai_logger.warning(
+                    f"[Orchestrator] Handshake failed ({e}). Retrying in 1s..."
+                )
+                if client._socket:
+                    client._socket.close()
+                time.sleep(1)
 
         self._context = DroneContext(team_name=config.teamName)
         self._context.available_slots = slots
