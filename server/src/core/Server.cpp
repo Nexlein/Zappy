@@ -10,7 +10,7 @@ Server::Server(const ServerConfig& config)
       _clients(_listener),
       _world(config.width, config.height, config.teamNames),
       _notifier(_clients),
-      _dispatcher(_clients, _world, _notifier, config, _scheduler)
+      _dispatcher(_clients, _world, _notifier, _config, _scheduler)
 {
     _world.spawnResources();
 }
@@ -44,12 +44,12 @@ void Server::run()
             int timeout = _scheduler.msUntilNext();
             PollResult pr = _clients.poll(timeout);
 
+            for (int id : pr.newConnections) _dispatcher.onNewConnection(id);
+            for (auto& [connId, line] : pr.lines) _dispatcher.dispatch(connId, line);
             for (int id : pr.disconnectedIds) {
                 _dispatcher.onDisconnect(id);
                 _clients.disconnect(id);
             }
-            for (int id : pr.newConnections) _dispatcher.onNewConnection(id);
-            for (auto& [connId, line] : pr.lines) _dispatcher.dispatch(connId, line);
 
             _scheduler.tick();
         } catch (const std::exception& e) {
