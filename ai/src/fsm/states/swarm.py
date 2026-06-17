@@ -23,7 +23,6 @@ from config import (
     SOLO_INCANTATION_LEVEL,
 )
 from BroadcastProtocol import BroadcastProtocol, MessageType
-from ai_logger import ai_logger
 
 
 # --- Helpers ---
@@ -73,9 +72,6 @@ class BroadcastHelp(State):
         self.ready_count = 0
         self._abort_target = None
         self._abort_emitted = False
-        ai_logger.talk(
-            "[BroadcastHelp] Help! I need my teammates to gather here! RALLY!"
-        )
 
     def update(self, context: DroneContext) -> str | None:
         """
@@ -96,16 +92,8 @@ class BroadcastHelp(State):
                 and bcst.direction in BROADCAST_DIRECTION_ARRIVED
             ):
                 self.ready_count += 1
-                ai_logger.talk(
-                    f"[BroadcastHelp] A teammate is ready! "
-                    f"({self.ready_count + 1}/{PLAYERS_REQUIRED[context.level]})"
-                )
             elif bcst.content.msg_type == MessageType.LEAVING and self.ready_count > 0:
                 self.ready_count -= 1
-                ai_logger.talk(
-                    f"[BroadcastHelp] A teammate left... "
-                    f"({self.ready_count + 1}/{PLAYERS_REQUIRED[context.level]})"
-                )
 
         if context.vision:
             tile = context.vision[0]
@@ -122,20 +110,11 @@ class BroadcastHelp(State):
                     and bcst.content.level == context.level
                     and bcst.content.drone_id > context.drone_id
                 ):
-                    ai_logger.talk(
-                        f"[BroadcastHelp] Yielding to leader {bcst.content.drone_id[:4]}... transitioning to MapsToAlly."
-                    )
                     self._abort_target = "MapsToAlly"
                     return None
         if context.inventory.food < SURVIVAL_THRESHOLD:
-            ai_logger.talk(
-                "[BroadcastHelp] Waiting is making me hungry! I'm going to look for food."
-            )
             self._abort_target = "ForageFood"
         elif self.ticks_waited > RALLY_TIMEOUT:
-            ai_logger.talk(
-                "[BroadcastHelp] Nobody is coming... I need to grow the team."
-            )
             self._abort_target = "Reproduce"
 
         return None
@@ -176,7 +155,7 @@ class BroadcastHelp(State):
         return "Look"
 
     def exit(self, context: DroneContext) -> None:
-        ai_logger.talk("[BroadcastHelp] Stopping my broadcast.")
+        pass
 
 
 # MapsToAlly: Navigate toward a teammate's broadcast signal.
@@ -188,7 +167,6 @@ class MapsToAlly(State):
     """
 
     def enter(self, context: DroneContext) -> None:
-        ai_logger.talk("[MapsToAlly] I hear someone! I'm on my way to help!")
         self._entry_level = context.level
         self.ticks_waited = 0
         self.arrived = False
@@ -217,33 +195,22 @@ class MapsToAlly(State):
         self.ticks_waited += 1
 
         if context.inventory.food < SURVIVAL_THRESHOLD:
-            ai_logger.talk("[MapsToAlly] I'm too hungry to keep walking... Food first!")
             return self._leave("ForageFood")
 
         # Leveled up thanks to the elevations
         if context.level > self._entry_level:
-            ai_logger.talk("[MapsToAlly] I leveled up! This rally is over for me.")
             return "SearchStone"
 
         for bcst in context.broadcasts:
             if bcst.content.level != self._entry_level:
                 continue
             if bcst.content.msg_type == MessageType.ABORT:
-                ai_logger.talk(
-                    "[MapsToAlly] The rally was called off. Back to my own business."
-                )
                 return "SearchStone"
             if bcst.content.msg_type == MessageType.INCANT:
                 if bcst.direction in BROADCAST_DIRECTION_ARRIVED:
-                    ai_logger.talk(
-                        "[MapsToAlly] The ritual is starting here! Holding still."
-                    )
                     self.arrived = True
                     self.waiting_incant = True
                 else:
-                    ai_logger.talk(
-                        "[MapsToAlly] The ritual started without me... too late."
-                    )
                     return "SearchStone"
 
         # Also switch to the highest known leader in update so we don't ignore ABORTs from them.
@@ -262,9 +229,6 @@ class MapsToAlly(State):
             self.ticks_waited = 0
 
         if self.ticks_waited > RALLY_TIMEOUT:
-            ai_logger.talk(
-                "[MapsToAlly] I lost the signal... back to searching myself."
-            )
             return self._leave("SearchStone")
 
         return None
@@ -332,4 +296,4 @@ class MapsToAlly(State):
         return "Look"
 
     def exit(self, context: DroneContext) -> None:
-        ai_logger.talk("[MapsToAlly] I am leaving the group-up journey.")
+        pass

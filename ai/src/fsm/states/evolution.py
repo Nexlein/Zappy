@@ -10,7 +10,6 @@ from fsm.states.AStates import State
 from context import DroneContext
 from elevations import ELEVATION_REQUIREMENTS
 from BroadcastProtocol import MessageType
-from ai_logger import ai_logger
 from config import (
     MAX_LEVEL,
     SOLO_INCANTATION_LEVEL,
@@ -32,9 +31,6 @@ class SearchStone(State):
     """
 
     def enter(self, context: DroneContext) -> None:
-        ai_logger.talk(
-            f"[SearchStone] Let's gather stones to reach level {context.level + 1}!"
-        )
         self._forward_streak = 0
 
     def _get_missing_stones(self, context: DroneContext) -> dict[str, int]:
@@ -48,15 +44,9 @@ class SearchStone(State):
 
     def update(self, context: DroneContext) -> str | None:
         if context.level >= MAX_LEVEL:
-            ai_logger.talk(
-                "[SearchStone] I am already max level! Let's just eat and chill."
-            )
             return "ForageFood"
 
         if context.inventory.food < SURVIVAL_THRESHOLD:
-            ai_logger.talk(
-                "[SearchStone] I am getting hungry while searching for stones... I need food!"
-            )
             return "ForageFood"
 
         # React to a teammate's RALLY call (solo levels can incant alone).
@@ -66,16 +56,10 @@ class SearchStone(State):
                     bcst.content.msg_type == MessageType.RALLY
                     and bcst.content.level == context.level
                 ):
-                    ai_logger.talk(
-                        f"[SearchStone] I hear my friends calling for level {context.level}! I am coming!"
-                    )
                     return "MapsToAlly"
 
         missing = self._get_missing_stones(context)
         if not missing:
-            ai_logger.talk(
-                "[SearchStone] I have found all the stones I need! I am ready!"
-            )
             return "BroadcastHelp"
 
         return None
@@ -121,7 +105,7 @@ class SearchStone(State):
         return "Forward"
 
     def exit(self, context: DroneContext) -> None:
-        ai_logger.talk("[SearchStone] Done looking for stones for now.")
+        pass
 
 
 class IncantationState(State):
@@ -130,7 +114,6 @@ class IncantationState(State):
     """
 
     def enter(self, context: DroneContext) -> None:
-        ai_logger.talk("[Incantation] Let the elevation ritual begin!")
         self.broadcast_sent = False
         self.command_sent = False
         self.need_abort = False
@@ -148,11 +131,7 @@ class IncantationState(State):
 
         if self.command_sent and context.last_command_successful is not None:
             if context.last_command_successful:
-                ai_logger.talk(
-                    f"[Incantation] Yes! I successfully reached level {context.level}!"
-                )
                 return "SearchStone"
-            ai_logger.talk("[Incantation] Oh no, the ritual failed. Let's try again...")
             if context.level > SOLO_INCANTATION_LEVEL:
                 self.need_abort = True
                 return None

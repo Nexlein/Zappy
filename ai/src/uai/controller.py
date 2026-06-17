@@ -1,5 +1,5 @@
 from context import DroneContext
-from elevations import PLAYERS_REQUIRED, BROADCAST_DIRECTION_ARRIVED
+from elevations import BROADCAST_DIRECTION_ARRIVED
 from config import BCAST_INTERVAL, MAX_LEVEL, FORK_FOOD_THRESHOLD
 from BroadcastProtocol import BroadcastProtocol, MessageType
 from ai_logger import ai_logger
@@ -92,17 +92,14 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
                     decoded.msg_type == MessageType.ABORT
                     and decoded.drone_id == self.target_leader_id
                 ):
-                    ai_logger.talk("[UAI-Follower] Rally aborted. Resetting.")
                     self._reset_follower_state()
                 elif (
                     decoded.msg_type == MessageType.INCANT
                     and decoded.drone_id == self.target_leader_id
                 ):
                     if bcst.direction in BROADCAST_DIRECTION_ARRIVED:
-                        ai_logger.talk("[UAI-Follower] Ritual starting! Freezing.")
                         self.waiting_incant = True
                     else:
-                        ai_logger.talk("[UAI-Follower] Ritual started without me.")
                         self._reset_follower_state()
 
             # Leader listening to Followers / Other Leaders
@@ -113,21 +110,12 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
                 ):
                     self.ready_count += 1
                     self.rally_ticks = 0
-                    ai_logger.talk(
-                        f"[UAI-Leader] Teammate ready! ({self.ready_count + 1}/{PLAYERS_REQUIRED[self.context.level]})"
-                    )
                 elif decoded.msg_type == MessageType.LEAVING and self.ready_count > 0:
                     self.ready_count -= 1
-                    ai_logger.talk(
-                        f"[UAI-Leader] Teammate left... ({self.ready_count + 1}/{PLAYERS_REQUIRED[self.context.level]})"
-                    )
                 elif (
                     decoded.msg_type == MessageType.RALLY
                     and decoded.drone_id > self.context.drone_id
                 ):
-                    ai_logger.talk(
-                        f"[UAI-Leader] Yielding leadership to {decoded.drone_id[:4]}."
-                    )
                     self._reset_leader_state()
                     self.is_following = True
 

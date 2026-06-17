@@ -41,7 +41,6 @@ class Orchestrator:
     _config: Config
 
     def __init__(self, config: Config):
-        ai_logger.info("[Orchestrator] Initializing Zappy AI client...")
         import time
 
         client = None
@@ -95,7 +94,7 @@ class Orchestrator:
                 if response is not None:
                     self._handle_response(self._pending_command, response)
         except DroneDied:
-            ai_logger.info("[Orchestrator] This drone has died. Exiting.")
+            pass
 
     def _handle_event(self, event: str):
         if event.startswith("message"):
@@ -103,46 +102,30 @@ class Orchestrator:
                 direction, payload = BroadcastProtocol.parse_message(event)
                 decoded = BroadcastProtocol.decode(payload)
             except ValueError:
-                ai_logger.log_event(event, "Broadcast (Invalid Payload)")
                 return
 
-            info = f"Broadcast: {decoded.msg_type.name} from {decoded.team_name}-{decoded.drone_id[:4]} (Lvl {decoded.level})"
-
             if decoded.team_name != self._context.team_name:
-                ai_logger.log_event(event, info + " [Ignored: Wrong Team]")
                 return
 
             if decoded.level != self._context.level:
-                ai_logger.log_event(event, info + " [Ignored: Wrong Level]")
                 # We still append it below because some FSM might care, but usually they ignore wrong levels.
-            else:
-                ai_logger.log_event(event, info + " [Relevant!]")
+                pass
 
             if (
                 self._context.elevation_in_progress
                 and decoded.msg_type == MessageType.ABORT
                 and decoded.level == self._context.level
             ):
-                ai_logger.info(
-                    "[Orchestrator] Received ABORT while frozen. Unfreezing!"
-                )
                 self._context.elevation_in_progress = False
 
             self._context.broadcasts.append(BroadcastMessage(direction, decoded))
         elif event.startswith("eject"):
-            ai_logger.log_event(event)
             self._context.vision.clear()
         elif event.startswith("dead"):
-            ai_logger.log_event(event)
             raise DroneDied()
         elif event.startswith("Elevation underway"):
-            ai_logger.log_event(event)
-            ai_logger.info(
-                "[Orchestrator] Ritual started: drone is frozen until verdict."
-            )
             self._context.elevation_in_progress = True
         elif event.startswith("Current level:"):
-            ai_logger.log_event(event)
             try:
                 level = int(event.split(":")[1].strip())
             except ValueError:
