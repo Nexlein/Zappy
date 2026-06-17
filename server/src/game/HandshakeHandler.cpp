@@ -48,7 +48,8 @@ void HandshakeHandler::_promoteToGui(int connectionId)
     for (auto& name : _config.teamNames) _notifier.send(connectionId, Serializer::tna(name));
     _notifier.send(connectionId, Serializer::sgt(_config.freq));
     for (auto& [id, p] : _world.getPlayers())
-        _notifier.send(connectionId, Serializer::pnw(p.id, p.x, p.y, p.orientation, p.level, p.teamName));
+        _notifier.send(connectionId,
+                       Serializer::pnw(p.id, p.x, p.y, p.orientation, p.level, p.teamName));
     for (auto& [id, egg] : _world.getEggs())
         _notifier.send(connectionId, Serializer::enw(egg.id, egg.parentPlayerId, egg.x, egg.y));
 }
