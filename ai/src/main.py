@@ -40,10 +40,11 @@ class Orchestrator:
     _context: DroneContext
     _config: Config
 
-    def __init__(self, config):
+    def __init__(self, config: Config):
         ai_logger.info("[Orchestrator] Initializing Zappy AI client...")
         import time
 
+        client = None
         while True:
             try:
                 client = TcpClient(host=config.host, port=config.port)
@@ -54,11 +55,15 @@ class Orchestrator:
                 ai_logger.warning(
                     f"[Orchestrator] Handshake failed ({e}). Retrying in 1s..."
                 )
-                if client._socket:
+                if client and client._socket:
                     client._socket.close()
                 time.sleep(1)
 
+        if not client:
+            raise RuntimeError("Failed to initialize TcpClient")
+
         self._context = DroneContext(team_name=config.teamName)
+        ai_logger.drone_id = self._context.drone_id[:4]
         self._context.available_slots = slots
         self._context.map_width = w
         self._context.map_height = h
@@ -93,15 +98,25 @@ class Orchestrator:
             ai_logger.info("[Orchestrator] This drone has died. Exiting.")
 
     def _handle_event(self, event: str):
-        ai_logger.log_event(event)
         if event.startswith("message"):
             try:
                 direction, payload = BroadcastProtocol.parse_message(event)
                 decoded = BroadcastProtocol.decode(payload)
             except ValueError:
+                ai_logger.log_event(event, "Broadcast (Invalid Payload)")
                 return
+
+            info = f"Broadcast: {decoded.msg_type.name} from {decoded.team_name}-{decoded.drone_id[:4]} (Lvl {decoded.level})"
+
             if decoded.team_name != self._context.team_name:
+                ai_logger.log_event(event, info + " [Ignored: Wrong Team]")
                 return
+
+            if decoded.level != self._context.level:
+                ai_logger.log_event(event, info + " [Ignored: Wrong Level]")
+                # We still append it below because some FSM might care, but usually they ignore wrong levels.
+            else:
+                ai_logger.log_event(event, info + " [Relevant!]")
 
             if (
                 self._context.elevation_in_progress
@@ -115,15 +130,19 @@ class Orchestrator:
 
             self._context.broadcasts.append(BroadcastMessage(direction, decoded))
         elif event.startswith("eject"):
+            ai_logger.log_event(event)
             self._context.vision.clear()
         elif event.startswith("dead"):
+            ai_logger.log_event(event)
             raise DroneDied()
         elif event.startswith("Elevation underway"):
+            ai_logger.log_event(event)
             ai_logger.info(
                 "[Orchestrator] Ritual started: drone is frozen until verdict."
             )
             self._context.elevation_in_progress = True
         elif event.startswith("Current level:"):
+            ai_logger.log_event(event)
             try:
                 level = int(event.split(":")[1].strip())
             except ValueError:
@@ -223,4 +242,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print(
+            "\n[Zappy AI] Shutting down due to KeyboardInterrupt.",
+            file=sys.stderr,
+        )
+        sys.exit(0)
