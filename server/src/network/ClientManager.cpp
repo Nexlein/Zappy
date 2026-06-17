@@ -38,7 +38,7 @@ void ClientManager::_acceptNew(PollResult& result)
     int id = _nextId++;
     _connections.emplace(std::piecewise_construct, std::forward_as_tuple(id),
                          std::forward_as_tuple(fd));
-    result.newFds.push_back(id);
+    result.newConnections.push_back(id);
 }
 
 void ClientManager::_handleEvents(const pollfd& pfd, PollResult& result)
@@ -49,14 +49,14 @@ void ClientManager::_handleEvents(const pollfd& pfd, PollResult& result)
     auto& conn = _connections.at(id);
 
     if (pfd.revents & (POLLHUP | POLLERR)) {
-        disconnect(id);
+        result.disconnectedIds.push_back(id);
         return;
     }
     if (pfd.revents & POLLIN) {
         char buf[4096];
         ssize_t n = ::recv(pfd.fd, buf, sizeof(buf), 0);
         if (n <= 0) {
-            disconnect(id);
+            result.disconnectedIds.push_back(id);
             return;
         }
         conn.appendRead({buf, static_cast<size_t>(n)});

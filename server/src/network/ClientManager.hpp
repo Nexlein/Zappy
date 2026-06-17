@@ -11,7 +11,8 @@
 #include "network/Listener.hpp"
 
 struct PollResult {
-    std::vector<int> newFds;
+    std::vector<int> newConnections;
+    std::vector<int> disconnectedIds;
     std::vector<std::pair<int, std::string>> lines;
 };
 
