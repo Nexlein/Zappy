@@ -176,11 +176,20 @@ class Orchestrator:
         elif command == "Connect_nbr" and response.isdigit():
             self._context.available_slots = int(response)
         elif command == "Fork" and response == "ok":
-            subprocess.Popen([sys.executable, sys.argv[0],
-                        "-p", str(self._config.port),
-                        "-n", self._config.teamName,
-                        "-h", self._config.host,
-                        "-s", self._config.strategy])
+            subprocess.Popen(
+                [
+                    sys.executable,
+                    sys.argv[0],
+                    "-p",
+                    str(self._config.port),
+                    "-n",
+                    self._config.teamName,
+                    "-h",
+                    self._config.host,
+                    "-s",
+                    self._config.strategy,
+                ]
+            )
         self._context.last_command_successful = response != "ko"
         self._pending_command = None
 

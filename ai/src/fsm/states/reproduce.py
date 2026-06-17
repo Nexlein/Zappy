@@ -48,8 +48,7 @@ class Reproduce(State):
             if context.last_command_successful:
                 self.forks_done += 1
                 ai_logger.talk(
-                    f"[Reproduce] Egg laid! "
-                    f"({self.forks_done}/{MAX_FORKS_PER_DRONE})"
+                    f"[Reproduce] Egg laid! ({self.forks_done}/{MAX_FORKS_PER_DRONE})"
                 )
             return "SearchStone"
 

@@ -43,7 +43,7 @@ MAX_FORKS_PER_DRONE = 2
 
 # Max ticks BroadcastHelp waits for allies before giving up and retrying solo.
 # The SURVIVAL_THRESHOLD is the primary abort condition; this is a safety net.
-RALLY_TIMEOUT = 100
+RALLY_TIMEOUT = 300
 
 # Ticks between successive RALLY broadcasts.
 BCAST_INTERVAL = 10
