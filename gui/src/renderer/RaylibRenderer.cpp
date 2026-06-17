@@ -124,8 +124,7 @@ void RaylibRenderer::_render3D()
         Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
                                                         _state->world.height, TILE_SIZE);
         EntityRenderer::drawEgg(worldPos, _getTeamColor(egg.team), _eggModel, egg.rotation,
-                                _eggModelBaseMats,
-                                EGG_CUBE_SIZE * egg.visual.scale,
+                                _eggModelBaseMats, EGG_CUBE_SIZE * egg.visual.scale,
                                 EGG_MODEL_SIZE * egg.visual.scale);
         _drawBehaviorParticles(egg.visual);
     }

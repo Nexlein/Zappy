@@ -213,8 +213,7 @@ void GameState::applyEggNew(const EggNew& e)
     world.eggs[e.eggId] = std::move(egg);
     Egg& settled = world.eggs[e.eggId];
     settled.visual.behaviors.push_back(
-        std::make_unique<ForkBehavior>(settled.visual, static_cast<float>(timeUnit))
-    );
+        std::make_unique<ForkBehavior>(settled.visual, static_cast<float>(timeUnit)));
 }
 
 void GameState::applyEggHatch(const EggHatch& e)

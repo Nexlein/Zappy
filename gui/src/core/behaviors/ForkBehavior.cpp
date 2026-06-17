@@ -14,17 +14,17 @@ ForkBehavior::ForkBehavior(VisualState& visual, float server_tick_rate)
 void ForkBehavior::_spawnParticles()
 {
     for (int i = 0; i < PARTICLE_COUNT; i++) {
-        float angle = (static_cast<float>(i) / PARTICLE_COUNT) * 2.0f * PI
-                      + (static_cast<float>(rand()) / RAND_MAX) * 0.4f;
+        float angle = (static_cast<float>(i) / PARTICLE_COUNT) * 2.0f * PI +
+                      (static_cast<float>(rand()) / RAND_MAX) * 0.4f;
         float speed = 0.9f + (static_cast<float>(rand()) / RAND_MAX) * 0.85f;
 
         Particle p;
-        p.pos   = {_visual.pos.x, _visual.pos.y + 0.1f, _visual.pos.z};
+        p.pos = {_visual.pos.x, _visual.pos.y + 0.1f, _visual.pos.z};
         p.vel.x = std::cos(angle) * speed;
         p.vel.y = 0.6f + (static_cast<float>(rand()) / RAND_MAX) * 0.5f;
         p.vel.z = std::sin(angle) * speed;
         p.color = {180, 255, 120, 255};  // vivid green
-        p.size  = 0.06f + (static_cast<float>(rand()) / RAND_MAX) * 0.05f;
+        p.size = 0.06f + (static_cast<float>(rand()) / RAND_MAX) * 0.05f;
         p.alpha = 1.0f;
         p.delay = 0.0f;
         p.active = true;
@@ -54,7 +54,7 @@ void ForkBehavior::update(float dt)
         p.pos.y += p.vel.y * dt;
         p.pos.z += p.vel.z * dt;
         p.vel.y -= 1.5f * dt;
-        p.alpha  = 1.0f - (burstAge / (_duration * 0.25f));
+        p.alpha = 1.0f - (burstAge / (_duration * 0.25f));
         if (p.alpha < 0.0f) p.alpha = 0.0f;
     }
 }
