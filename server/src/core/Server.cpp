@@ -52,6 +52,10 @@ void Server::run()
             }
 
             _scheduler.tick();
+            for (int id : _dispatcher.drainPendingDisconnects()) {
+                _dispatcher.onDisconnect(id);
+                _clients.disconnect(id);
+            }
         } catch (const std::exception& e) {
             std::cerr << "[error] " << e.what() << "\n";
         }
