@@ -46,8 +46,7 @@ std::vector<std::pair<int, int>> World::spawnResources()
 
     std::vector<std::pair<int, int>> changed;
     changed.reserve(changedIndices.size());
-    for (int idx : changedIndices)
-        changed.emplace_back(idx % _width, idx / _width);
+    for (int idx : changedIndices) changed.emplace_back(idx % _width, idx / _width);
     return changed;
 }
 
