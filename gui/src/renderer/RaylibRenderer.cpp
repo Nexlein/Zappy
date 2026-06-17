@@ -188,21 +188,20 @@ void RaylibRenderer::_drawSelectionHighlight()
         case SelectionFinder::EntityType::Player:
             if (_state->world.players.find(_selection.id) != _state->world.players.end()) {
                 const Player& player = _state->world.players.at(_selection.id);
-                Vector3 worldPos = player.visual.pos;
-                worldPos.y = PLAYER_CUBE_SIZE / 2.0f;
-                EntityRenderer::drawPlayerHighlight(worldPos, PLAYER_CUBE_SIZE, SELECTION_COLOR,
-                                                    SELECTION_WIREFRAME_THICKNESS);
+                BoundingBox bbox = GetModelBoundingBox(_playerModel);
+                float topY = bbox.max.y * PLAYER_MODEL_SIZE;
+                _drawSelectionArrow(player.visual.pos, topY);
             }
             break;
 
         case SelectionFinder::EntityType::Egg:
             if (_state->world.eggs.find(_selection.id) != _state->world.eggs.end()) {
                 const Egg& egg = _state->world.eggs.at(_selection.id);
-                Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
-                                                                _state->world.height, TILE_SIZE);
-                worldPos.y = EGG_CUBE_SIZE / 2.0f;
-                EntityRenderer::drawEggHighlight(worldPos, EGG_CUBE_SIZE, SELECTION_COLOR,
-                                                 SELECTION_WIREFRAME_THICKNESS);
+                Vector3 eggPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
+                                                              _state->world.height, TILE_SIZE);
+                BoundingBox bbox = GetModelBoundingBox(_eggModel);
+                float topY = bbox.max.y * EGG_MODEL_SIZE * egg.visual.scale;
+                _drawSelectionArrow(eggPos, topY);
             }
             break;
         default:
@@ -279,6 +278,7 @@ void RaylibRenderer::_drawHUD()
     Color bgColor = {20, 25, 35, 220};
     Color borderColor = {60, 70, 90, 200};
     Color textColor = {150, 160, 180, 255};
+    Color accentColor = {210, 220, 240, 255};
 
     int fps = GetFPS();
     Color fpsColor = fps >= 55 ? GREEN : (fps >= 30 ? YELLOW : RED);
@@ -300,8 +300,9 @@ void RaylibRenderer::_drawHUD()
 
     auto builder = TooltipRenderer::create()
                        .addLine(fpsText, fpsColor)
-                       .addLine(mapText, textColor)
-                       .addLine(timeText, textColor);
+                       .addLine(mapText, accentColor)
+                       .addLine(timeText, accentColor)
+                       .addLine("Time: --:--", textColor);
 
     // Add top 5 teams by population
     for (size_t i = 0; i < std::min(sortedTeams.size(), size_t(5)); i++) {
@@ -375,8 +376,9 @@ void RaylibRenderer::_performRaycast()
     if (!_state) return;
 
     Ray ray = GetMouseRay(GetMousePosition(), _camera);
-    _selection = SelectionFinder::findFromRay(ray, *_state, TILE_SIZE, PLAYER_CUBE_SIZE,
-                                              EGG_CUBE_SIZE, SELECTION_TIMER);
+    _selection = SelectionFinder::findFromRay(ray, *_state, TILE_SIZE, _playerModel,
+                                              PLAYER_MODEL_SIZE, _eggModel, EGG_MODEL_SIZE,
+                                              SELECTION_TIMER);
 
     if (_selection.type == SelectionFinder::EntityType::None) {
         _selection = SelectionFinder::getEmptySelection();
@@ -435,4 +437,24 @@ std::vector<std::vector<const Player*>> RaylibRenderer::_groupPlayersByVisualPro
         groups.push_back(std::move(group));
     }
     return groups;
+}
+
+void RaylibRenderer::_drawSelectionArrow(Vector3 basePos, float modelTopY) const
+{
+    // bob up and down using a sine wave
+    float bob = sinf(static_cast<float>(GetTime()) * 4.0f) * 0.08f;
+
+    float arrowBase = basePos.y + modelTopY + 0.05f + bob;
+    float shaftHeight = 0.18f;
+    float shaftRadius = 0.03f;
+    float headHeight = 0.14f;
+    float headRadius = 0.08f;
+
+    // shaft sits above the arrowhead
+    Vector3 shaftBot = {basePos.x, arrowBase + headHeight, basePos.z};
+    DrawCylinder(shaftBot, shaftRadius, shaftRadius, shaftHeight, 8, SELECTION_COLOR);
+
+    // cone: startPos at bottom, wide base there, tip (radius=0) at top → points down toward entity
+    Vector3 coneBottom = {basePos.x, arrowBase, basePos.z};
+    DrawCylinder(coneBottom, headRadius, 0.0f, headHeight, 8, SELECTION_COLOR);
 }
