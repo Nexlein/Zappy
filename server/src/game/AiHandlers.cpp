@@ -329,7 +329,7 @@ void CommandDispatcher::_handleIncantation(int connectionId)
     _scheduler.schedule(
         std::chrono::milliseconds(delayMs / _freq),
         [this, connectionId, participants = *participants, x, y] {
-            bool success = _world.finalizeIncantation(participants);
+            bool success = _world.finalizeIncantation(x, y, participants);
 
             _notifier.broadcast(Serializer::pie(x, y, success));
 
