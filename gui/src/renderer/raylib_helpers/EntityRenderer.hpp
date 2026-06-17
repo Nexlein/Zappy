@@ -11,24 +11,22 @@
 class EntityRenderer {
     public:
     /**
-     * @brief Draws a player cube at the given world position.
+     * @brief Draws a player at the given world position.
      * @param worldPos World position to draw at.
      * @param teamColor Color for the player's team.
-     * @param size Size of the player cube.
+     * @param modelSize Size scalar for the model.
      */
     static void drawPlayer(Vector3& worldPos, Color teamColor, float rotation,
-                           Model* model = nullptr, const Color* baseMats = nullptr,
-                           float cubeSize = 0.8f, float modelSize = 0.4f);
+                           Model& model, const Color* baseMats, float modelSize = 0.4f);
 
     /**
-     * @brief Draws an egg cube at the given world position.
+     * @brief Draws an egg at the given world position.
      * @param worldPos World position to draw at.
      * @param teamColor Color for the egg's team.
-     * @param size Size of the egg cube.
+     * @param modelSize Size scalar for the model.
      */
     static void drawEgg(Vector3& worldPos, Color teamColor, Model& model, float rotation = 0.0f,
-                        const Color* baseMats = nullptr, float cubeSize = 0.4f,
-                        float modelSize = 0.3f);
+                        const Color* baseMats = nullptr, float modelSize = 0.3f);
 
     /**
      * @brief Draws a wireframe highlight around a player cube.

@@ -8,51 +8,41 @@ std::unordered_map<std::tuple<int, int, int>, EntityRenderer::ResourceCacheEntry
                    EntityRenderer::TupleHash>
     EntityRenderer::_resourcePositions;
 
-void EntityRenderer::drawPlayer(Vector3& worldPos, Color teamColor, float rotation, Model* model,
-                                const Color* baseMats, float cubeSize, float modelSize)
+void EntityRenderer::drawPlayer(Vector3& worldPos, Color teamColor, float rotation, Model& model,
+                                const Color* baseMats, float modelSize)
 {
-    if (model != nullptr) {
-        // mat[0] idk what it controls
-        // mat[1] = internal transparent layer (reflects mat[3], lighter color)
-        // mat[2] = blush accent color
-        // mat[3] = internal body color (darker than mat[1])
-        // mat[4] = slime external small reflection (2 white blobs on top)
-        // mat[5] = seems to be the very outer reflection layer
+    // mat[0] idk what it controls
+    // mat[1] = internal transparent layer (reflects mat[3], lighter color)
+    // mat[2] = blush accent color
+    // mat[3] = internal body color (darker than mat[1])
+    // mat[4] = slime external small reflection (2 white blobs on top)
+    // mat[5] = seems to be the very outer reflection layer
 
-        ColorPalette::SlimePalette palette = ColorPalette::getSlimePalette(teamColor);
-        if (!ColorPalette::colorEquals(palette.outer, ColorPalette::KEEP))
-            model->materials[1].maps[MATERIAL_MAP_DIFFUSE].color = palette.outer;
-        if (!ColorPalette::colorEquals(palette.inner, ColorPalette::KEEP))
-            model->materials[3].maps[MATERIAL_MAP_DIFFUSE].color = palette.inner;
-        if (!ColorPalette::colorEquals(palette.blush, ColorPalette::KEEP))
-            model->materials[2].maps[MATERIAL_MAP_DIFFUSE].color = palette.blush;
+    ColorPalette::SlimePalette palette = ColorPalette::getSlimePalette(teamColor);
+    if (!ColorPalette::colorEquals(palette.outer, ColorPalette::KEEP))
+        model.materials[1].maps[MATERIAL_MAP_DIFFUSE].color = palette.outer;
+    if (!ColorPalette::colorEquals(palette.inner, ColorPalette::KEEP))
+        model.materials[3].maps[MATERIAL_MAP_DIFFUSE].color = palette.inner;
+    if (!ColorPalette::colorEquals(palette.blush, ColorPalette::KEEP))
+        model.materials[2].maps[MATERIAL_MAP_DIFFUSE].color = palette.blush;
 
-        DrawModelEx(*model, worldPos, {0.0f, 1.0f, 0.0f}, rotation,
-                    {modelSize, modelSize, modelSize}, WHITE);
+    DrawModelEx(model, worldPos, {0.0f, 1.0f, 0.0f}, rotation, {modelSize, modelSize, modelSize},
+                WHITE);
 
-        if (baseMats) _restoreModelBaseColors(*model, baseMats);
-    } else {
-        worldPos.y = cubeSize / 2.0f;  // Sit on ground
-        DrawCube(worldPos, cubeSize, cubeSize, cubeSize, teamColor);
-    }
+    if (baseMats) _restoreModelBaseColors(model, baseMats);
 }
 
 void EntityRenderer::drawEgg(Vector3& worldPos, Color teamColor, Model& model, float rotation,
-                             const Color* baseMats, float cubeSize, float modelSize)
+                             const Color* baseMats, float modelSize)
 {
-    if (model.meshCount > 0) {
-        // mat[0] = white base color, the shell
-        // mat[1] = inner part color (visible through shell)
+    // mat[0] = white base color, the shell
+    // mat[1] = inner part color (visible through shell)
 
-        model.materials[1].maps[MATERIAL_MAP_DIFFUSE].color = teamColor;
-        DrawModelEx(model, worldPos, {0.0f, 1.0f, 0.0f}, rotation,
-                    {modelSize, modelSize, modelSize}, WHITE);
+    model.materials[1].maps[MATERIAL_MAP_DIFFUSE].color = teamColor;
+    DrawModelEx(model, worldPos, {0.0f, 1.0f, 0.0f}, rotation, {modelSize, modelSize, modelSize},
+                WHITE);
 
-        if (baseMats) _restoreModelBaseColors(model, baseMats, 2);
-    } else {
-        worldPos.y = cubeSize / 2.0f;  // Sit on ground
-        DrawCube(worldPos, cubeSize, cubeSize, cubeSize, teamColor);
-    }
+    if (baseMats) _restoreModelBaseColors(model, baseMats, 2);
 }
 
 void EntityRenderer::drawPlayerHighlight(const Vector3& worldPos, float size, Color color,
