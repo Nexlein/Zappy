@@ -43,6 +43,7 @@ void ClientManager::_acceptNew(PollResult& result)
     _connections.emplace(std::piecewise_construct, std::forward_as_tuple(id),
                          std::forward_as_tuple(fd));
     result.newConnections.push_back(id);
+    for (auto* obs : _observers) obs->onClientConnected(id);
 }
 
 void ClientManager::_handleEvents(const pollfd& pfd, PollResult& result)
@@ -60,7 +61,10 @@ void ClientManager::_handleEvents(const pollfd& pfd, PollResult& result)
             return;
         }
         conn.appendRead({buf, static_cast<size_t>(n)});
-        while (auto line = conn.nextLine()) result.lines.emplace_back(id, std::move(*line));
+        while (auto line = conn.nextLine()) {
+            for (auto* obs : _observers) obs->onLineReceived(id, *line);
+            result.lines.emplace_back(id, std::move(*line));
+        }
     }
     if (pfd.revents & (POLLHUP | POLLERR)) {
         result.disconnectedIds.push_back(id);
@@ -73,6 +77,7 @@ void ClientManager::send(int connectionId, const std::string& msg)
 {
     auto it = _connections.find(connectionId);
     if (it != _connections.end()) it->second.queueWrite(msg);
+    for (auto* obs : _observers) obs->onLineSent(connectionId, msg);
 }
 
 void ClientManager::disconnect(int connectionId)
@@ -81,6 +86,7 @@ void ClientManager::disconnect(int connectionId)
     if (it == _connections.end()) return;
     it->second.flushWrite();
     _connections.erase(it);
+    for (auto* obs : _observers) obs->onClientDisconnected(connectionId);
 }
 
 Connection& ClientManager::getConnection(int connectionId)
@@ -89,4 +95,9 @@ Connection& ClientManager::getConnection(int connectionId)
     if (it == _connections.end())
         throw std::out_of_range("ClientManager::getConnection: unknown id");
     return it->second;
+}
+
+void ClientManager::addNetworkObserver(INetworkObserver* observer)
+{
+    _observers.push_back(observer);
 }
