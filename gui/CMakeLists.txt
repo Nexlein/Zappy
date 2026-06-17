@@ -61,7 +61,7 @@ target_include_directories(zappy_gui PRIVATE
 )
 
 target_compile_options(zappy_gui PRIVATE
-    -Wall -Wextra -Wpedantic
+    -Wall -Wextra -Wpedantic -Wno-missing-field-initializers
 )
 
 target_link_libraries(zappy_gui PRIVATE raylib)

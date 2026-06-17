@@ -23,9 +23,9 @@ void LevelUpBehavior::_spawnParticles()
     Vector3 base = {_visual.pos.x, _visual.pos.y + 0.3f, _visual.pos.z};
 
     for (int i = 0; i < PARTICLE_COUNT; i++) {
-        float angle = (static_cast<float>(rand()) / RAND_MAX) * 2.0f * PI;
-        float spread = (static_cast<float>(rand()) / RAND_MAX) * 0.25f;
-        float speed = 2.5f + (static_cast<float>(rand()) / RAND_MAX) * 2.5f;
+        float angle = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 2.0f * PI;
+        float spread = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 0.25f;
+        float speed = 2.5f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 2.5f;
 
         Particle p;
         p.pos = base;
@@ -33,9 +33,9 @@ void LevelUpBehavior::_spawnParticles()
         p.vel.y = speed;
         p.vel.z = std::sin(angle) * spread * speed;
         p.color = COLORS[rand() % 4];
-        p.size = 0.04f + (static_cast<float>(rand()) / RAND_MAX) * 0.05f;
+        p.size = 0.04f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 0.05f;
         p.alpha = 0.0f;
-        p.delay = (static_cast<float>(rand()) / RAND_MAX) * (_duration * 0.6f);
+        p.delay = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * (_duration * 0.6f);
         p.active = false;
         _particles.push_back(p);
     }
