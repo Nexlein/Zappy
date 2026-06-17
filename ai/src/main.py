@@ -50,7 +50,17 @@ class Orchestrator:
                 client.connect()
                 slots, (w, h) = client.handshake(config.teamName)
                 break
-            except (ConnectionError, ConnectionRefusedError, ValueError) as e:
+            except ConnectionRefusedError as e:
+                if "Team is full" in str(e):
+                    ai_logger.error(f"[Orchestrator] {e}. Exiting.")
+                    sys.exit(0)
+                ai_logger.warning(
+                    "[Orchestrator] Connection refused. Retrying in 1s..."
+                )
+                if client and client._socket:
+                    client._socket.close()
+                time.sleep(1)
+            except (ConnectionError, ValueError) as e:
                 ai_logger.warning(
                     f"[Orchestrator] Handshake failed ({e}). Retrying in 1s..."
                 )
@@ -143,6 +153,7 @@ class Orchestrator:
 
     def _handle_response(self, command: str | None, response: str):
         ai_logger.log_receive(response)
+
         if (
             self._context.elevation_in_progress
             and response == "ko"
@@ -150,52 +161,81 @@ class Orchestrator:
         ):
             self._context.elevation_in_progress = False
             return
+
         if command is None:
             ai_logger.error(
                 f"[Orchestrator] Response with no pending command: {response}"
             )
             return
-        if command == "Incantation":
-            # Failure verdict of our own ritual (success arrives as an event).
-            self._context.elevation_in_progress = False
-            self._context.last_command_successful = response != "ko"
-        elif command == "Look":
-            try:
-                self._context.vision = parse_look_to_tiles(response)
-            except ValueError as e:
-                ai_logger.error(f"[Orchestrator] Look parse error: {e}")
-        elif command == "Inventory":
-            try:
-                update_inventory(self._context.inventory, response)
-            except ValueError as e:
-                ai_logger.error(f"[Orchestrator] Inventory parse error: {e}")
-            self._context.ticks_since_inventory = 0
-        elif command.startswith("Take"):
-            if response == "ok":
-                resource = command.removeprefix("Take ").strip()
-                if self._context.vision:
-                    tile = self._context.vision[0]
-                    setattr(tile, resource, max(0, getattr(tile, resource, 0) - 1))
-                inv = self._context.inventory
-                setattr(inv, resource, getattr(inv, resource, 0) + 1)
-            elif response == "ko":
-                self._context.vision.clear()
-        elif command.startswith("Set"):
-            if response == "ok":
-                resource = command.removeprefix("Set ").strip()
-                inv = self._context.inventory
-                setattr(inv, resource, max(0, getattr(inv, resource, 0) - 1))
-                if self._context.vision:
-                    tile = self._context.vision[0]
-                    setattr(tile, resource, getattr(tile, resource, 0) + 1)
-            elif response == "ko":
-                self._context.vision.clear()
+
+        handlers = {
+            "Incantation": self._handle_incantation_response,
+            "Look": self._handle_look_response,
+            "Inventory": self._handle_inventory_response,
+            "Connect_nbr": self._handle_connect_nbr_response,
+            "Fork": self._handle_fork_response,
+        }
+
+        # Check exact matches
+        if command in handlers:
+            handlers[command](response)
+        # Check prefix matches
+        elif command.startswith("Take "):
+            self._handle_take_response(command, response)
+        elif command.startswith("Set "):
+            self._handle_set_response(command, response)
         elif command in ("Forward", "Right", "Left"):
             if response == "ok":
                 self._context.vision.clear()
-        elif command == "Connect_nbr" and response.isdigit():
+
+        self._context.last_command_successful = response != "ko"
+        self._pending_command = None
+
+    def _handle_incantation_response(self, response: str):
+        self._context.elevation_in_progress = False
+        self._context.last_command_successful = response != "ko"
+
+    def _handle_look_response(self, response: str):
+        try:
+            self._context.vision = parse_look_to_tiles(response)
+        except ValueError as e:
+            ai_logger.error(f"[Orchestrator] Look parse error: {e}")
+
+    def _handle_inventory_response(self, response: str):
+        try:
+            update_inventory(self._context.inventory, response)
+        except ValueError as e:
+            ai_logger.error(f"[Orchestrator] Inventory parse error: {e}")
+        self._context.ticks_since_inventory = 0
+
+    def _handle_take_response(self, command: str, response: str):
+        if response == "ok":
+            resource = command.removeprefix("Take ").strip()
+            if self._context.vision:
+                tile = self._context.vision[0]
+                setattr(tile, resource, max(0, getattr(tile, resource, 0) - 1))
+            inv = self._context.inventory
+            setattr(inv, resource, getattr(inv, resource, 0) + 1)
+        elif response == "ko":
+            self._context.vision.clear()
+
+    def _handle_set_response(self, command: str, response: str):
+        if response == "ok":
+            resource = command.removeprefix("Set ").strip()
+            inv = self._context.inventory
+            setattr(inv, resource, max(0, getattr(inv, resource, 0) - 1))
+            if self._context.vision:
+                tile = self._context.vision[0]
+                setattr(tile, resource, getattr(tile, resource, 0) + 1)
+        elif response == "ko":
+            self._context.vision.clear()
+
+    def _handle_connect_nbr_response(self, response: str):
+        if response.isdigit():
             self._context.available_slots = int(response)
-        elif command == "Fork" and response == "ok":
+
+    def _handle_fork_response(self, response: str):
+        if response == "ok":
             subprocess.Popen(
                 [
                     sys.executable,
@@ -210,8 +250,6 @@ class Orchestrator:
                     self._config.strategy,
                 ]
             )
-        self._context.last_command_successful = response != "ko"
-        self._pending_command = None
 
 
 def main():
