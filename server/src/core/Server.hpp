@@ -10,12 +10,17 @@
 
 class Server {
     public:
-    Server(ServerConfig& config);
+    Server(const ServerConfig& config);
 
     int run();
 
     private:
-    ServerConfig& _config;
+    void _scheduleRespawn();
+    void _logStartup() const;
+
+    static constexpr int RESPAWN_INTERVAL_MS = 20000;
+
+    ServerConfig _config;
     Listener _listener;
     ClientManager _clients;
     World _world;
