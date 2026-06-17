@@ -24,6 +24,11 @@ class CommandDispatcher {
     void _dispatchGui(int connectionId, const std::string& line);
     void _executeNext(int connectionId);
 
+    void _startStarvationTimer(int connectionId, int playerId);
+
+    /// one food is consumed every 126 time units (1 unit = 1/freq seconds)
+    static constexpr int STARVATION_INTERVAL_MS = 126000;
+
     // GUI command handlers
     void _handleMsz(int connectionId);
     void _handleBct(int connectionId, int x, int y);
