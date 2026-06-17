@@ -1,10 +1,8 @@
-from elevations import ELEVATION_REQUIREMENTS, PLAYERS_REQUIRED, is_incantation_ready
-from config import (
-    FOOD_TARGET,
-    SURVIVAL_THRESHOLD,
-    SOLO_INCANTATION_LEVEL,
-    FORK_FOOD_THRESHOLD,
-    MAX_FORKS_PER_DRONE,
+from utils.stones import is_incantation_ready
+from utils.config_loader import (
+    get_survival_config,
+    get_evolution_config,
+    get_reproduction_config,
 )
 from BroadcastProtocol import MessageType
 
@@ -30,12 +28,15 @@ class UtilityCalculators:
         def _get_missing_stones(self) -> dict[str, int]: ...
 
     def _get_survival_utility(self) -> float:
+        surv_cfg = get_survival_config()
         food = self.context.inventory.food
-        if food < SURVIVAL_THRESHOLD:
+        threshold = surv_cfg.get("SURVIVAL_THRESHOLD", 5)
+        target = surv_cfg.get("FOOD_TARGET", 15)
+        if food < threshold:
             return 1.0
-        if food >= FOOD_TARGET:
+        if food >= target:
             return 0.0
-        return 1.0 - ((food - SURVIVAL_THRESHOLD) / (FOOD_TARGET - SURVIVAL_THRESHOLD))
+        return 1.0 - ((food - threshold) / (target - threshold))
 
     def _get_incantation_utility(self) -> float:
         if not self.context.vision:
@@ -46,13 +47,19 @@ class UtilityCalculators:
         if self.incant_cmd_sent:
             return 1.0
 
-        if self.context.level <= SOLO_INCANTATION_LEVEL:
+        evo_cfg = get_evolution_config()
+        solo_level = evo_cfg.get("SOLO_INCANTATION_LEVEL", 1)
+
+        if self.context.level <= solo_level:
             if is_incantation_ready(self.context.level, tile):
                 return 1.0
         else:
+            players_req = evo_cfg.get("PLAYERS_REQUIRED", {}).get(
+                str(self.context.level), 0
+            )
             if (
                 self.is_leader
-                and self.ready_count + 1 >= PLAYERS_REQUIRED.get(self.context.level, 0)
+                and self.ready_count + 1 >= players_req
                 and is_incantation_ready(self.context.level, tile)
             ):
                 return 1.0
@@ -63,16 +70,20 @@ class UtilityCalculators:
         if not missing:
             return 0.0
         num_missing = sum(missing.values())
-        requirements = ELEVATION_REQUIREMENTS.get(self.context.level, {})
+        evo_cfg = get_evolution_config()
+        requirements = evo_cfg.get("ELEVATION_REQUIREMENTS", {}).get(
+            str(self.context.level), {}
+        )
         total_needed = sum(requirements.values()) if requirements else 1
 
         stone_ratio = num_missing / total_needed
         return 0.8 * stone_ratio * (1.0 - u_survival)
 
     def _get_reproduce_utility(self, u_survival: float) -> float:
-        if self.forks_done >= MAX_FORKS_PER_DRONE:
+        repr_cfg = get_reproduction_config()
+        if self.forks_done >= repr_cfg.get("MAX_FORKS_PER_DRONE", 10):
             return 0.0
-        if self.context.inventory.food < FORK_FOOD_THRESHOLD:
+        if self.context.inventory.food < repr_cfg.get("FORK_FOOD_THRESHOLD", 10):
             return 0.0
 
         if self.reproduce_fork_sent:
@@ -93,7 +104,8 @@ class UtilityCalculators:
         return 0.9 * (1.0 - u_survival)
 
     def _get_follow_utility(self, u_survival: float) -> float:
-        if self.context.level <= SOLO_INCANTATION_LEVEL:
+        evo_cfg = get_evolution_config()
+        if self.context.level <= evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
             return 0.0
 
         if self.is_following:
