@@ -146,9 +146,15 @@ class Orchestrator:
             self._context.elevation_in_progress = False
             self._context.last_command_successful = response != "ko"
         elif command == "Look":
-            self._context.vision = parse_look_to_tiles(response)
+            try:
+                self._context.vision = parse_look_to_tiles(response)
+            except ValueError as e:
+                ai_logger.error(f"[Orchestrator] Look parse error: {e}")
         elif command == "Inventory":
-            update_inventory(self._context.inventory, response)
+            try:
+                update_inventory(self._context.inventory, response)
+            except ValueError as e:
+                ai_logger.error(f"[Orchestrator] Inventory parse error: {e}")
             self._context.ticks_since_inventory = 0
         elif command.startswith("Take"):
             if response == "ok":
