@@ -61,6 +61,7 @@ int World::addPlayer(int connectionId, const std::string& teamName, int x, int y
     p.x = x;
     p.y = y;
     p.orientation = orientation;
+    p.inventory.food = 10;
     _players[id] = p;
     at(x, y).playerIds.push_back(id);
     return id;
