@@ -255,12 +255,10 @@ void CommandDispatcher::_handleTake(int connectionId, ResourceType resource)
                                 _executeNext(connectionId);
                                 return;
                             }
-
-                            if (_world.takeResource(playerId, resource)) {
+                            if (_world.takeResource(playerId, resource))
                                 _clients.send(connectionId, "ok\n");
-                            } else {
+                            else
                                 _clients.send(connectionId, "ko\n");
-                            }
                             _executeNext(connectionId);
                         });
 }
@@ -277,11 +275,10 @@ void CommandDispatcher::_handleSet(int connectionId, ResourceType resource)
                                 return;
                             }
 
-                            if (_world.setResource(playerId, resource)) {
+                            if (_world.setResource(playerId, resource))
                                 _clients.send(connectionId, "ok\n");
-                            } else {
+                            else
                                 _clients.send(connectionId, "ko\n");
-                            }
                             _executeNext(connectionId);
                         });
 }
