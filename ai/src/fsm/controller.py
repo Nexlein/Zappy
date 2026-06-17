@@ -69,4 +69,5 @@ class AIController:
         self.current_state.exit(self.context)
         self.current_state_name = new_state_name
         self.current_state = self.states[new_state_name]
+        self.context.path_queue.clear()
         self.current_state.enter(self.context)

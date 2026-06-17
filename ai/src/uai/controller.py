@@ -44,6 +44,7 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
         self.reproduce_attempted = False
 
         self.last_level = context.level
+        self.last_behavior = "survival"
 
     def _reset_reproduce_state(self):
         self.reproduce_connect_sent = False
@@ -198,6 +199,10 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
 
         if utilities[best_behavior] <= 0.0:
             best_behavior = "survival"
+
+        if best_behavior != self.last_behavior:
+            self.context.path_queue.clear()
+            self.last_behavior = best_behavior
 
         # Handle state transitions based on utility
         if best_behavior == "survival":
