@@ -1,3 +1,5 @@
+#include <stdexcept>
+
 #include "CommandDispatcher.hpp"
 #include "protocol/Serializer.hpp"
 
@@ -25,20 +27,32 @@ void CommandDispatcher::_handleTna(int connectionId)
 
 void CommandDispatcher::_handlePpo(int connectionId, int playerId)
 {
-    auto& p = _world.getPlayer(playerId);
-    _clients.send(connectionId, Serializer::ppo(p.id, p.x, p.y, p.orientation));
+    try {
+        auto& p = _world.getPlayer(playerId);
+        _clients.send(connectionId, Serializer::ppo(p.id, p.x, p.y, p.orientation));
+    } catch (const std::out_of_range&) {
+        _clients.send(connectionId, "suc\n");
+    }
 }
 
 void CommandDispatcher::_handlePlv(int connectionId, int playerId)
 {
-    auto& p = _world.getPlayer(playerId);
-    _clients.send(connectionId, Serializer::plv(p.id, p.level));
+    try {
+        auto& p = _world.getPlayer(playerId);
+        _clients.send(connectionId, Serializer::plv(p.id, p.level));
+    } catch (const std::out_of_range&) {
+        _clients.send(connectionId, "suc\n");
+    }
 }
 
 void CommandDispatcher::_handlePin(int connectionId, int playerId)
 {
-    auto& p = _world.getPlayer(playerId);
-    _clients.send(connectionId, Serializer::pin(p.id, p.x, p.y, p.inventory));
+    try {
+        auto& p = _world.getPlayer(playerId);
+        _clients.send(connectionId, Serializer::pin(p.id, p.x, p.y, p.inventory));
+    } catch (const std::out_of_range&) {
+        _clients.send(connectionId, "suc\n");
+    }
 }
 
 void CommandDispatcher::_handleSgt(int connectionId)
