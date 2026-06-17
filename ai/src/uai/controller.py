@@ -23,6 +23,7 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
         self.ready_count = 0
         self.is_leader = False
         self.leader_aborted = False
+        self.rally_ticks = 0
 
         # Incantation sequence state
         self.incant_bcast_sent = False
@@ -55,6 +56,7 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
         self.ready_count = 0
         self.is_leader = False
         self.leader_aborted = False
+        self.rally_ticks = 0
         self.incant_bcast_sent = False
         self.incant_cmd_sent = False
 
@@ -110,6 +112,7 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
                     and bcst.direction in BROADCAST_DIRECTION_ARRIVED
                 ):
                     self.ready_count += 1
+                    self.rally_ticks = 0
                     ai_logger.talk(
                         f"[UAI-Leader] Teammate ready! ({self.ready_count + 1}/{PLAYERS_REQUIRED[self.context.level]})"
                     )
@@ -216,9 +219,19 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
         if best_behavior == "rally":
             self.is_leader = True
             self.is_following = False
+            self.rally_ticks += 1
+            from config import RALLY_TIMEOUT
+
+            if self.rally_ticks > RALLY_TIMEOUT:
+                # Timed out waiting for followers. Abort and try to reproduce.
+                self.rally_ticks = 0
+                self.reproduce_attempted = False
+                best_behavior = "reproduce"
         elif best_behavior == "follow":
             self.is_following = True
             self.is_leader = False
+        else:
+            self.rally_ticks = 0
 
         # Execute Action
         if best_behavior == "incantation":
@@ -234,5 +247,5 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
         else:
             action = self._get_survival_action()
 
-        ai_logger.log_state(best_behavior, action or "None")
+        ai_logger.log_state(best_behavior, action or "None", self.context)
         return action
