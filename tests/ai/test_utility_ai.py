@@ -52,7 +52,7 @@ class TestUtilityAIController(unittest.TestCase):
 
     def test_gather_utility_and_action(self):
         self.context.inventory.food = 15  # Safe food
-        self.controller.forks_done = 10   # Max forks done, so reproduce utility is 0
+        self.controller.forks_done = 10  # Max forks done, so reproduce utility is 0
         self.context.level = 1
         self.context.inventory.linemate = 0  # Missing linemate
         self.context.vision = [Tile(linemate=1)]
