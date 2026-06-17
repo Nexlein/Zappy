@@ -272,7 +272,7 @@ std::optional<std::vector<int>> World::startIncantation(int playerId)
     for (int pid : participants) _players.at(pid).isIncanting = true;
 
     for (auto* observer : _observers)
-        observer->onIncantationStart(initiator.x, initiator.y, participants);
+        observer->onIncantationStart(initiator.x, initiator.y, initiator.level, participants);
 
     return participants;
 }

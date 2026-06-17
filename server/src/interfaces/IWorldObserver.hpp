@@ -22,7 +22,7 @@ class IWorldObserver {
                                    Resources resources) = 0;
     virtual void onEggLaid(int eggId, int playerId, int x, int y) = 0;
     virtual void onEggHatched(int eggId) = 0;
-    virtual void onIncantationStart(int x, int y, const std::vector<int>& participantIds) = 0;
+    virtual void onIncantationStart(int x, int y, int level, const std::vector<int>& participantIds) = 0;
     virtual void onIncantationEnd(int x, int y, bool success) = 0;
     virtual void onPlayerLevelUp(int playerId, int newLevel) = 0;
     virtual void onGameEnd(const std::string& winningTeam) = 0;
