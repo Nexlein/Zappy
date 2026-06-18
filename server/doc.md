@@ -403,6 +403,24 @@ done
 - `World`: resource spawn, movement, elevation table, eject logic
 - `broadcastDirection`: toroidal cases, wrap-around, all 8 directions, same-tile
 
+### E2E tests (`tests/e2e/`)
+Spawn the real `zappy_server` binary and talk to it over raw TCP — no server internals linked. Each test forks the binary, connects sockets, sends wire bytes, and asserts on what comes back.
+
+```bash
+# Build and run
+cmake --build build --target zappy_server zappy_server_e2e_tests
+./zappy_server_e2e_tests
+```
+
+| File | What it covers |
+|------|----------------|
+| `test_e2e_handshake.cpp` | WELCOME on connect, two simultaneous clients, slot count + map size after team join |
+| `test_e2e_ai_command.cpp` | `Forward` → `ok`, `Inventory` → `[...]`, unknown command → `ko` |
+| `test_e2e_gui.cpp` | `msz` is first GUI response, `msz` command reply, `pnw` broadcast on AI connect |
+| `test_e2e_incantation.cpp` | Full ritual flow: navigate to linemate tile, incantate, GUI sees `pic` + `pie 1`, player reaches level 2 |
+| `test_e2e_starvation.cpp` | Starved player receives `dead`, GUI receives `pdi`, no double-death |
+| `test_e2e_slot_exhaustion.cpp` | 6th client on full team gets `ko`, slot count decreases per join, other team unaffected, unknown team → `ko` |
+
 ## File Structure
 
 ```
