@@ -3,6 +3,7 @@ import time
 import os
 import json
 from datetime import datetime
+from utils.config_loader import get_config
 
 
 class JsonFormatter(logging.Formatter):
@@ -61,8 +62,10 @@ class AILogger:
         if config_dict:
             config_path = os.path.join(log_dir, "config.json")
             if not os.path.exists(config_path):
+                full_config = get_config().copy()
+                full_config["client"] = config_dict
                 with open(config_path, "w") as f:
-                    json.dump(config_dict, f, indent=4)
+                    json.dump(full_config, f, indent=4)
 
         pid = os.getpid()
         fh_ai = logging.FileHandler(
