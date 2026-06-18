@@ -3,18 +3,8 @@
 #include <memory>
 #include <vector>
 
+#include "DrawTypes.hpp"
 #include "behaviors/IBehavior.hpp"
-#include "raylib.h"
-
-struct Particle {
-    Vector3 pos;
-    Vector3 vel;
-    Color color;
-    float size;
-    float alpha;  // 1.0 → 0.0
-    float delay;  // seconds before particle activates
-    bool active = false;
-};
 
 /**
  * @brief Visual-only state for an entity, driven by behaviors each frame.
