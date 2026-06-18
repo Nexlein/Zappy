@@ -1,6 +1,7 @@
 #include "ProtocolParser.hpp"
 
 #include <unordered_map>
+#include <iostream>
 
 std::optional<Event> ProtocolParser::parse(std::string_view input)
 {
@@ -23,6 +24,7 @@ std::optional<Event> ProtocolParser::parse(std::string_view input)
         return it->second(tokens);
     }
 
+    std::cerr << "[ProtocolParser] Unknown command: " << tokens[0] << "\n";
     return std::nullopt;
 }
 
