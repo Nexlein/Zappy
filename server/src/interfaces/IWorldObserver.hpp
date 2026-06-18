@@ -13,6 +13,7 @@ class IWorldObserver {
     virtual void onPlayerAdded(int playerId, int x, int y, Orientation orientation, int level,
                                const std::string& teamName) = 0;
     virtual void onPlayerMoved(int playerId, int nx, int ny, Orientation newOrientation) = 0;
+    virtual void onPlayerInventoryChanged(int playerId, int x, int y, Resources inventory) = 0;
     virtual void onPlayerRemoved(int playerId) = 0;
     virtual void onPlayerEjected(int playerId) = 0;
     virtual void onBroadcast(int playerId, const std::string& message) = 0;
