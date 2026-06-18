@@ -54,8 +54,14 @@ void HandshakeHandler::_promoteToGui(int connectionId)
     for (auto& [id, p] : _world.getPlayers())
         _notifier.send(connectionId,
                        Serializer::pnw(p.id, p.x, p.y, p.orientation, p.level, p.teamName));
-    for (auto& [id, egg] : _world.getEggs())
-        _notifier.send(connectionId, Serializer::enw(egg.id, egg.parentPlayerId, egg.x, egg.y));
+    // Initial eggs (parentPlayerId < 0) replay as sse; player-laid eggs as enw,
+    // matching how World::_spawnEgg first announced them.
+    for (auto& [id, egg] : _world.getEggs()) {
+        if (egg.parentPlayerId < 0)
+            _notifier.send(connectionId, Serializer::sse(egg.id, egg.teamName, egg.x, egg.y));
+        else
+            _notifier.send(connectionId, Serializer::enw(egg.id, egg.parentPlayerId, egg.x, egg.y));
+    }
 }
 
 void HandshakeHandler::_promoteToAi(int connectionId, const std::string& teamName)
