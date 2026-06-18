@@ -8,10 +8,9 @@
 import random
 from fsm.states.AState import AState
 from context import DroneContext
-from utils.config_loader import get_survival_config
-
-
-from look_parser import generate_path_to_tile
+from utils.config_loader import get_survival_config, get_evolution_config
+from BroadcastProtocol import MessageType
+from look_parser import find_closest_resource_path
 
 
 class ForageFood(AState):
@@ -26,6 +25,19 @@ class ForageFood(AState):
         surv_cfg = get_survival_config()
         if context.inventory.food >= surv_cfg.get("FOOD_TARGET", 15):
             return "SearchStone"
+
+        # Check if we have a safe amount of food and someone is calling for help
+        safe_food = surv_cfg.get("SAFE_FOOD_THRESHOLD", 10)
+        if context.inventory.food >= safe_food:
+            evo_cfg = get_evolution_config()
+            if context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
+                for bcst in context.broadcasts:
+                    if (
+                        bcst.content.msg_type == MessageType.RALLY
+                        and bcst.content.level == context.level
+                    ):
+                        return "MapsToAlly"
+
         return None
 
     def get_action(self, context: DroneContext) -> str | None:
@@ -40,15 +52,7 @@ class ForageFood(AState):
             self._forward_streak = 0
             return "Take food"
 
-        # Check vision for food ahead
-        best_path = None
-        for i, tile in enumerate(context.vision):
-            if i == 0:
-                continue
-            if tile.food > 0:
-                path = generate_path_to_tile(i)
-                if best_path is None or len(path) < len(best_path):
-                    best_path = path
+        best_path = find_closest_resource_path(context.vision, ["food"])
 
         if best_path:
             self._forward_streak = 0

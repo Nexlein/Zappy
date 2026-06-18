@@ -7,7 +7,8 @@
     },
     "survival": {
         "SURVIVAL_THRESHOLD": 5,
-        "FOOD_TARGET": 15,
+        "SAFE_FOOD_THRESHOLD": 10,
+        "FOOD_TARGET": 25,
         "EXPLORE_TURN_EVERY": 5,
         "INVENTORY_REFRESH_INTERVAL": 15
     },
@@ -84,7 +85,7 @@
     },
     "reproduction": {
         "FORK_FOOD_THRESHOLD": 10,
-        "MAX_FORKS_PER_DRONE": 10
+        "MAX_FORKS_PER_DRONE": 2
     },
     "swarm": {
         "RALLY_TIMEOUT": 100,

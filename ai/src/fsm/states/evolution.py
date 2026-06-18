@@ -8,9 +8,9 @@
 import random
 from utils.config_loader import get_survival_config, get_evolution_config
 from utils.stones import get_missing_stones
-from look_parser import generate_path_to_tile
 from BroadcastProtocol import BroadcastProtocol, MessageType
 from context import DroneContext
+from look_parser import find_closest_resource_path
 
 from fsm.states.AState import AState
 
@@ -38,7 +38,7 @@ class SearchStone(AState):
         if context.level >= evo_cfg.get("MAX_LEVEL", 8):
             return "ForageFood"
 
-        if context.inventory.food < surv_cfg.get("SURVIVAL_THRESHOLD", 5):
+        if context.inventory.food < surv_cfg.get("SAFE_FOOD_THRESHOLD", 10):
             return "ForageFood"
 
         # React to a teammate's RALLY call (solo levels can incant alone).
@@ -52,6 +52,9 @@ class SearchStone(AState):
 
         missing = self._get_missing_stones_for_drone(context)
         if not missing:
+            # Force the leader to be full food
+            if context.inventory.food < surv_cfg.get("FOOD_TARGET", 25):
+                return "ForageFood"
             return "BroadcastHelp"
 
         return None
@@ -66,23 +69,14 @@ class SearchStone(AState):
         missing_stones = self._get_missing_stones_for_drone(context)
         current_tile = context.vision[0]
 
-        # Pick up any needed stone on the current tile.
-        for stone in missing_stones:
-            if getattr(current_tile, stone, 0) > 0:
-                self._forward_streak = 0
-                return f"Take {stone}"
-
-        # Check vision for needed stones ahead
-        best_path = None
-        for i, tile in enumerate(context.vision):
-            if i == 0:
-                continue
+        # Pick up any needed stone on the current tile, unless there are other players here (could be a ritual).
+        if current_tile.player <= 1:
             for stone in missing_stones:
-                if getattr(tile, stone, 0) > 0:
-                    path = generate_path_to_tile(i)
-                    if best_path is None or len(path) < len(best_path):
-                        best_path = path
-                    break
+                if getattr(current_tile, stone, 0) > 0:
+                    self._forward_streak = 0
+                    return f"Take {stone}"
+
+        best_path = find_closest_resource_path(context.vision, missing_stones)
 
         if best_path:
             self._forward_streak = 0
