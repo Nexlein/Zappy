@@ -34,6 +34,11 @@ void GuiNotifier::onPlayerMoved(int playerId, int nx, int ny, Orientation newOri
     broadcast(Serializer::ppo(playerId, nx, ny, newOrientation));
 }
 
+void GuiNotifier::onPlayerInventoryChanged(int playerId, int x, int y, Resources inventory)
+{
+    broadcast(Serializer::pin(playerId, x, y, inventory));
+}
+
 void GuiNotifier::onPlayerRemoved(int playerId) { broadcast(Serializer::pdi(playerId)); }
 
 void GuiNotifier::onPlayerEjected(int playerId) { broadcast(Serializer::pex(playerId)); }

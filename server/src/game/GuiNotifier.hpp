@@ -19,6 +19,7 @@ class GuiNotifier : public IWorldObserver {
     void onPlayerAdded(int playerId, int x, int y, Orientation orientation, int level,
                        const std::string& teamName) override;
     void onPlayerMoved(int playerId, int nx, int ny, Orientation newOrientation) override;
+    void onPlayerInventoryChanged(int playerId, int x, int y, Resources inventory) override;
     void onPlayerRemoved(int playerId) override;
     void onPlayerEjected(int playerId) override;
     void onBroadcast(int playerId, const std::string& message) override;
