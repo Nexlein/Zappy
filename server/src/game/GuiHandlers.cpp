@@ -1,3 +1,4 @@
+#include <ctime>
 #include <stdexcept>
 
 #include "CommandDispatcher.hpp"
@@ -58,6 +59,12 @@ void CommandDispatcher::_handlePin(int connectionId, int playerId)
 void CommandDispatcher::_handleSgt(int connectionId)
 {
     _clients.send(connectionId, Serializer::sgt(_freq));
+}
+
+void CommandDispatcher::_handleStu(int connectionId)
+{
+    int elapsed = static_cast<int>(std::difftime(time(nullptr), _startTime));
+    _clients.send(connectionId, Serializer::stu(elapsed));
 }
 
 void CommandDispatcher::_handleSst(int freq)
