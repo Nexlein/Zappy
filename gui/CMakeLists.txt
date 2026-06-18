@@ -61,6 +61,7 @@ set(GUI_SOURCES
     src/core/behaviors/DeathBehavior.cpp
     src/core/behaviors/ForkBehavior.cpp
     src/core/behaviors/LevelUpBehavior.cpp
+    src/core/behaviors/BroadcastBehavior.cpp
     src/core/EventQueue.cpp
     src/core/GameState.cpp
     src/core/Args.cpp

@@ -31,6 +31,7 @@ _deps/
 *.swo
 *~
 .DS_Store
+.cache/
 
 # Compiled Python files (if AI uses Python)
 __pycache__/

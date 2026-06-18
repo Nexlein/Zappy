@@ -45,6 +45,7 @@ if(ZAPPY_BUILD_GUI)
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/DeathBehavior.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/ForkBehavior.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/LevelUpBehavior.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/BroadcastBehavior.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/renderer/raylib_helpers/RenderingHelper.cpp
     )
 
@@ -105,6 +106,11 @@ if(ZAPPY_BUILD_SERVER)
         server/test_listener.cpp
         server/test_connection.cpp
         server/test_client_manager.cpp
+        server/test_gui_notifier.cpp
+        server/test_handshake_handler.cpp
+        server/test_command_dispatcher.cpp
+        server/test_gui_handlers.cpp
+        server/test_ai_handlers.cpp
     )
 
     add_executable(zappy_server_tests ${SERVER_TEST_SOURCES} ${SERVER_SOURCES})

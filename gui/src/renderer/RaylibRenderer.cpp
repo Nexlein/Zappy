@@ -4,7 +4,7 @@
 #include <cfloat>
 #include <cmath>
 
-#include "core/behaviors/ABehavior.hpp"
+#include "core/behaviors/ADrawableBehavior.hpp"
 #include "raylib_helpers/ColorPalette.hpp"
 #include "raylib_helpers/EntityRenderer.hpp"
 #include "raylib_helpers/GridRenderer.hpp"
@@ -136,8 +136,14 @@ void RaylibRenderer::_render3D()
 void RaylibRenderer::_drawBehaviorParticles(const VisualState& visual)
 {
     for (const auto& b : visual.behaviors) {
-        const auto* ab = dynamic_cast<const ABehavior*>(b.get());
+        const auto* ab = dynamic_cast<const ADrawableBehavior*>(b.get());
         if (!ab) continue;
+        for (const auto& line : ab->getLines()) {
+            if (line.alpha <= 0.0f) continue;
+            Color c = {line.color.r, line.color.g, line.color.b,
+                       static_cast<unsigned char>(line.alpha * 255)};
+            DrawLine3D(line.a, line.b, c);
+        }
         for (const auto& p : ab->getParticles()) {
             if (!p.active) continue;
             Color c = {p.color.r, p.color.g, p.color.b, static_cast<unsigned char>(p.alpha * 255)};

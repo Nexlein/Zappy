@@ -1,12 +1,19 @@
 #include "App.hpp"
 
+#include <chrono>
+#include <csignal>
 #include <iostream>
+#include <thread>
+
+extern volatile sig_atomic_t g_interrupted;
 
 #include "network/ProtocolParser.hpp"
 #include "network/TcpSocket.hpp"
 #include "renderer/HeadlessRenderer.hpp"
 #include "renderer/IRenderer.hpp"
 #include "renderer/RaylibRenderer.hpp"
+
+static constexpr int MAX_RETRIES = 5;
 
 App::App(int argc, char** argv) : args(argc, argv) {}
 
@@ -18,9 +25,8 @@ void App::run()
 {
     AppConfig config = args.getConfig();
 
-    TcpSocket socket;
-    socket.connect(config.machine, config.port);
-    socket.send("GRAPHIC\n");
+    auto socket = std::make_unique<TcpSocket>();
+    if (!_connectWithRetry(*socket, config.machine, config.port)) return;
 
     EventQueue eventQueue;
     IRenderer* renderer;
@@ -33,24 +39,35 @@ void App::run()
     }
 
     renderer->init();
-    try {
-        while (!renderer->shouldClose()) {
-            socket.send("mct\n");
-            pollAndEnqueue(socket, eventQueue);
 
-            while (auto event = eventQueue.pop()) {
-                state.applyEvent(*event);
+    _rendererActive = true;
+    while (!renderer->shouldClose() && !g_interrupted) {
+        try {
+            while (!renderer->shouldClose() && !g_interrupted) {
+                socket->send("mct\n");
+                pollAndEnqueue(*socket, eventQueue);
+
+                while (auto event = eventQueue.pop()) state.applyEvent(*event);
+
+                renderer->setState(state);
+                renderer->handleInput();
+                renderer->render();
             }
-
-            renderer->setState(state);
-            renderer->handleInput();
-            renderer->render();
+        } catch (const TcpException& e) {
+            std::cerr << "[Network] " << e.what() << "\n";
+            renderer->shutdown();
+            _rendererActive = false;
+            socket = std::make_unique<TcpSocket>();
+            if (!_connectWithRetry(*socket, config.machine, config.port)) break;
+            state = GameState{};
+            eventQueue.clear();
+            renderer->init();
+            _rendererActive = true;
         }
-    } catch (const TcpException& e) {
-        std::cerr << "[Network] " << e.what() << "\n";
     }
 
-    renderer->shutdown();
+    if (g_interrupted) std::cerr << "[GUI] Stopping\n";
+    if (_rendererActive) renderer->shutdown();
     delete renderer;
 }
 
@@ -62,4 +79,29 @@ void App::pollAndEnqueue(TcpSocket& socket, EventQueue& queue)
         std::optional<Event> event = ProtocolParser::parse(*line);
         if (event) queue.push(*event);
     }
+}
+
+bool App::_connectWithRetry(TcpSocket& socket, const std::string& host, int port)
+{
+    int delay = 1;
+    for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            socket.connect(host, port);
+            socket.send("GRAPHIC\n");
+            return true;
+        } catch (const TcpException& e) {
+            std::cerr << "[Network] " << e.what() << " (attempt " << attempt << "/" << MAX_RETRIES
+                      << ")\n";
+            if (attempt == MAX_RETRIES) break;
+            for (int s = delay; s > 0 && !g_interrupted; s--) {
+                std::cerr << "[Network] Retrying in " << s << "s...   \r";
+                std::cerr.flush();
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
+            if (g_interrupted) return false;
+            delay *= 2;
+        }
+    }
+    std::cerr << "\n[Network] Could not connect after " << MAX_RETRIES << " attempts.\n";
+    return false;
 }
