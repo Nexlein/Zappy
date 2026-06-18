@@ -146,8 +146,10 @@ if(ZAPPY_BUILD_SERVER)
         -Wall -Wextra
     )
 
-    # Run e2e tests from the project root so ./zappy_server resolves correctly.
-    gtest_discover_tests(zappy_server_e2e_tests
+    # Use add_test instead of gtest_discover_tests to avoid generating a
+    # discovery JSON file in the project root.
+    add_test(NAME zappy_server_e2e_tests
+        COMMAND zappy_server_e2e_tests
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
 endif()
