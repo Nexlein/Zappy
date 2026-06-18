@@ -33,8 +33,9 @@ namespace Gui {
     struct Sst {
         int freq;
     };
+    struct Stu {};
 
-    using Request = std::variant<Msz, Bct, Mct, Tna, Ppo, Plv, Pin, Sgt, Sst>;
+    using Request = std::variant<Msz, Bct, Mct, Tna, Ppo, Plv, Pin, Sgt, Sst, Stu>;
 }  // namespace Gui
 
 /**
