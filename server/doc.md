@@ -1,5 +1,125 @@
 # Zappy Server - Implementation Documentation
 
+## Protocol Reference
+
+### Server ↔ AI
+
+AI clients authenticate with a team name, then send commands one at a time (queue max: 10). All responses are terminated with `\n`.
+
+**Handshake**
+
+| Direction | Message | Description |
+|-----------|---------|-------------|
+| S→C | `WELCOME` | Sent immediately on connect |
+| C→S | `<team_name>` | Client sends team name to join |
+| S→C | `<slots>` | Remaining egg count for that team |
+| S→C | `<w> <h>` | Map dimensions |
+| S→C | `ko` | Team unknown or no eggs left — connection closed |
+
+**AI commands (C→S) and responses (S→C)**
+
+| Command | Response | Delay (time units) | Description |
+|---------|----------|--------------------|-------------|
+| `Forward` | `ok` | 7 | Move one tile in current direction |
+| `Right` | `ok` | 7 | Turn 90° clockwise |
+| `Left` | `ok` | 7 | Turn 90° counter-clockwise |
+| `Look` | `[tile tile ...]` | 7 | Tiles visible in front (level-dependent radius) |
+| `Inventory` | `[food N, linemate N, ...]` | 1 | Player's current resources |
+| `Broadcast <msg>` | `ok` | 7 | Send message to all players |
+| `Connect_nbr` | `<n>` | — | Remaining slots for own team (immediate) |
+| `Fork` | `ok` | 42 | Lay an egg (adds a team slot) |
+| `Eject` | `ok` / `ko` | 7 | Push all players off current tile |
+| `Take <resource>` | `ok` / `ko` | 7 | Pick up a resource from current tile |
+| `Set <resource>` | `ok` / `ko` | 7 | Drop a resource on current tile |
+| `Incantation` | `Elevation underway` / `ko` | 300 | Start elevation ritual |
+| *(unknown)* | `ko` | — | Any unrecognised command |
+
+**Incantation result (sent after delay)**
+
+| Message | Description |
+|---------|-------------|
+| `Current level: <n>` | Ritual succeeded — player is now level n |
+| `ko` | Ritual failed (conditions no longer met) |
+| `dead` | Player starved — connection will be closed |
+
+---
+
+### Server ↔ GUI
+
+GUI clients authenticate with the literal team name `GRAPHIC`. On connect the server pushes a full world snapshot, then broadcasts all state changes in real time.
+
+**Handshake**
+
+| Direction | Message | Description |
+|-----------|---------|-------------|
+| S→C | `WELCOME` | Sent immediately on connect |
+| C→S | `GRAPHIC` | GUI identification |
+| S→C | `msz <w> <h>` | Map size (first snapshot line) |
+| S→C | `bct <x> <y> <food> <lin> <der> <sib> <men> <phi> <thy>` | One per tile (w×h lines) |
+| S→C | `tna <name>` | One per team |
+| S→C | `sgt <freq>` | Current server frequency |
+| S→C | `pnw / sse / enw` | One per existing player / egg |
+
+**GUI query commands (C→S) and responses (S→C)**
+
+| Command | Response | Description |
+|---------|----------|-------------|
+| `msz` | `msz <w> <h>` | Map dimensions |
+| `bct <x> <y>` | `bct <x> <y> <resources>` | Resources on one tile |
+| `mct` | `bct ...` × (w×h) | Resources on all tiles |
+| `tna` | `tna <name>` × teams | All team names |
+| `ppo #<id>` | `ppo #<id> <x> <y> <ori>` | Player position & orientation |
+| `plv #<id>` | `plv #<id> <level>` | Player level |
+| `pin #<id>` | `pin #<id> <x> <y> <resources>` | Player inventory |
+| `sgt` | `sgt <freq>` | Current frequency |
+| `sst <freq>` | `sst <freq>` *(broadcast)* | Set frequency |
+| *(unknown)* | `suc` | Unknown command |
+| *(bad args)* | `sbp` | Bad parameters |
+
+**Real-time broadcasts (S→C, sent to all GUI clients)**
+
+| Message | Trigger |
+|---------|---------|
+| `pnw #<id> <x> <y> <ori> <lvl> <team>` | Player connects |
+| `ppo #<id> <x> <y> <ori>` | Player moves |
+| `plv #<id> <lvl>` | Player levels up |
+| `pin #<id> <x> <y> <resources>` | Player inventory changes |
+| `pex #<id>` | Player ejected |
+| `pbc #<id> <msg>` | Player broadcasts a message |
+| `pic <x> <y> <lvl> #<id> ...` | Incantation starts |
+| `pie <x> <y> <result>` | Incantation ends (1=success, 0=fail) |
+| `pfk #<id>` | Player forks (egg laid) |
+| `pdr #<id> <resource>` | Player drops resource |
+| `pgt #<id> <resource>` | Player picks up resource |
+| `pdi #<id>` | Player dies |
+| `enw #<egg> #<player> <x> <y>` | Egg laid by a player |
+| `ebo #<egg>` | Egg hatches (player connects from it) |
+| `edi #<egg>` | Egg dies (starved) |
+| `sgt <freq>` | Frequency changed |
+| `seg <team>` | Game over — team won |
+| `smg <msg>` | Server message |
+
+---
+
+### Bonus commands (extensions beyond the base protocol)
+
+These commands are not in the original specification. They were added as bonuses.
+
+**`stu` — server wall-clock uptime**
+
+| Direction | Message | Description |
+|-----------|---------|-------------|
+| C→S | `stu` | GUI requests uptime |
+| S→C | `stu <seconds>` | Integer seconds since server start |
+
+**`sse` — initial egg notification**
+
+| Direction | Message | Description |
+|-----------|---------|-------------|
+| S→C | `sse #<egg> <team> <x> <y>` | Sent during GUI snapshot for eggs that existed at server start (not player-laid). Distinguishes initial eggs from `enw` (player-laid eggs). |
+
+---
+
 ## Architecture Overview
 
 ```
