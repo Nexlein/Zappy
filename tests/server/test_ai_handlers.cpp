@@ -66,6 +66,7 @@ struct AiHandlersFixture : public ::testing::Test {
         world = new World(config.width, config.height, config.teamNames);
         notifier = new GuiNotifier(*cm);
         world->addWorldObserver(notifier);
+        world->spawnInitialEggs(config.clientsNb);
         scheduler = new Scheduler();
         dispatcher = new CommandDispatcher(*cm, *world, *notifier, config, *scheduler);
     }

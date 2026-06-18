@@ -58,6 +58,7 @@ struct HandshakeFixture : public ::testing::Test {
         listener = new Listener(port);
         cm = new ClientManager(*listener);
         world = new World(config.width, config.height, config.teamNames);
+        world->spawnInitialEggs(config.clientsNb);
         notifier = new GuiNotifier(*cm);
         world->addWorldObserver(notifier);
         handler = new HandshakeHandler(*cm, *world, *notifier, config,
@@ -243,7 +244,9 @@ TEST_F(HandshakeTest, MultipleTeamsAreIndependent)
 
 TEST_F(HandshakeTest, AiPlayerSpawnsOnEggWhenAvailable)
 {
-    // Place an egg for TeamA at a known position
+    // Drain the eggs spawned in SetUp so this test controls the pool exactly:
+    // one egg available for TeamA at a known position.
+    while (world->popEggForTeam("TeamA")) {}
     int dummyId = world->addPlayer(999, "TeamA", 3, 7, Orientation::N);
     int eggId = world->addEgg(dummyId);
     (void)eggId;

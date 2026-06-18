@@ -61,6 +61,7 @@ struct GuiHandlersFixture : public ::testing::Test {
         listener = new Listener(port);
         cm = new ClientManager(*listener);
         world = new World(config.width, config.height, config.teamNames);
+        world->spawnInitialEggs(config.clientsNb);
         notifier = new GuiNotifier(*cm);
         scheduler = new Scheduler();
         dispatcher = new CommandDispatcher(*cm, *world, *notifier, config, *scheduler);
