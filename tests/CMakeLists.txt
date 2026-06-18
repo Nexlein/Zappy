@@ -45,6 +45,7 @@ if(ZAPPY_BUILD_GUI)
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/DeathBehavior.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/ForkBehavior.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/LevelUpBehavior.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/BroadcastBehavior.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/renderer/raylib_helpers/RenderingHelper.cpp
     )
 
