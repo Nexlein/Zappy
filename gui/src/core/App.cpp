@@ -90,11 +90,12 @@ bool App::_connectWithRetry(TcpSocket& socket, const std::string& host, int port
             std::cerr << "[Network] " << e.what() << " (attempt " << attempt << "/" << MAX_RETRIES
                       << ")\n";
             if (attempt == MAX_RETRIES) break;
-            for (int s = delay; s > 0; s--) {
+            for (int s = delay; s > 0 && !g_interrupted; s--) {
                 std::cerr << "[Network] Retrying in " << s << "s...   \r";
                 std::cerr.flush();
                 std::this_thread::sleep_for(std::chrono::seconds(1));
             }
+            if (g_interrupted) return false;
             delay *= 2;
         }
     }
