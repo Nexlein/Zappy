@@ -40,3 +40,7 @@ def get_swarm_config() -> dict[str, Any]:
 
 def get_network_config() -> dict[str, Any]:
     return get_config().get("network", {})
+
+
+def get_client_config() -> dict[str, Any]:
+    return get_config().get("client", {})
