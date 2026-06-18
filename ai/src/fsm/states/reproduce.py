@@ -40,7 +40,7 @@ class Reproduce(AState):
         if self.forks_done >= repr_cfg.get("MAX_FORKS_PER_DRONE", 10):
             return "SearchStone"
         if context.inventory.food < repr_cfg.get("FORK_FOOD_THRESHOLD", 10):
-            return "SearchStone"
+            return "ForageFood"
 
         if self._fork_sent:
             if context.last_command_successful:
