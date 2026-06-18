@@ -80,11 +80,33 @@ def generate_charts(run_folder):
             G.add_edge(ppid, pid)
 
     plt.figure(figsize=(12, 8))
-    try:
-        # Try tree layout if pydot is installed or just use spring
-        pos = nx.spring_layout(G, k=0.5, iterations=50)
-    except Exception:
-        pos = nx.spring_layout(G)
+
+    def hierarchy_pos(graph):
+        pos = {}
+        roots = [n for n, d in graph.in_degree() if d == 0]
+        levels = {}
+        for r in roots:
+            lengths = nx.single_source_shortest_path_length(graph, r)
+            for n, d in lengths.items():
+                levels[n] = max(levels.get(n, 0), d)
+
+        by_level = defaultdict(list)
+        for n in graph.nodes():
+            if n not in levels:
+                levels[n] = 0
+            by_level[levels[n]].append(n)
+
+        max_depth = max(levels.values()) if levels else 0
+
+        for depth, nodes in by_level.items():
+            y = 1.0 - (depth / max(1, max_depth))
+            width = len(nodes)
+            for i, n in enumerate(nodes):
+                x = (i + 1) / (width + 1)
+                pos[n] = (x, y)
+        return pos
+
+    pos = hierarchy_pos(G)
 
     nx.draw(
         G,

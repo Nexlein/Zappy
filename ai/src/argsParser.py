@@ -26,7 +26,7 @@ def parseArgs() -> Config:
         print("-p port\t\tport number")
         print("-n name\t\tname of the team")
         print("-h machine\tname of the machine; localhost by default")
-        print("-s strategy\tAI strategy: fsm or utility; fsm by default")
+        print("-s strategy\tAI strategy: fsm, utility or uai; fsm by default")
         sys.exit(0)
 
     parser = ArgumentParser(description="Zappy AI Client", add_help=False)
@@ -52,8 +52,8 @@ def parseArgs() -> Config:
         "--strategy",
         type=str,
         default="fsm",
-        choices=["fsm", "utility"],
-        help="AI strategy: fsm or utility (default: fsm)",
+        choices=["fsm", "utility", "uai"],
+        help="AI strategy: fsm, utility or uai (default: fsm)",
     )
 
     args = parser.parse_args()
