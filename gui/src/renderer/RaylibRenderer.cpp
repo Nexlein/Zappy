@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "core/behaviors/ABehavior.hpp"
+#include "core/behaviors/BroadcastBehavior.hpp"
 #include "raylib_helpers/ColorPalette.hpp"
 #include "raylib_helpers/EntityRenderer.hpp"
 #include "raylib_helpers/GridRenderer.hpp"
@@ -136,6 +137,35 @@ void RaylibRenderer::_render3D()
 void RaylibRenderer::_drawBehaviorParticles(const VisualState& visual)
 {
     for (const auto& b : visual.behaviors) {
+        // BroadcastBehavior: draw lines between ring anchors + spheres for scatter
+        const auto* bb = dynamic_cast<const BroadcastBehavior*>(b.get());
+        if (bb) {
+            const auto& pts = bb->getParticles();
+            int ringN = BroadcastBehavior::RING_POINTS;
+            // ring lines — skip segments that cross a toroidal seam
+            float halfW = bb->getHalfW();
+            float halfH = bb->getHalfH();
+            for (int i = 0; i < ringN; i++) {
+                const Particle& a = pts[i];
+                const Particle& b2 = pts[(i + 1) % ringN];
+                if (!a.active || !b2.active) continue;
+                if (fabsf(a.pos.x - b2.pos.x) > halfW || fabsf(a.pos.z - b2.pos.z) > halfH)
+                    continue;
+                Color c = {a.color.r, a.color.g, a.color.b,
+                           static_cast<unsigned char>(a.alpha * 255)};
+                DrawLine3D(a.pos, b2.pos, c);
+            }
+            // scatter spheres
+            for (int i = ringN; i < static_cast<int>(pts.size()); i++) {
+                const Particle& p = pts[i];
+                if (!p.active) continue;
+                Color c = {p.color.r, p.color.g, p.color.b,
+                           static_cast<unsigned char>(p.alpha * 255)};
+                DrawSphere(p.pos, p.size, c);
+            }
+            continue;
+        }
+
         const auto* ab = dynamic_cast<const ABehavior*>(b.get());
         if (!ab) continue;
         for (const auto& p : ab->getParticles()) {
