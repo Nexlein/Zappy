@@ -1,7 +1,7 @@
 #include "ProtocolParser.hpp"
 
-#include <unordered_map>
 #include <iostream>
+#include <unordered_map>
 
 std::optional<Event> ProtocolParser::parse(std::string_view input)
 {
@@ -12,14 +12,16 @@ std::optional<Event> ProtocolParser::parse(std::string_view input)
     // Map command -> parser function
     using ParserFunc = std::optional<Event> (*)(const std::vector<std::string_view>&);
     static const std::unordered_map<std::string_view, ParserFunc> parsers = {
-        {"welcome", _parseWelcome}, {"WELCOME", _parseWelcome},
-        {"msz", _parseMSZ}, {"bct", _parseBCT}, {"tna", _parseTNA}, {"pnw", _parsePNW},
-        {"ppo", _parsePPO}, {"plv", _parsePLV}, {"pin", _parsePIN}, {"pex", _parsePEX},
-        {"pbc", _parsePBC}, {"pic", _parsePIC}, {"pie", _parsePIE}, {"pfk", _parsePFK},
-        {"pdr", _parsePDR}, {"pgt", _parsePGT}, {"pdi", _parsePDI}, {"enw", _parseENW},
-        {"ebo", _parseEBO}, {"edi", _parseEDI}, {"sgt", _parseSGT}, {"sst", _parseSST},
-        {"seg", _parseSEG}, {"smg", _parseSMG}, {"suc", _parseSUC}, {"sbp", _parseSBP},
-        {"stu", _parseSTU}, {"sse", _parseSSE}};
+        {"welcome", _parseWelcome}, {"WELCOME", _parseWelcome}, {"msz", _parseMSZ},
+        {"bct", _parseBCT},         {"tna", _parseTNA},         {"pnw", _parsePNW},
+        {"ppo", _parsePPO},         {"plv", _parsePLV},         {"pin", _parsePIN},
+        {"pex", _parsePEX},         {"pbc", _parsePBC},         {"pic", _parsePIC},
+        {"pie", _parsePIE},         {"pfk", _parsePFK},         {"pdr", _parsePDR},
+        {"pgt", _parsePGT},         {"pdi", _parsePDI},         {"enw", _parseENW},
+        {"ebo", _parseEBO},         {"edi", _parseEDI},         {"sgt", _parseSGT},
+        {"sst", _parseSST},         {"seg", _parseSEG},         {"smg", _parseSMG},
+        {"suc", _parseSUC},         {"sbp", _parseSBP},         {"stu", _parseSTU},
+        {"sse", _parseSSE}};
 
     auto it = parsers.find(tokens[0]);
     if (it != parsers.end()) {
@@ -68,7 +70,8 @@ std::string ProtocolParser::_joinTokens(const std::vector<std::string_view>& tok
     return result;
 }
 
-std::optional<Event> ProtocolParser::_parseWelcome([[maybe_unused]] const std::vector<std::string_view>& tokens)
+std::optional<Event> ProtocolParser::_parseWelcome(
+    [[maybe_unused]] const std::vector<std::string_view>& tokens)
 {
     // Server send "WELCOME", we do nothing
     return std::nullopt;

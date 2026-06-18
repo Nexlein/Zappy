@@ -298,10 +298,8 @@ void RaylibRenderer::_drawHUD()
     int uptimeMinutes = (_state->serverUptimeSeconds % 3600) / 60;
     int uptimeSeconds = _state->serverUptimeSeconds % 60;
     std::string uptimeText = "Time ";
-    if (uptimeHours > 0)
-        uptimeText += std::to_string(uptimeHours) + "h ";
-    if (uptimeMinutes > 0 || uptimeHours > 0)
-        uptimeText += std::to_string(uptimeMinutes) + "m ";
+    if (uptimeHours > 0) uptimeText += std::to_string(uptimeHours) + "h ";
+    if (uptimeMinutes > 0 || uptimeHours > 0) uptimeText += std::to_string(uptimeMinutes) + "m ";
     uptimeText += std::to_string(uptimeSeconds) + "s";
 
     std::unordered_map<std::string, int> teamPlayerCounts;
