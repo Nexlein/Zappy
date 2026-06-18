@@ -14,9 +14,9 @@ void DeathBehavior::_spawnParticles()
 {
     _particles.clear();
     for (int i = 0; i < PARTICLE_COUNT; i++) {
-        float theta = (static_cast<float>(rand()) / RAND_MAX) * 2.0f * PI;
-        float phi = (static_cast<float>(rand()) / RAND_MAX) * PI;
-        float speed = 0.8f + (static_cast<float>(rand()) / RAND_MAX) * 1.2f;
+        float theta = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 2.0f * PI;
+        float phi = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * PI;
+        float speed = 0.8f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 1.2f;
 
         Particle p;
         p.pos = _visual.pos;
@@ -24,7 +24,7 @@ void DeathBehavior::_spawnParticles()
         p.vel.y = speed * std::cos(phi) * 0.6f + 0.4f;  // bias upward
         p.vel.z = speed * std::sin(phi) * std::sin(theta);
         p.color = WHITE;
-        p.size = 0.04f + (static_cast<float>(rand()) / RAND_MAX) * 0.06f;
+        p.size = 0.04f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 0.06f;
         p.alpha = 1.0f;
         p.delay = 0.0f;
         p.active = true;

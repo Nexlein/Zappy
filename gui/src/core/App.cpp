@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "network/ProtocolParser.hpp"
+#include "network/TcpSocket.hpp"
 #include "renderer/HeadlessRenderer.hpp"
 #include "renderer/IRenderer.hpp"
 #include "renderer/RaylibRenderer.hpp"
@@ -32,16 +33,21 @@ void App::run()
     }
 
     renderer->init();
-    while (!renderer->shouldClose()) {
-        pollAndEnqueue(socket, eventQueue);
+    try {
+        while (!renderer->shouldClose()) {
+            socket.send("mct\n");
+            pollAndEnqueue(socket, eventQueue);
 
-        while (auto event = eventQueue.pop()) {
-            state.applyEvent(*event);
+            while (auto event = eventQueue.pop()) {
+                state.applyEvent(*event);
+            }
+
+            renderer->setState(state);
+            renderer->handleInput();
+            renderer->render();
         }
-
-        renderer->setState(state);
-        renderer->handleInput();
-        renderer->render();
+    } catch (const TcpException& e) {
+        std::cerr << "[Network] " << e.what() << "\n";
     }
 
     renderer->shutdown();

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <string>
 
 #include "core/Args.hpp"
@@ -7,10 +8,12 @@
 #include "game/GuiNotifier.hpp"
 #include "network/ClientManager.hpp"
 
+using PromotedCallback = std::function<void(int connectionId, int playerId)>;
+
 class HandshakeHandler {
     public:
     HandshakeHandler(ClientManager& clients, World& world, GuiNotifier& notifier,
-                     const ServerConfig& config);
+                     const ServerConfig& config, PromotedCallback onPromoted);
 
     void onNewConnection(int connectionId);
     void onLine(int connectionId, const std::string& line);
@@ -24,4 +27,5 @@ class HandshakeHandler {
     World& _world;
     GuiNotifier& _notifier;
     const ServerConfig& _config;
+    PromotedCallback _onPromoted;
 };

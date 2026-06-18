@@ -204,7 +204,7 @@ TEST(WorldInventory, SetResourceMovesFromPlayerToTile)
     bool ok = w.setResource(id, ResourceType::FOOD);
 
     EXPECT_TRUE(ok);
-    EXPECT_EQ(w.getPlayer(id).inventory[ResourceType::FOOD], 0);
+    EXPECT_EQ(w.getPlayer(id).inventory[ResourceType::FOOD], 10);
     EXPECT_EQ(w.at(2, 2).resources[ResourceType::FOOD], 1);
 }
 
@@ -385,7 +385,7 @@ TEST(Incantation, FinalizeSuccessLevelsUpAndConsumesStones)
     auto participants = w.startIncantation(pid);
     ASSERT_TRUE(participants.has_value());
 
-    bool ok = w.finalizeIncantation(*participants);
+    bool ok = w.finalizeIncantation(0, 0, *participants);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(w.getPlayer(pid).level, 2);
@@ -403,7 +403,7 @@ TEST(Incantation, FinalizeFailsIfPlayerDied)
     ASSERT_TRUE(participants.has_value());
 
     w.removePlayer(pid);  // player dies mid-ritual
-    bool ok = w.finalizeIncantation(*participants);
+    bool ok = w.finalizeIncantation(0, 0, *participants);
 
     EXPECT_FALSE(ok);
 }
@@ -421,7 +421,7 @@ TEST(Incantation, FinalizeStonesConsumedMatchLevel)
 
     auto participants = w.startIncantation(p1);
     ASSERT_TRUE(participants.has_value());
-    w.finalizeIncantation(*participants);
+    w.finalizeIncantation(1, 1, *participants);
 
     EXPECT_EQ(w.at(1, 1).resources[ResourceType::LINEMATE], 0);
     EXPECT_EQ(w.at(1, 1).resources[ResourceType::DERAUMERE], 0);

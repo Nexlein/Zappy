@@ -13,6 +13,7 @@ from fsm.states.swarm import BroadcastHelp, MapsToAlly
 from context import BroadcastMessage
 from fsm.states.evolution import IncantationState
 from BroadcastProtocol import DecodedBroadcast, MessageType
+from utils.stones import get_missing_stones
 
 
 def _rally(team: str, level: int, direction: int = 1) -> BroadcastMessage:
@@ -41,7 +42,7 @@ class TestForageFood(unittest.TestCase):
     def test_update_food_high(self):
         self.context.inventory.food = 15
         res = self.state.update(self.context)
-        self.assertEqual(res, "Reproduce")
+        self.assertEqual(res, "SearchStone")
 
     def test_get_action_empty_vision(self):
         self.context.vision = []
@@ -78,13 +79,13 @@ class TestSearchStone(unittest.TestCase):
     def test_get_missing_stones_level_1_missing(self):
         self.context.level = 1
         self.context.inventory.linemate = 0
-        missing = self.state._get_missing_stones(self.context)
+        missing = get_missing_stones(self.context.level, self.context.inventory)
         self.assertEqual(missing, {"linemate": 1})
 
     def test_get_missing_stones_level_1_complete(self):
         self.context.level = 1
         self.context.inventory.linemate = 1
-        missing = self.state._get_missing_stones(self.context)
+        missing = get_missing_stones(self.context.level, self.context.inventory)
         self.assertEqual(missing, {})
 
     def test_update_low_food_trigger(self):
@@ -208,7 +209,7 @@ class TestBroadcastHelp(unittest.TestCase):
         self.state.ticks_waited = 301  # Greater than RALLY_TIMEOUT (300)
         res = self.state.update(self.context)
         self.assertIsNone(res)
-        self.assertEqual(self.state._abort_target, "SearchStone")
+        self.assertEqual(self.state._abort_target, "Reproduce")
 
     def test_update_incantation_ready(self):
         self.state.enter(self.context)

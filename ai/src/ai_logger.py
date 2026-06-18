@@ -1,105 +1,143 @@
-##
-## EPITECH PROJECT, 2026
-## Zappy
-## File description:
-## AI Logger
-##
-
 import logging
 import time
 import os
 import json
 from datetime import datetime
-
-logging.addLevelName(25, "AI_TALK")
+from utils.config_loader import get_config
 
 
 class JsonFormatter(logging.Formatter):
     def format(self, record):
         log_obj = {
             "timestamp": datetime.fromtimestamp(record.created).isoformat(),
-            "level": record.levelname,
             "pid": os.getpid(),
-            "message": record.getMessage(),
         }
-        if hasattr(record, "command"):
-            log_obj["command"] = getattr(record, "command")
-        if hasattr(record, "latency_ms"):
-            log_obj["latency_ms"] = getattr(record, "latency_ms")
-        if hasattr(record, "state"):
-            log_obj["state"] = getattr(record, "state")
-        if hasattr(record, "action"):
-            log_obj["action"] = getattr(record, "action")
-        if hasattr(record, "response"):
-            log_obj["response"] = getattr(record, "response")
-        if hasattr(record, "event"):
-            log_obj["event"] = getattr(record, "event")
+        for attr in [
+            "command",
+            "latency_ms",
+            "state",
+            "action",
+            "response",
+            "event",
+            "level",
+            "inventory",
+        ]:
+            if hasattr(record, attr):
+                log_obj[attr] = getattr(record, attr)
         return json.dumps(log_obj)
-
-
-class NoTalkFilter(logging.Filter):
-    def filter(self, record):
-        return record.levelno != 25
 
 
 class AILogger:
     def __init__(self):
         self.logger = logging.getLogger("ZappyAI")
+        self.net_logger = logging.getLogger("ZappyAINet")
         self.logger.setLevel(logging.DEBUG)
-
-        # Terminal handler (StreamHandler)
-        self.ch = logging.StreamHandler()
-        # Default to showing AI_TALK and above
-        self.ch.setLevel(25)
-
-        formatter = logging.Formatter(
-            "%(asctime)s | %(levelname)-7s | %(message)s", datefmt="%H:%M:%S"
-        )
-        self.ch.setFormatter(formatter)
-
-        if not self.logger.handlers:
-            self.logger.addHandler(self.ch)
+        self.net_logger.setLevel(logging.DEBUG)
+        self.logger.propagate = False
+        self.net_logger.propagate = False
 
         self.last_command_time = 0.0
         self.last_command = ""
+        self.last_state_log = ""
+        self.drone_id: str | None = None
 
-    def configure(self, team_name: str, verbose: bool):
-        if verbose:
-            self.ch.setLevel(logging.DEBUG)
+        self.start_time = time.time()
+        self.highest_level = 1
+        self.run_id = ""
 
-        log_dir = os.path.join(os.path.dirname(__file__), "..", "logs")
+    def configure(self, team_name: str, config_dict: dict | None = None):
+        run_id_env = os.environ.get("ZAPPY_RUN_ID")
+        if not run_id_env:
+            run_id_env = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            os.environ["ZAPPY_RUN_ID"] = run_id_env
+        self.run_id = str(run_id_env)
+
+        log_dir = os.path.join(os.path.dirname(__file__), "..", "logs", self.run_id)
+        self.log_dir = log_dir
         os.makedirs(log_dir, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        os.makedirs(os.path.join(log_dir, "metrics"), exist_ok=True)
+        os.makedirs(os.path.join(log_dir, "ai"), exist_ok=True)
+        os.makedirs(os.path.join(log_dir, "network"), exist_ok=True)
+
+        if config_dict:
+            config_path = os.path.join(log_dir, "config.json")
+            if not os.path.exists(config_path):
+                full_config = get_config().copy()
+                full_config["client"] = config_dict
+                with open(config_path, "w") as f:
+                    json.dump(full_config, f, indent=4)
+
         pid = os.getpid()
-        log_filename = f"ai_{team_name}_{timestamp}_{pid}.jsonl"
-
-        fh = logging.FileHandler(os.path.join(log_dir, log_filename), mode="w")
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(JsonFormatter())
-        fh.addFilter(NoTalkFilter())  # Filter out AI_TALK from JSON file
-
-        self.logger.addHandler(fh)
-
-    def talk(self, msg: str):
-        self.logger.log(25, msg)
-
-    def log_state(self, state: str, action: str):
-        self.logger.info(
-            f"[{state}] {action}", extra={"state": state, "action": action}
+        fh_ai = logging.FileHandler(
+            os.path.join(log_dir, "ai", f"{team_name}_{pid}.jsonl"), mode="w"
         )
+        fh_ai.setLevel(logging.DEBUG)
+        fh_ai.setFormatter(JsonFormatter())
+        self.logger.addHandler(fh_ai)
+
+        fh_net = logging.FileHandler(
+            os.path.join(log_dir, "network", f"{team_name}_{pid}.jsonl"), mode="w"
+        )
+        fh_net.setLevel(logging.DEBUG)
+        fh_net.setFormatter(JsonFormatter())
+        self.net_logger.addHandler(fh_net)
+
+    def get_log_dir(self) -> str | None:
+        return getattr(self, "log_dir", None)
+
+    def dump_metrics(self):
+        log_dir = os.path.join(
+            os.path.dirname(__file__), "..", "logs", self.run_id, "metrics"
+        )
+        os.makedirs(log_dir, exist_ok=True)
+
+        survival_time = time.time() - self.start_time
+        metrics = {
+            "pid": os.getpid(),
+            "parent_pid": os.getppid(),
+            "drone_id": self.drone_id,
+            "survival_time_sec": survival_time,
+            "highest_level": self.highest_level,
+        }
+
+        metrics_file = os.path.join(log_dir, f"metrics_{os.getpid()}.json")
+        with open(metrics_file, "w") as f:
+            json.dump(metrics, f, indent=4)
+
+    def warning(self, msg: str):
+        self.logger.warning("warning", extra={"event": f"WARNING: {msg}"})
+
+    def error(self, msg: str):
+        self.logger.error("error", extra={"event": f"ERROR: {msg}"})
+
+    def log_state(self, state: str, action: str, level: int | str, inventory):
+        inv_str = f"Food:{inventory.food} Lm:{inventory.linemate} Der:{inventory.deraumere} Sib:{inventory.sibur} Men:{inventory.mendiane} Phi:{inventory.phiras} Thy:{inventory.thystame}"
+        msg = f"Lvl:{level} | {inv_str} | State:{state} | Action:{action}"
+
+        if isinstance(level, int):
+            self.highest_level = max(self.highest_level, level)
+
+        if msg != self.last_state_log:
+            self.logger.info(
+                msg,
+                extra={
+                    "state": state,
+                    "action": action,
+                    "level": level,
+                    "inventory": inv_str,
+                },
+            )
+            self.last_state_log = msg
 
     def log_send(self, message: str):
         self.last_command_time = time.perf_counter()
         self.last_command = message
-        self.logger.info(
-            f"[NETWORK OUT] Sent: {repr(message)}", extra={"command": message}
-        )
 
     def log_receive(self, response: str):
         if self.last_command_time > 0:
             elapsed = time.perf_counter() - self.last_command_time
             ms = int(elapsed * 1000)
-            self.logger.info(
+            self.net_logger.info(
                 f"[NETWORK IN] Recv (to {repr(self.last_command)} in {ms}ms): {repr(response)}",
                 extra={
                     "command": self.last_command,
@@ -110,18 +148,9 @@ class AILogger:
             self.last_command_time = 0.0
             self.last_command = ""
         else:
-            self.logger.info(
+            self.net_logger.info(
                 f"[NETWORK IN] Recv: {repr(response)}", extra={"response": response}
             )
-
-    def log_event(self, event: str):
-        self.logger.warning(f"[EVENT] {event}", extra={"event": event})
-
-    def info(self, msg: str):
-        self.logger.info(msg)
-
-    def error(self, msg: str):
-        self.logger.error(msg)
 
 
 ai_logger = AILogger()

@@ -6,30 +6,26 @@
 ##
 
 import random
-from fsm.states.AStates import State
+from fsm.states.AState import AState
 from context import DroneContext
-from ai_logger import ai_logger
-from config import FOOD_TARGET, EXPLORE_TURN_EVERY
+from utils.config_loader import get_survival_config
 
 
 from look_parser import generate_path_to_tile
 
 
-class ForageFood(State):
+class ForageFood(AState):
     """
     Survival state — Priority 1: Keep the food buffer above the safety threshold.
     """
 
     def enter(self, context: DroneContext) -> None:
-        ai_logger.talk("[ForageFood] I am hungry! I am going to search for food.")
         self._forward_streak = 0
 
     def update(self, context: DroneContext) -> str | None:
-        if context.inventory.food >= FOOD_TARGET:
-            ai_logger.talk(
-                "[ForageFood] I have enough food now. Time to consider the team!"
-            )
-            return "Reproduce"
+        surv_cfg = get_survival_config()
+        if context.inventory.food >= surv_cfg.get("FOOD_TARGET", 15):
+            return "SearchStone"
         return None
 
     def get_action(self, context: DroneContext) -> str | None:
@@ -62,9 +58,11 @@ class ForageFood(State):
         # No food visible — explore.
         # Rotate every 5 steps to avoid getting stuck in a straight line.
         self._forward_streak += 1
-        if self._forward_streak % EXPLORE_TURN_EVERY == 0:
+        surv_cfg = get_survival_config()
+        explore_turn_every = surv_cfg.get("EXPLORE_TURN_EVERY", 5)
+        if self._forward_streak % explore_turn_every == 0:
             return random.choice(["Right", "Left"])
         return "Forward"
 
     def exit(self, context: DroneContext) -> None:
-        ai_logger.talk("[ForageFood] I am full. Stopping forage.")
+        pass

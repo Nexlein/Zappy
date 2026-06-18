@@ -2,6 +2,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "ARenderer.hpp"
 #include "raylib.h"
@@ -23,10 +24,11 @@ class RaylibRenderer : public ARenderer {
     void shutdown() override;
 
     private:
+    static constexpr std::string_view PLAYER_MODEL_PATH = "gui/assets/rimuru.glb";
+    static constexpr std::string_view EGG_MODEL_PATH = "gui/assets/egg.glb";
+
     static constexpr float CAMERA_MOVE_SPEED = 2.0f;
-    static constexpr float PLAYER_CUBE_SIZE = 0.8f;
     static constexpr float PLAYER_MODEL_SIZE = 0.4f;
-    static constexpr float EGG_CUBE_SIZE = 0.4f;
     static constexpr float EGG_MODEL_SIZE = 0.3f;
     static constexpr float RESOURCE_SPHERE_BASE_SIZE = 0.1f;
     static constexpr float TILE_SIZE = 1.0f;
@@ -69,4 +71,8 @@ class RaylibRenderer : public ARenderer {
 
     void _addResourceLines(TooltipRenderer::Builder& builder, const Resources& res,
                            const std::string& indent, Color color);
+
+    std::vector<std::vector<const Player*>> _groupPlayersByVisualProximity() const;
+
+    void _drawSelectionArrow(Vector3 basePos, float modelTopY) const;
 };

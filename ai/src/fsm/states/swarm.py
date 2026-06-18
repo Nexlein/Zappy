@@ -5,61 +5,20 @@
 ## The Swarm Layer (Contextual Priority)
 ##
 
-from fsm.states.AStates import State
+from fsm.states.AState import AState
 from context import DroneContext
-from elevations import (
-    is_incantation_ready,
-    ELEVATION_REQUIREMENTS,
-    PLAYERS_REQUIRED,
-    BROADCAST_DIRECTION_ARRIVED,
-    BROADCAST_DIRECTION_FORWARD,
-    BROADCAST_DIRECTION_RIGHT,
-    BROADCAST_DIRECTION_LEFT,
-)
-from config import (
-    SURVIVAL_THRESHOLD,
-    RALLY_TIMEOUT,
-    BCAST_INTERVAL,
-    SOLO_INCANTATION_LEVEL,
+from utils.stones import is_incantation_ready, next_stone_to_drop, next_stone_to_take
+from utils.navigation import get_action_for_broadcast, BROADCAST_DIRECTION_ARRIVED
+from utils.config_loader import (
+    get_survival_config,
+    get_swarm_config,
+    get_evolution_config,
 )
 from BroadcastProtocol import BroadcastProtocol, MessageType
-from ai_logger import ai_logger
-
-
-# --- Helpers ---
-def _next_stone_to_drop(context: DroneContext) -> str | None:
-    """
-    Return the name of the first stone the drone should place on its current
-    tile to meet the elevation requirements, or None if nothing more is needed
-    or if vision is unavailable.
-    """
-    if not context.vision:  # guard: vision may be empty
-        return None
-    tile = context.vision[0]
-    for stone, required in ELEVATION_REQUIREMENTS.get(context.level, {}).items():
-        if (
-            getattr(tile, stone, 0) < required
-            and getattr(context.inventory, stone, 0) > 0
-        ):
-            return stone
-    return None
-
-
-def _next_stone_to_take(context: DroneContext) -> str | None:
-    """Return the name of the first excess stone to remove from the tile."""
-    if not context.vision:
-        return None
-    tile = context.vision[0]
-    reqs = ELEVATION_REQUIREMENTS.get(context.level, {})
-    all_stones = ["linemate", "deraumere", "sibur", "mendiane", "phiras", "thystame"]
-    for stone in all_stones:
-        if getattr(tile, stone, 0) > reqs.get(stone, 0):
-            return stone
-    return None
 
 
 # BroadcastHelp: Yell across the map and wait for allies to arrive.
-class BroadcastHelp(State):
+class BroadcastHelp(AState):
     """
     Swarm state — Contextual Priority:
       1. Drop required stones on the current tile.
@@ -69,13 +28,13 @@ class BroadcastHelp(State):
 
     def enter(self, context: DroneContext) -> None:
         self.ticks_waited = 0
-        self.tick_since_bcast = BCAST_INTERVAL  # broadcast on the first tick
+        swarm_cfg = get_swarm_config()
+        self.tick_since_bcast = swarm_cfg.get(
+            "BCAST_INTERVAL", 2
+        )  # broadcast on the first tick
         self.ready_count = 0
         self._abort_target = None
         self._abort_emitted = False
-        ai_logger.talk(
-            "[BroadcastHelp] Help! I need my teammates to gather here! RALLY!"
-        )
 
     def update(self, context: DroneContext) -> str | None:
         """
@@ -96,47 +55,35 @@ class BroadcastHelp(State):
                 and bcst.direction in BROADCAST_DIRECTION_ARRIVED
             ):
                 self.ready_count += 1
-                ai_logger.talk(
-                    f"[BroadcastHelp] A teammate is ready! "
-                    f"({self.ready_count + 1}/{PLAYERS_REQUIRED[context.level]})"
-                )
             elif bcst.content.msg_type == MessageType.LEAVING and self.ready_count > 0:
                 self.ready_count -= 1
-                ai_logger.talk(
-                    f"[BroadcastHelp] A teammate left... "
-                    f"({self.ready_count + 1}/{PLAYERS_REQUIRED[context.level]})"
-                )
 
+        evo_cfg = get_evolution_config()
         if context.vision:
             tile = context.vision[0]
-            if self.ready_count + 1 >= PLAYERS_REQUIRED[
-                context.level
-            ] and is_incantation_ready(context.level, tile):
+            players_req = evo_cfg.get("PLAYERS_REQUIRED", {}).get(str(context.level), 0)
+            if self.ready_count + 1 >= players_req and is_incantation_ready(
+                context.level, tile
+            ):
                 return "Incantation"
 
         # Yield to another drone with a higher ID if they are calling for the same level
-        if context.level > SOLO_INCANTATION_LEVEL:
+        if context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
             for bcst in context.broadcasts:
                 if (
                     bcst.content.msg_type == MessageType.RALLY
                     and bcst.content.level == context.level
                     and bcst.content.drone_id > context.drone_id
                 ):
-                    ai_logger.talk(
-                        f"[BroadcastHelp] Yielding to leader {bcst.content.drone_id[:4]}... transitioning to MapsToAlly."
-                    )
                     self._abort_target = "MapsToAlly"
                     return None
-        if context.inventory.food < SURVIVAL_THRESHOLD:
-            ai_logger.talk(
-                "[BroadcastHelp] Waiting is making me hungry! I'm going to look for food."
-            )
+
+        surv_cfg = get_survival_config()
+        swarm_cfg = get_swarm_config()
+        if context.inventory.food < surv_cfg.get("SURVIVAL_THRESHOLD", 5):
             self._abort_target = "ForageFood"
-        elif self.ticks_waited > RALLY_TIMEOUT:
-            ai_logger.talk(
-                "[BroadcastHelp] Nobody is coming... I will go back to looking for stones."
-            )
-            self._abort_target = "SearchStone"
+        elif self.ticks_waited > swarm_cfg.get("RALLY_TIMEOUT", 100):
+            self._abort_target = "Reproduce"
 
         return None
 
@@ -151,18 +98,23 @@ class BroadcastHelp(State):
         if not context.vision:
             return "Look"
 
-        if self.ready_count + 1 >= PLAYERS_REQUIRED[context.level]:
-            stone_to_take = _next_stone_to_take(context)
+        evo_cfg = get_evolution_config()
+        players_req = evo_cfg.get("PLAYERS_REQUIRED", {}).get(str(context.level), 0)
+        if self.ready_count + 1 >= players_req:
+            stone_to_take = next_stone_to_take(context.level, context.vision[0])
             if stone_to_take:
                 return f"Take {stone_to_take}"
 
-            stone = _next_stone_to_drop(context)
+            stone = next_stone_to_drop(
+                context.level, context.inventory, context.vision[0]
+            )
             if stone:
                 return f"Set {stone}"
 
         # Periodically re-broadcast the RALLY signal (only if higher than solo).
-        if context.level > SOLO_INCANTATION_LEVEL:
-            if self.tick_since_bcast >= BCAST_INTERVAL:
+        if context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
+            swarm_cfg = get_swarm_config()
+            if self.tick_since_bcast >= swarm_cfg.get("BCAST_INTERVAL", 2):
                 self.tick_since_bcast = 0
                 payload = BroadcastProtocol.encode(
                     context.team_name,
@@ -173,20 +125,14 @@ class BroadcastHelp(State):
                 return f"Broadcast {payload}"
 
         self.tick_since_bcast += 1
-
-        if (
-            self.ready_count + 1 >= PLAYERS_REQUIRED[context.level]
-            or self.tick_since_bcast % 3 == 0
-        ):
-            return "Look"
-        return None
+        return "Look"
 
     def exit(self, context: DroneContext) -> None:
-        ai_logger.talk("[BroadcastHelp] Stopping my broadcast.")
+        pass
 
 
 # MapsToAlly: Navigate toward a teammate's broadcast signal.
-class MapsToAlly(State):
+class MapsToAlly(AState):
     """
     Swarm state — Contextual Priority:
       Navigate toward the ally broadcasting RALLY by reading the direction K
@@ -194,7 +140,6 @@ class MapsToAlly(State):
     """
 
     def enter(self, context: DroneContext) -> None:
-        ai_logger.talk("[MapsToAlly] I hear someone! I'm on my way to help!")
         self._entry_level = context.level
         self.ticks_waited = 0
         self.arrived = False
@@ -222,49 +167,43 @@ class MapsToAlly(State):
 
         self.ticks_waited += 1
 
-        if context.inventory.food < SURVIVAL_THRESHOLD:
-            ai_logger.talk("[MapsToAlly] I'm too hungry to keep walking... Food first!")
+        surv_cfg = get_survival_config()
+        if context.inventory.food < surv_cfg.get("SURVIVAL_THRESHOLD", 5):
             return self._leave("ForageFood")
 
         # Leveled up thanks to the elevations
         if context.level > self._entry_level:
-            ai_logger.talk("[MapsToAlly] I leveled up! This rally is over for me.")
             return "SearchStone"
 
         for bcst in context.broadcasts:
             if bcst.content.level != self._entry_level:
                 continue
             if bcst.content.msg_type == MessageType.ABORT:
-                ai_logger.talk(
-                    "[MapsToAlly] The rally was called off. Back to my own business."
-                )
                 return "SearchStone"
             if bcst.content.msg_type == MessageType.INCANT:
                 if bcst.direction in BROADCAST_DIRECTION_ARRIVED:
-                    ai_logger.talk(
-                        "[MapsToAlly] The ritual is starting here! Holding still."
-                    )
                     self.arrived = True
                     self.waiting_incant = True
                 else:
-                    ai_logger.talk(
-                        "[MapsToAlly] The ritual started without me... too late."
-                    )
                     return "SearchStone"
 
         # Also switch to the highest known leader in update so we don't ignore ABORTs from them.
+        heard_leader = False
         for bcst in context.broadcasts:
             if (
                 bcst.content.msg_type == MessageType.RALLY
                 and bcst.content.level == self._entry_level
-                and bcst.content.drone_id > self._target_leader_id
             ):
-                self._target_leader_id = bcst.content.drone_id
+                if bcst.content.drone_id > self._target_leader_id:
+                    self._target_leader_id = bcst.content.drone_id
+                if bcst.content.drone_id == self._target_leader_id:
+                    heard_leader = True
 
-        if self.ticks_waited > RALLY_TIMEOUT:
-            ai_logger.talk(
-                "[MapsToAlly] I lost the signal... back to searching myself."
-            )
+        if heard_leader:
+            self.ticks_waited = 0
+
+        swarm_cfg = get_swarm_config()
+        if self.ticks_waited > swarm_cfg.get("RALLY_TIMEOUT", 100):
             return self._leave("SearchStone")
 
         return None
@@ -306,14 +245,11 @@ class MapsToAlly(State):
                 self.ready_sent = False
 
             if not self.arrived:
-                if best_direction in BROADCAST_DIRECTION_ARRIVED:
+                action = get_action_for_broadcast(best_direction)
+                if action is None:
                     self.arrived = True
-                elif best_direction in BROADCAST_DIRECTION_FORWARD:
-                    return "Forward"
-                elif best_direction in BROADCAST_DIRECTION_RIGHT:
-                    return "Right"
-                elif best_direction in BROADCAST_DIRECTION_LEFT:
-                    return "Left"
+                else:
+                    return action
 
         # -- Already on the rally tile (or just arrived): wait for the leader. --
         if self.arrived:
@@ -326,10 +262,10 @@ class MapsToAlly(State):
                     context.drone_id,
                 )
                 return f"Broadcast {payload}"
-            return None  # Wait for INCANT
+            return "Look"  # Wait for INCANT
 
         # No RALLY heard this tick and not arrived — stay put and wait for the next broadcast.
-        return None
+        return "Look"
 
     def exit(self, context: DroneContext) -> None:
-        ai_logger.talk("[MapsToAlly] I am leaving the group-up journey.")
+        pass

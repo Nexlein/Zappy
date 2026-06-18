@@ -1,6 +1,7 @@
 #include "World.hpp"
 
 #include <algorithm>
+#include <set>
 
 World::World(int width, int height, const std::vector<std::string>& teamNames)
     : _width(width), _height(height), _teamNames(teamNames)
@@ -12,6 +13,7 @@ Tile& World::at(int x, int y)
 {
     int nx = ((x % _width) + _width) % _width;
     int ny = ((y % _height) + _height) % _height;
+
     return _tiles[ny * _width + nx];
 }
 
@@ -19,11 +21,14 @@ const Tile& World::at(int x, int y) const
 {
     int nx = ((x % _width) + _width) % _width;
     int ny = ((y % _height) + _height) % _height;
+
     return _tiles[ny * _width + nx];
 }
 
-void World::spawnResources()
+std::vector<std::pair<int, int>> World::spawnResources()
 {
+    std::set<int> changedIndices;
+
     for (int i = 0; i < Resources::TYPE_COUNT; i++) {
         auto type = static_cast<ResourceType>(i);
 
@@ -34,8 +39,20 @@ void World::spawnResources()
 
         int deficit = target - current;
         std::uniform_int_distribution<int> dist(0, (int)_tiles.size() - 1);
-        for (int j = 0; j < deficit; j++) _tiles[dist(_rng)].resources[type]++;
+        for (int j = 0; j < deficit; j++) {
+            int idx = dist(_rng);
+            _tiles[idx].resources[type]++;
+            changedIndices.insert(idx);
+        }
     }
+
+    std::vector<std::pair<int, int>> changed;
+
+    changed.reserve(changedIndices.size());
+    for (int idx : changedIndices) changed.emplace_back(idx % _width, idx / _width);
+    for (auto* observer : _observers)
+        for (auto [x, y] : changed) observer->onTileChanged(x, y, at(x, y).resources);
+    return changed;
 }
 
 int World::addPlayer(int connectionId, const std::string& teamName, int x, int y,
@@ -43,14 +60,18 @@ int World::addPlayer(int connectionId, const std::string& teamName, int x, int y
 {
     int id = _nextPlayerId++;
     Player p;
+
     p.id = id;
     p.connectionId = connectionId;
     p.teamName = teamName;
     p.x = x;
     p.y = y;
     p.orientation = orientation;
+    p.inventory.food = 10;
     _players[id] = p;
     at(x, y).playerIds.push_back(id);
+    for (auto* observer : _observers)
+        observer->onPlayerAdded(id, x, y, orientation, p.level, teamName);
     return id;
 }
 
@@ -58,38 +79,49 @@ void World::removePlayer(int id)
 {
     auto it = _players.find(id);
     if (it == _players.end()) return;
+
     auto& p = it->second;
     auto& ids = at(p.x, p.y).playerIds;
+
     ids.erase(std::remove(ids.begin(), ids.end(), id), ids.end());
     _players.erase(it);
+    for (auto* observer : _observers) observer->onPlayerRemoved(id);
 }
 
 void World::movePlayer(int id, int x, int y)
 {
     auto& p = _players.at(id);
     auto& oldIds = at(p.x, p.y).playerIds;
+
     oldIds.erase(std::remove(oldIds.begin(), oldIds.end(), id), oldIds.end());
     p.x = ((x % _width) + _width) % _width;
     p.y = ((y % _height) + _height) % _height;
     at(p.x, p.y).playerIds.push_back(id);
+    for (auto* observer : _observers) observer->onPlayerMoved(id, p.x, p.y, p.orientation);
 }
 
 bool World::takeResource(int playerId, ResourceType type)
 {
     auto& p = _players.at(playerId);
     auto& tile = at(p.x, p.y);
+
     if (tile.resources[type] <= 0) return false;
     tile.resources[type]--;
     p.inventory[type]++;
+    for (auto* observer : _observers)
+        observer->onResourceTaken(playerId, type, p.x, p.y, tile.resources);
     return true;
 }
 
 bool World::setResource(int playerId, ResourceType type)
 {
     auto& p = _players.at(playerId);
+
     if (p.inventory[type] <= 0) return false;
     p.inventory[type]--;
     at(p.x, p.y).resources[type]++;
+    for (auto* observer : _observers)
+        observer->onResourceDropped(playerId, type, p.x, p.y, at(p.x, p.y).resources);
     return true;
 }
 
@@ -126,6 +158,9 @@ EjectResult World::ejectPlayers(int ejectorId)
     for (int eid : tile.eggIds) _eggs.erase(eid);
     tile.eggIds.clear();
 
+    for (int pid : toEject) {
+        for (auto* observer : _observers) observer->onPlayerEjected(pid);
+    }
     return {toEject, dx, dy};
 }
 
@@ -133,9 +168,11 @@ int World::addEgg(int playerId)
 {
     auto& p = _players.at(playerId);
     int eid = _nextEggId++;
+
     Egg egg{eid, p.id, p.x, p.y, p.teamName};
     _eggs[eid] = egg;
     at(p.x, p.y).eggIds.push_back(eid);
+    for (auto* observer : _observers) observer->onEggLaid(eid, p.id, p.x, p.y);
     return eid;
 }
 
@@ -143,10 +180,13 @@ bool World::hatchEgg(int eggId)
 {
     auto it = _eggs.find(eggId);
     if (it == _eggs.end()) return false;
+
     auto& egg = it->second;
     auto& ids = at(egg.x, egg.y).eggIds;
+
     ids.erase(std::remove(ids.begin(), ids.end(), eggId), ids.end());
     _eggs.erase(it);
+    for (auto* observer : _observers) observer->onEggHatched(eggId);
     return true;
 }
 
@@ -158,6 +198,7 @@ std::optional<Egg> World::popEggForTeam(const std::string& teamName)
             auto& ids = at(egg.x, egg.y).eggIds;
             ids.erase(std::remove(ids.begin(), ids.end(), egg.id), ids.end());
             _eggs.erase(it);
+            for (auto* observer : _observers) observer->onEggHatched(egg.id);
             return egg;
         }
     }
@@ -230,10 +271,13 @@ std::optional<std::vector<int>> World::startIncantation(int playerId)
 
     for (int pid : participants) _players.at(pid).isIncanting = true;
 
+    for (auto* observer : _observers)
+        observer->onIncantationStart(initiator.x, initiator.y, initiator.level, participants);
+
     return participants;
 }
 
-bool World::finalizeIncantation(const std::vector<int>& participantIds)
+bool World::finalizeIncantation(int x, int y, const std::vector<int>& participantIds)
 {
     if (participantIds.empty()) return false;
 
@@ -243,6 +287,7 @@ bool World::finalizeIncantation(const std::vector<int>& participantIds)
             auto p = _players.find(pid);
             if (p != _players.end()) p->second.isIncanting = false;
         }
+        for (auto* obs : _observers) obs->onIncantationEnd(x, y, false);
         return false;
     }
 
@@ -254,6 +299,7 @@ bool World::finalizeIncantation(const std::vector<int>& participantIds)
             auto p = _players.find(pid);
             if (p != _players.end()) p->second.isIncanting = false;
         }
+        for (auto* obs : _observers) obs->onIncantationEnd(x, y, false);
         return false;
     }
 
@@ -265,11 +311,26 @@ bool World::finalizeIncantation(const std::vector<int>& participantIds)
     tile.resources[ResourceType::PHIRAS] -= req.phiras;
     tile.resources[ResourceType::THYSTAME] -= req.thystame;
 
+    int newLevel = level + 1;
     for (int pid : participantIds) {
         auto p = _players.find(pid);
         if (p != _players.end()) {
-            p->second.level += 1;
+            p->second.level = newLevel;
             p->second.isIncanting = false;
+        }
+    }
+
+    for (auto* obs : _observers) obs->onIncantationEnd(x, y, true);
+    for (int pid : participantIds) {
+        if (_players.count(pid))
+            for (auto* obs : _observers) obs->onPlayerLevelUp(pid, newLevel);
+    }
+
+    if (!_gameEnded) {
+        auto winner = checkWin();
+        if (winner) {
+            _gameEnded = true;
+            for (auto* obs : _observers) obs->onGameEnd(*winner);
         }
     }
 
@@ -300,3 +361,5 @@ std::optional<std::string> World::checkWin() const
 
     return std::nullopt;
 }
+
+void World::addWorldObserver(IWorldObserver* observer) { _observers.push_back(observer); }
