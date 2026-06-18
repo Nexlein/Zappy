@@ -1,13 +1,7 @@
 import random
-from elevations import (
-    ELEVATION_REQUIREMENTS,
-    PLAYERS_REQUIRED,
-    BROADCAST_DIRECTION_ARRIVED,
-    BROADCAST_DIRECTION_FORWARD,
-    BROADCAST_DIRECTION_RIGHT,
-    BROADCAST_DIRECTION_LEFT,
-)
-from config import BCAST_INTERVAL, SOLO_INCANTATION_LEVEL
+from utils.stones import next_stone_to_drop, next_stone_to_take, get_missing_stones
+from utils.navigation import get_action_for_broadcast
+from utils.config_loader import get_evolution_config, get_swarm_config
 from BroadcastProtocol import BroadcastProtocol, MessageType
 from look_parser import generate_path_to_tile
 
@@ -29,6 +23,7 @@ class ActionGenerators:
         tick_since_bcast: int
         arrived: bool
         ready_sent: bool
+        ready_count: int
         highest_rally_direction: int | None
         forks_done: int
         reproduce_connect_sent: bool
@@ -36,45 +31,6 @@ class ActionGenerators:
 
         def tick(self) -> str | None: ...
         def _reset_reproduce_state(self) -> None: ...
-
-    def _get_missing_stones(self) -> dict[str, int]:
-        requirements = ELEVATION_REQUIREMENTS.get(self.context.level, {})
-        return {
-            stone: required - getattr(self.context.inventory, stone, 0)
-            for stone, required in requirements.items()
-            if getattr(self.context.inventory, stone, 0) < required
-        }
-
-    def _next_stone_to_drop(self) -> str | None:
-        if not self.context.vision:
-            return None
-        tile = self.context.vision[0]
-        requirements = ELEVATION_REQUIREMENTS.get(self.context.level, {})
-        for stone, required in requirements.items():
-            if (
-                getattr(tile, stone, 0) < required
-                and getattr(self.context.inventory, stone, 0) > 0
-            ):
-                return stone
-        return None
-
-    def _next_stone_to_take(self) -> str | None:
-        if not self.context.vision:
-            return None
-        tile = self.context.vision[0]
-        reqs = ELEVATION_REQUIREMENTS.get(self.context.level, {})
-        all_stones = [
-            "linemate",
-            "deraumere",
-            "sibur",
-            "mendiane",
-            "phiras",
-            "thystame",
-        ]
-        for stone in all_stones:
-            if getattr(tile, stone, 0) > reqs.get(stone, 0):
-                return stone
-        return None
 
     def _get_survival_action(self) -> str:
         if self.context.path_queue:
@@ -107,7 +63,7 @@ class ActionGenerators:
             return self.context.path_queue.pop(0)
         if not self.context.vision:
             return "Look"
-        missing = self._get_missing_stones()
+        missing = get_missing_stones(self.context.level, self.context.inventory)
         current_tile = self.context.vision[0]
         for stone in missing:
             if getattr(current_tile, stone, 0) > 0:
@@ -157,7 +113,10 @@ class ActionGenerators:
             self.leader_aborted = True
             return self.tick()  # trigger abort
 
-        if not self.incant_bcast_sent and self.context.level > SOLO_INCANTATION_LEVEL:
+        evo_cfg = get_evolution_config()
+        if not self.incant_bcast_sent and self.context.level > evo_cfg.get(
+            "SOLO_INCANTATION_LEVEL", 1
+        ):
             self.incant_bcast_sent = True
             payload = BroadcastProtocol.encode(
                 self.context.team_name,
@@ -176,17 +135,26 @@ class ActionGenerators:
         if not self.context.vision:
             return "Look"
 
-        if self.ready_count + 1 >= PLAYERS_REQUIRED.get(self.context.level, 0):
-            stone_to_take = self._next_stone_to_take()
+        evo_cfg = get_evolution_config()
+        players_req = evo_cfg.get("PLAYERS_REQUIRED", {}).get(
+            str(self.context.level), 0
+        )
+        if self.ready_count + 1 >= players_req:
+            stone_to_take = next_stone_to_take(
+                self.context.level, self.context.vision[0]
+            )
             if stone_to_take:
                 return f"Take {stone_to_take}"
 
-            stone = self._next_stone_to_drop()
+            stone = next_stone_to_drop(
+                self.context.level, self.context.inventory, self.context.vision[0]
+            )
             if stone:
                 return f"Set {stone}"
 
-        if self.context.level > SOLO_INCANTATION_LEVEL:
-            if self.tick_since_bcast >= BCAST_INTERVAL:
+        if self.context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
+            swarm_cfg = get_swarm_config()
+            if self.tick_since_bcast >= swarm_cfg.get("BCAST_INTERVAL", 2):
                 self.tick_since_bcast = 0
                 payload = BroadcastProtocol.encode(
                     self.context.team_name,
@@ -198,10 +166,7 @@ class ActionGenerators:
 
         self.tick_since_bcast += 1
 
-        if (
-            self.ready_count + 1 >= PLAYERS_REQUIRED.get(self.context.level, 0)
-            or self.tick_since_bcast % 3 == 0
-        ):
+        if self.ready_count + 1 >= players_req or self.tick_since_bcast % 3 == 0:
             return "Look"
         return None
 
@@ -215,14 +180,11 @@ class ActionGenerators:
                 self.ready_sent = False
 
             if not self.arrived:
-                if direction in BROADCAST_DIRECTION_ARRIVED:
+                action = get_action_for_broadcast(direction)
+                if action is None:
                     self.arrived = True
-                elif direction in BROADCAST_DIRECTION_FORWARD:
-                    return "Forward"
-                elif direction in BROADCAST_DIRECTION_RIGHT:
-                    return "Right"
-                elif direction in BROADCAST_DIRECTION_LEFT:
-                    return "Left"
+                else:
+                    return action
 
         if self.arrived:
             if not self.ready_sent:

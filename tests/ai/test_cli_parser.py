@@ -42,18 +42,31 @@ class TestParseArgs(unittest.TestCase):
                 ),
             )
 
+    @patch(
+        "argsParser.get_client_config",
+        return_value={"port": 8080, "teamName": "JsonTeam"},
+    )
+    def test_zero_args_uses_defaults(self, mock_defaults):
+        with patch("sys.argv", ["zappy_ai"]):
+            config = parseArgs()
+            self.assertEqual(config.port, 8080)
+            self.assertEqual(config.teamName, "JsonTeam")
+            self.assertEqual(config.host, "localhost")
+
     def test_default_host_and_strategy(self):
         with patch("sys.argv", ["zappy_ai", "-p", "4242", "-n", "team1"]):
             config = parseArgs()
             self.assertEqual(config.host, "localhost")
             self.assertEqual(config.strategy, "fsm")
 
-    def test_missing_port(self):
+    @patch("argsParser.get_client_config", return_value={})
+    def test_missing_port(self, mock_defaults):
         with patch("sys.argv", ["zappy_ai", "-n", "team1"]):
             with self.assertRaises(SystemExit):
                 parseArgs()
 
-    def test_missing_name(self):
+    @patch("argsParser.get_client_config", return_value={})
+    def test_missing_name(self, mock_defaults):
         with patch("sys.argv", ["zappy_ai", "-p", "4242"]):
             with self.assertRaises(SystemExit):
                 parseArgs()
