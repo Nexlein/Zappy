@@ -103,7 +103,7 @@ class Orchestrator:
                 response = self._net.next_response()
                 if response is not None:
                     self._handle_response(self._pending_command, response)
-        except DroneDied:
+        except (DroneDied, ConnectionError):
             pass
 
     def _handle_event(self, event: str):
