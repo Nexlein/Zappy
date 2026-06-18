@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstdlib>
+#include <vector>
 
 static constexpr float RING_Y = 0.05f;
 static constexpr float JITTER_RANGE = 0.08f;
@@ -13,16 +14,8 @@ BroadcastBehavior::BroadcastBehavior(VisualState& visual, float server_tick_rate
     : _visual(visual), _duration(7.0f / server_tick_rate), _maxRadius(maxRadius),
       _halfW(mapWidth / 2.0f), _halfH(mapHeight / 2.0f)
 {
-    _particles.resize(RING_POINTS + SCATTER_COUNT);
-
-    // ring anchor particles
-    for (int i = 0; i < RING_POINTS; i++) {
-        _particles[i].size = 0.05f;
-        _particles[i].active = true;
-        _particles[i].delay = 0.0f;
-        _particles[i].color = {30, 100, 255, 255};
-        _particles[i].alpha = 1.0f;
-    }
+    _lines.resize(RING_POINTS);
+    _particles.resize(SCATTER_COUNT);
 
     // scatter seeds — randomized once at spawn
     _seeds.resize(SCATTER_COUNT);
@@ -40,11 +33,11 @@ BroadcastBehavior::BroadcastBehavior(VisualState& visual, float server_tick_rate
 
     // scatter particles
     for (int i = 0; i < SCATTER_COUNT; i++) {
-        _particles[RING_POINTS + i].size = (0.04f + frand() * 0.06f) * 0.8f;
-        _particles[RING_POINTS + i].active = true;
-        _particles[RING_POINTS + i].delay = 0.0f;
-        _particles[RING_POINTS + i].color = _seeds[i].color;
-        _particles[RING_POINTS + i].alpha = 1.0f;
+        _particles[i].size = (0.04f + frand() * 0.06f) * 0.8f;
+        _particles[i].active = true;
+        _particles[i].delay = 0.0f;
+        _particles[i].color = _seeds[i].color;
+        _particles[i].alpha = 1.0f;
     }
 }
 
@@ -65,13 +58,19 @@ void BroadcastBehavior::update(float dt)
     // fade only starts at 80% of the animation
     float alpha = t < 0.8f ? 1.0f : 1.0f - (t - 0.8f) / 0.2f;
 
-    // ring anchors
+    // ring as line segments — precompute all anchor positions, then build segments
+    Color ringColor = {30, 100, 255, 255};
+    std::vector<Vector3> anchors(RING_POINTS);
     for (int i = 0; i < RING_POINTS; i++) {
         float angle = (2.0f * PI * i) / RING_POINTS;
-        float px = wrapCoord(_visual.pos.x + radius * cosf(angle), _halfW);
-        float pz = wrapCoord(_visual.pos.z + radius * sinf(angle), _halfH);
-        _particles[i].pos = {px, RING_Y, pz};
-        _particles[i].alpha = alpha;
+        anchors[i] = {wrapCoord(_visual.pos.x + radius * cosf(angle), _halfW), RING_Y,
+                      wrapCoord(_visual.pos.z + radius * sinf(angle), _halfH)};
+    }
+    for (int i = 0; i < RING_POINTS; i++) {
+        Vector3 a = anchors[i];
+        Vector3 b = anchors[(i + 1) % RING_POINTS];
+        bool seam = fabsf(a.x - b.x) > _halfW || fabsf(a.z - b.z) > _halfH;
+        _lines[i] = {a, b, ringColor, seam ? 0.0f : alpha};
     }
 
     // scatter particles
@@ -82,8 +81,8 @@ void BroadcastBehavior::update(float dt)
         float r = radius + s.radialJitter;
         float px = wrapCoord(_visual.pos.x + r * cosf(angle), _halfW);
         float pz = wrapCoord(_visual.pos.z + r * sinf(angle), _halfH);
-        _particles[RING_POINTS + i].pos = {px, RING_Y + (frand() - 0.5f) * 0.1f, pz};
-        _particles[RING_POINTS + i].alpha = alpha * s.alphaScale;
+        _particles[i].pos = {px, RING_Y + (frand() - 0.5f) * 0.1f, pz};
+        _particles[i].alpha = alpha * s.alphaScale;
     }
 }
 
@@ -91,5 +90,6 @@ bool BroadcastBehavior::isDone() const
 {
     if (_elapsed < _duration) return false;
     _particles.clear();
+    _lines.clear();
     return true;
 }

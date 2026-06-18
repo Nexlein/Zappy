@@ -1,12 +1,12 @@
 #pragma once
 
-#include "ABehavior.hpp"
+#include "ADrawableBehavior.hpp"
 #include "core/VisualState.hpp"
 
 /**
  * @brief Handles the death animation for a player.
  */
-class DeathBehavior : public ABehavior {
+class DeathBehavior : public ADrawableBehavior {
     public:
     DeathBehavior(VisualState& visual, float server_tick_rate);
 

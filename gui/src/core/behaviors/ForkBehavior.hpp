@@ -1,12 +1,12 @@
 #pragma once
 
-#include "ABehavior.hpp"
+#include "ADrawableBehavior.hpp"
 #include "core/VisualState.hpp"
 
 /**
  * @brief Plays a scale-up animation when an egg is laid, with a particle burst at full size.
  */
-class ForkBehavior : public ABehavior {
+class ForkBehavior : public ADrawableBehavior {
     public:
     ForkBehavior(VisualState& visual, float server_tick_rate);
 

@@ -2,13 +2,13 @@
 
 #include <vector>
 
-#include "ABehavior.hpp"
+#include "ADrawableBehavior.hpp"
 #include "core/VisualState.hpp"
 
 /**
  * @brief Expanding ring wave emitted from a broadcasting player, implemented as a circle of particles.
  */
-class BroadcastBehavior : public ABehavior {
+class BroadcastBehavior : public ADrawableBehavior {
     public:
     static constexpr int RING_POINTS = 64;
 
@@ -19,9 +19,6 @@ class BroadcastBehavior : public ABehavior {
     bool isDone() const override;
     float getDuration() const override { return _duration; }
     float minDuration() const override { return 0.8f; }
-
-    float getHalfW() const { return _halfW; }
-    float getHalfH() const { return _halfH; }
 
     private:
     struct ScatterSeed {
