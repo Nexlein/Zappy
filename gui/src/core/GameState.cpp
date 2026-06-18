@@ -1,12 +1,14 @@
 #include "GameState.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <memory>
 
 #include "behaviors/DeathBehavior.hpp"
 #include "behaviors/ForkBehavior.hpp"
 #include "behaviors/LevelUpBehavior.hpp"
+#include "behaviors/BroadcastBehavior.hpp"
 #include "behaviors/MoveBehavior.hpp"
 #include "behaviors/TurnBehavior.hpp"
 #include "renderer/raylib_helpers/RenderingHelper.hpp"
@@ -113,9 +115,9 @@ void GameState::applyPlayerPosition(const PlayerPosition& e)
                                                   dynamic_cast<TurnBehavior*>(b.get());
                                        }),
                         behaviors.end());
-        behaviors.push_back(std::make_unique<MoveBehavior>(
+        _pushBehavior(player.visual, std::make_unique<MoveBehavior>(
             player.visual, fromX, fromY, e.x, e.y, world.width, world.height, tileSize, duration));
-        behaviors.push_back(std::make_unique<TurnBehavior>(player.visual, player.visual.angle,
+        _pushBehavior(player.visual, std::make_unique<TurnBehavior>(player.visual, player.visual.angle,
                                                            toAngle(e.orientation), duration));
     }
 }
@@ -125,7 +127,7 @@ void GameState::applyPlayerLevel(const PlayerLevel& e)
     auto it = world.players.find(e.id);
     if (it == world.players.end()) return;
     it->second.level = e.level;
-    it->second.visual.behaviors.push_back(
+    _pushBehavior(it->second.visual,
         std::make_unique<LevelUpBehavior>(it->second.visual, static_cast<float>(timeUnit)));
 }
 
@@ -142,9 +144,15 @@ void GameState::applyPlayerExpulsion([[maybe_unused]] const PlayerExpulsion& e)
     // Seemingly nothing tbd for now
 }
 
-void GameState::applyPlayerBroadcast([[maybe_unused]] const PlayerBroadcast& e)
+void GameState::applyPlayerBroadcast(const PlayerBroadcast& e)
 {
-    // Seemingly nothing tbd for now
+    auto it = world.players.find(e.id);
+    if (it == world.players.end()) return;
+    float mapRadius = std::max(static_cast<float>(world.width), static_cast<float>(world.height)) / 2.0f;
+    _pushBehavior(it->second.visual,
+        std::make_unique<BroadcastBehavior>(it->second.visual, static_cast<float>(timeUnit),
+                                            mapRadius, static_cast<float>(world.width),
+                                            static_cast<float>(world.height)));
 }
 
 void GameState::applyIncantationStart(const IncantationStart& e)
@@ -198,7 +206,7 @@ void GameState::applyPlayerDeath(const PlayerDeath& e)
     dying.visual.behaviors.clear();
     world.dyingPlayers[e.id] = std::move(dying);
     Player& settled = world.dyingPlayers[e.id];
-    settled.visual.behaviors.push_back(
+    _pushBehavior(settled.visual,
         std::make_unique<DeathBehavior>(settled.visual, static_cast<float>(timeUnit)));
 }
 
@@ -212,7 +220,7 @@ void GameState::applyEggNew(const EggNew& e)
     egg.visual.pos = RenderingHelper::tileToWorld(e.x, e.y, world.width, world.height, tileSize);
     world.eggs[e.eggId] = std::move(egg);
     Egg& settled = world.eggs[e.eggId];
-    settled.visual.behaviors.push_back(
+    _pushBehavior(settled.visual,
         std::make_unique<ForkBehavior>(settled.visual, static_cast<float>(timeUnit)));
 }
 
@@ -229,3 +237,9 @@ void GameState::applyTimeUnit(const TimeUnit& e) { timeUnit = e.timeUnit; }
 void GameState::applyTimeUnitChange(const TimeUnitChange& e) { timeUnit = e.timeUnit; }
 
 void GameState::applyGameEnd(const GameEnd& e) { winnerTeam = e.winningTeam; }
+
+void GameState::_pushBehavior(VisualState& visual, std::unique_ptr<IBehavior> b)
+{
+    if (b->getDuration() >= b->minDuration())
+        visual.behaviors.push_back(std::move(b));
+}
