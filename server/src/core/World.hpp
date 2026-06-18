@@ -58,6 +58,7 @@ class World {
                   Orientation orientation);
     void removePlayer(int id);
     void movePlayer(int id, int x, int y);
+    void turnPlayer(int id, Orientation orientation);
 
     bool takeResource(int playerId, ResourceType type);
     bool setResource(int playerId, ResourceType type);

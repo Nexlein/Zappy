@@ -100,6 +100,13 @@ void World::movePlayer(int id, int x, int y)
     for (auto* observer : _observers) observer->onPlayerMoved(id, p.x, p.y, p.orientation);
 }
 
+void World::turnPlayer(int id, Orientation orientation)
+{
+    auto& p = _players.at(id);
+    p.orientation = orientation;
+    for (auto* observer : _observers) observer->onPlayerMoved(id, p.x, p.y, p.orientation);
+}
+
 bool World::takeResource(int playerId, ResourceType type)
 {
     auto& p = _players.at(playerId);

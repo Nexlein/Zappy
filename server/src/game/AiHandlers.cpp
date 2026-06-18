@@ -94,7 +94,7 @@ void CommandDispatcher::_handleRight(int connectionId)
         }
         auto& p = _world.getPlayer(playerId);
 
-        p.orientation = turnRight(p.orientation);
+        _world.turnPlayer(playerId, turnRight(p.orientation));
         _clients.send(connectionId, "ok\n");
         _executeNext(connectionId);
     });
@@ -111,7 +111,7 @@ void CommandDispatcher::_handleLeft(int connectionId)
             return;
         }
         auto& p = _world.getPlayer(playerId);
-        p.orientation = turnLeft(p.orientation);
+        _world.turnPlayer(playerId, turnLeft(p.orientation));
         _clients.send(connectionId, "ok\n");
         _executeNext(connectionId);
     });
