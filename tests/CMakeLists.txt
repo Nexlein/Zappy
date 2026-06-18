@@ -135,6 +135,7 @@ if(ZAPPY_BUILD_SERVER)
     # E2E tests: spawn the real zappy_server binary over TCP, no server internals linked.
     add_executable(zappy_server_e2e_tests
         e2e/test_e2e_handshake.cpp
+        e2e/test_e2e_ai_command.cpp
     )
 
     target_link_libraries(zappy_server_e2e_tests PRIVATE
