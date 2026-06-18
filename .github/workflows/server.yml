@@ -43,7 +43,7 @@ jobs:
         run: cmake -B build -DZAPPY_BUILD_TESTS=ON -DZAPPY_BUILD_GUI=OFF -DZAPPY_BUILD_AI=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Compilation
-        run: cmake --build build --config Release --target zappy_server zappy_server_tests -j 4
+        run: cmake --build build --config Release --target zappy_server zappy_server_tests zappy_server_e2e_tests -j 4
 
       - name: Tests
         working-directory: ${{github.workspace}}/build

@@ -150,10 +150,11 @@ if(ZAPPY_BUILD_SERVER)
         -Wall -Wextra
     )
 
-    # Use add_test instead of gtest_discover_tests to avoid generating a
-    # discovery JSON file in the project root.
+    # $<TARGET_FILE:...> gives the absolute path to the binary so CTest finds
+    # it regardless of working directory. WORKING_DIRECTORY is CMAKE_SOURCE_DIR
+    # so that ./zappy_server resolves correctly when the tests spawn it.
     add_test(NAME zappy_server_e2e_tests
-        COMMAND zappy_server_e2e_tests
+        COMMAND $<TARGET_FILE:zappy_server_e2e_tests>
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
 endif()
