@@ -67,7 +67,7 @@ class BroadcastHelp(AState):
         if context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
             for bcst in context.broadcasts:
                 if (
-                    bcst.content.msg_type in (MessageType.RALLY, MessageType.RALLY_FULL)
+                    bcst.content.msg_type == MessageType.RALLY
                     and bcst.content.level == context.level
                     and bcst.content.drone_id > context.drone_id
                 ):
@@ -81,13 +81,14 @@ class BroadcastHelp(AState):
         elif self.ticks_waited > swarm_cfg.get("RALLY_TIMEOUT", 100):
             # Count ALL active allies on the team, not just those of our level.
             # If the team is large enough overall, we just wait for them to catch up.
-            active_allies = sum(
+            active_allies_able_to_help = sum(
                 1
                 for info in context.ally_roster.values()
                 if context.total_ticks - info.last_seen_tick < 1500
+                and info.level <= context.level
             )
             players_req = evo_cfg.get("PLAYERS_REQUIRED", {}).get(str(context.level), 0)
-            if active_allies < players_req + 1:
+            if active_allies_able_to_help < players_req - 1:
                 self._abort_target = "Reproduce"
             else:
                 self.ticks_waited = 0
