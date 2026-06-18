@@ -125,7 +125,24 @@ bool World::setResource(int playerId, ResourceType type)
     return true;
 }
 
+bool World::consumeFood(int playerId)
+{
+    auto it = _players.find(playerId);
+    if (it == _players.end()) return false;
+
+    auto& p = it->second;
+    p.inventory.food--;
+    for (auto* observer : _observers)
+        observer->onPlayerInventoryChanged(playerId, p.x, p.y, p.inventory);
+    return p.inventory.food > 0;
+}
+
 Player& World::getPlayer(int id) { return _players.at(id); }
+
+void World::playerBroadcast(int playerId, const std::string& message)
+{
+    for (auto* observer : _observers) observer->onBroadcast(playerId, message);
+}
 
 EjectResult World::ejectPlayers(int ejectorId)
 {
@@ -164,16 +181,37 @@ EjectResult World::ejectPlayers(int ejectorId)
     return {toEject, dx, dy};
 }
 
+int World::_spawnEgg(const std::string& teamName, int x, int y, int parentPlayerId)
+{
+    int eid = _nextEggId++;
+
+    Egg egg{eid, parentPlayerId, x, y, teamName};
+    _eggs[eid] = egg;
+    at(x, y).eggIds.push_back(eid);
+    for (auto* observer : _observers) observer->onEggLaid(eid, parentPlayerId, x, y);
+    return eid;
+}
+
+void World::spawnInitialEggs(int countPerTeam)
+{
+    std::uniform_int_distribution<int> dx(0, _width - 1);
+    std::uniform_int_distribution<int> dy(0, _height - 1);
+    for (const auto& team : _teamNames)
+        for (int i = 0; i < countPerTeam; i++) _spawnEgg(team, dx(_rng), dy(_rng), -1);
+}
+
 int World::addEgg(int playerId)
 {
     auto& p = _players.at(playerId);
-    int eid = _nextEggId++;
+    return _spawnEgg(p.teamName, p.x, p.y, p.id);
+}
 
-    Egg egg{eid, p.id, p.x, p.y, p.teamName};
-    _eggs[eid] = egg;
-    at(p.x, p.y).eggIds.push_back(eid);
-    for (auto* observer : _observers) observer->onEggLaid(eid, p.id, p.x, p.y);
-    return eid;
+int World::teamEggCount(const std::string& team) const
+{
+    int count = 0;
+    for (const auto& [id, egg] : _eggs)
+        if (egg.teamName == team) count++;
+    return count;
 }
 
 bool World::hatchEgg(int eggId)
