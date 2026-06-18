@@ -283,7 +283,6 @@ void RaylibRenderer::_drawHUD()
 {
     Color bgColor = {20, 25, 35, 220};
     Color borderColor = {60, 70, 90, 200};
-    Color textColor = {150, 160, 180, 255};
     Color accentColor = {210, 220, 240, 255};
 
     int fps = GetFPS();
@@ -316,7 +315,7 @@ void RaylibRenderer::_drawHUD()
                        .addLine(fpsText, fpsColor)
                        .addLine(mapText, accentColor)
                        .addLine(timeUnitText, accentColor)
-                       .addLine(uptimeText, textColor);
+                       .addLine(uptimeText, accentColor);
 
     // Add top 5 teams by population
     for (size_t i = 0; i < std::min(sortedTeams.size(), size_t(5)); i++) {
