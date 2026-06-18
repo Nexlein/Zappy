@@ -8,9 +8,9 @@
 import random
 from utils.config_loader import get_survival_config, get_evolution_config
 from utils.stones import get_missing_stones
-from BroadcastProtocol import BroadcastProtocol, MessageType
+from protocol.BroadcastProtocol import BroadcastProtocol, MessageType
 from context import DroneContext
-from look_parser import find_closest_resource_path
+from protocol.look_parser import find_closest_resource_path
 
 from fsm.states.AState import AState
 

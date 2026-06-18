@@ -14,7 +14,7 @@ from utils.config_loader import (
     get_swarm_config,
     get_evolution_config,
 )
-from BroadcastProtocol import BroadcastProtocol, MessageType
+from protocol.BroadcastProtocol import BroadcastProtocol, MessageType
 
 
 # BroadcastHelp: Yell across the map and wait for allies to arrive.

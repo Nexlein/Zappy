@@ -4,7 +4,7 @@ from utils.config_loader import (
     get_evolution_config,
     get_reproduction_config,
 )
-from BroadcastProtocol import MessageType
+from protocol.BroadcastProtocol import MessageType
 
 from typing import TYPE_CHECKING
 

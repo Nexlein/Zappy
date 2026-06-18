@@ -9,8 +9,8 @@ import random
 from fsm.states.AState import AState
 from context import DroneContext
 from utils.config_loader import get_survival_config, get_evolution_config
-from BroadcastProtocol import MessageType
-from look_parser import find_closest_resource_path
+from protocol.BroadcastProtocol import MessageType
+from protocol.look_parser import find_closest_resource_path
 
 
 class ForageFood(AState):

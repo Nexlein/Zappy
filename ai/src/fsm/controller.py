@@ -13,7 +13,7 @@ from fsm.states.evolution import SearchStone, IncantationState
 from fsm.states.swarm import BroadcastHelp, MapsToAlly
 from fsm.states.reproduce import Reproduce
 from ai_logger import ai_logger
-from BroadcastProtocol import MessageType
+from protocol.BroadcastProtocol import MessageType
 
 
 class AIController:

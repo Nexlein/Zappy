@@ -8,7 +8,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 import uuid
-from BroadcastProtocol import DecodedBroadcast
+from protocol.BroadcastProtocol import DecodedBroadcast
 
 
 @dataclass

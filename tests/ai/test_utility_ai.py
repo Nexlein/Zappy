@@ -8,7 +8,7 @@
 import unittest
 from context import DroneContext, Tile, BroadcastMessage
 from uai.controller import UtilityAIController
-from BroadcastProtocol import BroadcastProtocol
+from protocol.BroadcastProtocol import BroadcastProtocol
 
 
 class TestUtilityAIController(unittest.TestCase):

@@ -5,7 +5,7 @@ from utils.config_loader import (
     get_evolution_config,
     get_reproduction_config,
 )
-from BroadcastProtocol import BroadcastProtocol, MessageType
+from protocol.BroadcastProtocol import BroadcastProtocol, MessageType
 from ai_logger import ai_logger
 
 from uai.utilities import UtilityCalculators

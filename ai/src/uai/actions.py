@@ -2,8 +2,8 @@ import random
 from utils.stones import next_stone_to_drop, next_stone_to_take, get_missing_stones
 from utils.navigation import get_action_for_broadcast
 from utils.config_loader import get_evolution_config, get_swarm_config
-from BroadcastProtocol import BroadcastProtocol, MessageType
-from look_parser import find_closest_resource_path
+from protocol.BroadcastProtocol import BroadcastProtocol, MessageType
+from protocol.look_parser import find_closest_resource_path
 
 from typing import TYPE_CHECKING
 

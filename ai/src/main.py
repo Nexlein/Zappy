@@ -7,12 +7,12 @@
 
 from ai_factory import create_ai_controller
 from context import DroneContext, BroadcastMessage
-from NetworkBuffer import NetworkBuffer
-from tcpClient import TcpClient
+from network.NetworkBuffer import NetworkBuffer
+from network.tcpClient import TcpClient
 from argsParser import parseArgs, Config
-from BroadcastProtocol import BroadcastProtocol, MessageType
-from look_parser import parse_look_to_tiles
-from inventory_parser import update_inventory
+from protocol.BroadcastProtocol import BroadcastProtocol, MessageType
+from protocol.look_parser import parse_look_to_tiles
+from protocol.inventory_parser import update_inventory
 from typing import Any
 from ai_logger import ai_logger
 import subprocess

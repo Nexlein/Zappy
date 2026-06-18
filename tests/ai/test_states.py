@@ -12,7 +12,7 @@ from fsm.states.evolution import SearchStone
 from fsm.states.swarm import BroadcastHelp, MapsToAlly
 from context import BroadcastMessage
 from fsm.states.evolution import IncantationState
-from BroadcastProtocol import DecodedBroadcast, MessageType
+from protocol.BroadcastProtocol import DecodedBroadcast, MessageType
 from utils.stones import get_missing_stones
 from context import AllyInfo
 
