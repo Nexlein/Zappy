@@ -292,7 +292,17 @@ void RaylibRenderer::_drawHUD()
 
     std::string mapText =
         "Map: " + std::to_string(_state->world.width) + "x" + std::to_string(_state->world.height);
-    std::string timeText = "Time unit: " + std::to_string(_state->timeUnit);
+    std::string timeUnitText = "Time unit: " + std::to_string(_state->timeUnit);
+
+    int uptimeHours = _state->serverUptimeSeconds / 3600;
+    int uptimeMinutes = (_state->serverUptimeSeconds % 3600) / 60;
+    int uptimeSeconds = _state->serverUptimeSeconds % 60;
+    std::string uptimeText = "Time ";
+    if (uptimeHours > 0)
+        uptimeText += std::to_string(uptimeHours) + "h ";
+    if (uptimeMinutes > 0 || uptimeHours > 0)
+        uptimeText += std::to_string(uptimeMinutes) + "m ";
+    uptimeText += std::to_string(uptimeSeconds) + "s";
 
     std::unordered_map<std::string, int> teamPlayerCounts;
     for (const auto& teamName : _state->world.teams) teamPlayerCounts[teamName] = 0;
@@ -307,8 +317,8 @@ void RaylibRenderer::_drawHUD()
     auto builder = TooltipRenderer::create()
                        .addLine(fpsText, fpsColor)
                        .addLine(mapText, accentColor)
-                       .addLine(timeText, accentColor)
-                       .addLine("Time: --:--", textColor);
+                       .addLine(timeUnitText, accentColor)
+                       .addLine(uptimeText, textColor);
 
     // Add top 5 teams by population
     for (size_t i = 0; i < std::min(sortedTeams.size(), size_t(5)); i++) {
