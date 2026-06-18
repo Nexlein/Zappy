@@ -5,6 +5,7 @@
 
 #include <gtest/gtest.h>
 
+#include "interfaces/INetworkObserver.hpp"
 #include "network/ClientManager.hpp"
 #include "network/Listener.hpp"
 
@@ -261,4 +262,100 @@ TEST(ClientManager, ClientDisconnectDetectedOnPoll)
 
     cm.disconnect(id);
     EXPECT_THROW(cm.getConnection(id), std::out_of_range);
+}
+
+// --- INetworkObserver ---
+
+struct SpyObserver : public INetworkObserver {
+    std::vector<int> connected;
+    std::vector<int> disconnected;
+    std::vector<std::pair<int, std::string>> linesReceived;
+    std::vector<std::pair<int, std::string>> linesSent;
+
+    void onClientConnected(int id) override { connected.push_back(id); }
+    void onClientDisconnected(int id) override { disconnected.push_back(id); }
+    void onLineReceived(int id, const std::string& line) override { linesReceived.emplace_back(id, line); }
+    void onLineSent(int id, const std::string& line) override { linesSent.emplace_back(id, line); }
+};
+
+TEST(ClientManager, ObserverFiredOnConnect)
+{
+    Listener l(14263);
+    ClientManager cm(l);
+    SpyObserver spy;
+    cm.addNetworkObserver(&spy);
+
+    int clientFd = connectTo(14263);
+    ASSERT_GE(clientFd, 0);
+
+    cm.poll(200);
+
+    ASSERT_EQ(spy.connected.size(), 1u);
+    EXPECT_GE(spy.connected[0], 0);
+
+    close(clientFd);
+}
+
+TEST(ClientManager, ObserverFiredOnDisconnect)
+{
+    Listener l(14264);
+    ClientManager cm(l);
+    SpyObserver spy;
+    cm.addNetworkObserver(&spy);
+
+    int clientFd = connectTo(14264);
+    ASSERT_GE(clientFd, 0);
+    cm.poll(200);
+    ASSERT_EQ(spy.connected.size(), 1u);
+    int id = spy.connected[0];
+
+    cm.disconnect(id);
+
+    ASSERT_EQ(spy.disconnected.size(), 1u);
+    EXPECT_EQ(spy.disconnected[0], id);
+
+    close(clientFd);
+}
+
+TEST(ClientManager, ObserverFiredOnLineReceived)
+{
+    Listener l(14265);
+    ClientManager cm(l);
+    SpyObserver spy;
+    cm.addNetworkObserver(&spy);
+
+    int clientFd = connectTo(14265);
+    ASSERT_GE(clientFd, 0);
+    cm.poll(200);
+
+    const char* msg = "Forward\n";
+    ::send(clientFd, msg, strlen(msg), 0);
+    cm.poll(200);
+
+    ASSERT_EQ(spy.linesReceived.size(), 1u);
+    EXPECT_EQ(spy.linesReceived[0].second, "Forward");
+
+    close(clientFd);
+}
+
+TEST(ClientManager, ObserverFiredOnSend)
+{
+    Listener l(14266);
+    ClientManager cm(l);
+    SpyObserver spy;
+    cm.addNetworkObserver(&spy);
+
+    int clientFd = connectTo(14266);
+    ASSERT_GE(clientFd, 0);
+    auto result = cm.poll(200);
+    ASSERT_EQ(result.newConnections.size(), 1u);
+    int id = result.newConnections[0];
+
+    cm.send(id, "WELCOME\n");
+
+    ASSERT_EQ(spy.linesSent.size(), 1u);
+    EXPECT_EQ(spy.linesSent[0].first, id);
+    EXPECT_EQ(spy.linesSent[0].second, "WELCOME\n");
+
+    close(clientFd);
 }
