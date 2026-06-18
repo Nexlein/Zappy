@@ -3,8 +3,8 @@
 #include <memory>
 #include <vector>
 
-#include "raylib.h"
 #include "behaviors/IBehavior.hpp"
+#include "raylib.h"
 
 /**
  * @brief Visual-only state for an entity, driven by behaviors each frame.

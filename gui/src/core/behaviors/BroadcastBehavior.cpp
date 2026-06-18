@@ -11,8 +11,11 @@ static inline float frand() { return static_cast<float>(rand()) / static_cast<fl
 
 BroadcastBehavior::BroadcastBehavior(VisualState& visual, float server_tick_rate, float maxRadius,
                                      float mapWidth, float mapHeight)
-    : _visual(visual), _duration(7.0f / server_tick_rate), _maxRadius(maxRadius),
-      _halfW(mapWidth / 2.0f), _halfH(mapHeight / 2.0f)
+    : _visual(visual),
+      _duration(7.0f / server_tick_rate),
+      _maxRadius(maxRadius),
+      _halfW(mapWidth / 2.0f),
+      _halfH(mapHeight / 2.0f)
 {
     _lines.resize(RING_POINTS);
     _particles.resize(SCATTER_COUNT);

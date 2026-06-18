@@ -5,10 +5,10 @@
 #include <iostream>
 #include <memory>
 
+#include "behaviors/BroadcastBehavior.hpp"
 #include "behaviors/DeathBehavior.hpp"
 #include "behaviors/ForkBehavior.hpp"
 #include "behaviors/LevelUpBehavior.hpp"
-#include "behaviors/BroadcastBehavior.hpp"
 #include "behaviors/MoveBehavior.hpp"
 #include "behaviors/TurnBehavior.hpp"
 #include "renderer/raylib_helpers/RenderingHelper.hpp"
@@ -116,9 +116,11 @@ void GameState::applyPlayerPosition(const PlayerPosition& e)
                                        }),
                         behaviors.end());
         _pushBehavior(player.visual, std::make_unique<MoveBehavior>(
-            player.visual, fromX, fromY, e.x, e.y, world.width, world.height, tileSize, duration));
-        _pushBehavior(player.visual, std::make_unique<TurnBehavior>(player.visual, player.visual.angle,
-                                                           toAngle(e.orientation), duration));
+                                         player.visual, fromX, fromY, e.x, e.y, world.width,
+                                         world.height, tileSize, duration));
+        _pushBehavior(player.visual,
+                      std::make_unique<TurnBehavior>(player.visual, player.visual.angle,
+                                                     toAngle(e.orientation), duration));
     }
 }
 
@@ -127,8 +129,8 @@ void GameState::applyPlayerLevel(const PlayerLevel& e)
     auto it = world.players.find(e.id);
     if (it == world.players.end()) return;
     it->second.level = e.level;
-    _pushBehavior(it->second.visual,
-        std::make_unique<LevelUpBehavior>(it->second.visual, static_cast<float>(timeUnit)));
+    _pushBehavior(it->second.visual, std::make_unique<LevelUpBehavior>(
+                                         it->second.visual, static_cast<float>(timeUnit)));
 }
 
 void GameState::applyPlayerInventory(const PlayerInventory& e)
@@ -148,11 +150,12 @@ void GameState::applyPlayerBroadcast(const PlayerBroadcast& e)
 {
     auto it = world.players.find(e.id);
     if (it == world.players.end()) return;
-    float mapRadius = std::max(static_cast<float>(world.width), static_cast<float>(world.height)) / 2.0f;
+    float mapRadius =
+        std::max(static_cast<float>(world.width), static_cast<float>(world.height)) / 2.0f;
     _pushBehavior(it->second.visual,
-        std::make_unique<BroadcastBehavior>(it->second.visual, static_cast<float>(timeUnit),
-                                            mapRadius, static_cast<float>(world.width),
-                                            static_cast<float>(world.height)));
+                  std::make_unique<BroadcastBehavior>(
+                      it->second.visual, static_cast<float>(timeUnit), mapRadius,
+                      static_cast<float>(world.width), static_cast<float>(world.height)));
 }
 
 void GameState::applyIncantationStart(const IncantationStart& e)
@@ -207,7 +210,7 @@ void GameState::applyPlayerDeath(const PlayerDeath& e)
     world.dyingPlayers[e.id] = std::move(dying);
     Player& settled = world.dyingPlayers[e.id];
     _pushBehavior(settled.visual,
-        std::make_unique<DeathBehavior>(settled.visual, static_cast<float>(timeUnit)));
+                  std::make_unique<DeathBehavior>(settled.visual, static_cast<float>(timeUnit)));
 }
 
 void GameState::applyEggNew(const EggNew& e)
@@ -221,7 +224,7 @@ void GameState::applyEggNew(const EggNew& e)
     world.eggs[e.eggId] = std::move(egg);
     Egg& settled = world.eggs[e.eggId];
     _pushBehavior(settled.visual,
-        std::make_unique<ForkBehavior>(settled.visual, static_cast<float>(timeUnit)));
+                  std::make_unique<ForkBehavior>(settled.visual, static_cast<float>(timeUnit)));
 }
 
 void GameState::applyEggHatch(const EggHatch& e)
@@ -240,6 +243,5 @@ void GameState::applyGameEnd(const GameEnd& e) { winnerTeam = e.winningTeam; }
 
 void GameState::_pushBehavior(VisualState& visual, std::unique_ptr<IBehavior> b)
 {
-    if (b->getDuration() >= b->minDuration())
-        visual.behaviors.push_back(std::move(b));
+    if (b->getDuration() >= b->minDuration()) visual.behaviors.push_back(std::move(b));
 }

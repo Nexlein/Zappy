@@ -26,8 +26,7 @@ void App::run()
     AppConfig config = args.getConfig();
 
     auto socket = std::make_unique<TcpSocket>();
-    if (!_connectWithRetry(*socket, config.machine, config.port))
-        return;
+    if (!_connectWithRetry(*socket, config.machine, config.port)) return;
 
     EventQueue eventQueue;
     IRenderer* renderer;
@@ -47,8 +46,7 @@ void App::run()
                 socket->send("mct\n");
                 pollAndEnqueue(*socket, eventQueue);
 
-                while (auto event = eventQueue.pop())
-                    state.applyEvent(*event);
+                while (auto event = eventQueue.pop()) state.applyEvent(*event);
 
                 renderer->setState(state);
                 renderer->handleInput();
@@ -58,16 +56,14 @@ void App::run()
             std::cerr << "[Network] " << e.what() << "\n";
             renderer->shutdown();
             socket = std::make_unique<TcpSocket>();
-            if (!_connectWithRetry(*socket, config.machine, config.port))
-                break;
+            if (!_connectWithRetry(*socket, config.machine, config.port)) break;
             state = GameState{};
             eventQueue.clear();
             renderer->init();
         }
     }
 
-    if (g_interrupted)
-        std::cerr << "[GUI] Stopping\n";
+    if (g_interrupted) std::cerr << "[GUI] Stopping\n";
     renderer->shutdown();
     delete renderer;
 }
@@ -91,8 +87,8 @@ bool App::_connectWithRetry(TcpSocket& socket, const std::string& host, int port
             socket.send("GRAPHIC\n");
             return true;
         } catch (const TcpException& e) {
-            std::cerr << "[Network] " << e.what()
-                      << " (attempt " << attempt << "/" << MAX_RETRIES << ")\n";
+            std::cerr << "[Network] " << e.what() << " (attempt " << attempt << "/" << MAX_RETRIES
+                      << ")\n";
             if (attempt == MAX_RETRIES) break;
             for (int s = delay; s > 0; s--) {
                 std::cerr << "[Network] Retrying in " << s << "s...   \r";

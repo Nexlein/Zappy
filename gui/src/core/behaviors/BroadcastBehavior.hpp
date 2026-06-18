@@ -6,14 +6,15 @@
 #include "core/VisualState.hpp"
 
 /**
- * @brief Expanding ring wave emitted from a broadcasting player, implemented as a circle of particles.
+ * @brief Expanding ring wave emitted from a broadcasting player, implemented as a circle of
+ * particles.
  */
 class BroadcastBehavior : public ADrawableBehavior {
     public:
     static constexpr int RING_POINTS = 64;
 
-    BroadcastBehavior(VisualState& visual, float server_tick_rate, float maxRadius,
-                      float mapWidth, float mapHeight);
+    BroadcastBehavior(VisualState& visual, float server_tick_rate, float maxRadius, float mapWidth,
+                      float mapHeight);
 
     void update(float dt) override;
     bool isDone() const override;
