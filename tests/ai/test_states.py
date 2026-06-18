@@ -41,7 +41,7 @@ class TestForageFood(unittest.TestCase):
         self.assertIsNone(res)
 
     def test_update_food_high(self):
-        self.context.inventory.food = 15
+        self.context.inventory.food = 25
         res = self.state.update(self.context)
         self.assertEqual(res, "SearchStone")
 
@@ -85,6 +85,7 @@ class TestSearchStone(unittest.TestCase):
 
     def test_get_missing_stones_level_1_complete(self):
         self.context.level = 1
+        self.context.inventory.food = 25
         self.context.inventory.linemate = 1
         missing = get_missing_stones(self.context.level, self.context.inventory)
         self.assertEqual(missing, {})
@@ -96,12 +97,14 @@ class TestSearchStone(unittest.TestCase):
 
     def test_update_all_stones_collected_level_1(self):
         self.context.level = 1
+        self.context.inventory.food = 25
         self.context.inventory.linemate = 1
         res = self.state.update(self.context)
         self.assertEqual(res, "BroadcastHelp")
 
     def test_update_all_stones_collected_level_2(self):
         self.context.level = 2
+        self.context.inventory.food = 25
         self.context.inventory.linemate = 1
         self.context.inventory.deraumere = 1
         self.context.inventory.sibur = 1
@@ -206,7 +209,7 @@ class TestBroadcastHelp(unittest.TestCase):
 
     def test_update_timeout(self):
         self.state.enter(self.context)
-        self.context.inventory.food = 15  # Food secure
+        self.context.inventory.food = 25  # Food secure
         self.context.level = 2  # Require 2 players
         self.state.ticks_waited = 301  # Greater than RALLY_TIMEOUT (300)
         res = self.state.update(self.context)
@@ -215,7 +218,7 @@ class TestBroadcastHelp(unittest.TestCase):
 
     def test_update_incantation_ready(self):
         self.state.enter(self.context)
-        self.context.inventory.food = 15  # Food secure
+        self.context.inventory.food = 25  # Food secure
         self.context.vision = [Tile(player=2, linemate=1, deraumere=1, sibur=1)]
         self.context.level = 2
         self.context.ally_roster["fake"] = AllyInfo(
@@ -243,17 +246,17 @@ class TestMapsToAlly(unittest.TestCase):
 
     def test_update_timeout(self):
         self.state.enter(self.context)
-        self.context.inventory.food = 15  # Food secure
+        self.context.inventory.food = 25  # Food secure
         self.state.ticks_waited = 301  # Greater than RALLY_TIMEOUT (300)
         res = self.state.update(self.context)
         self.assertEqual(res, "SearchStone")
 
     def test_get_action_follow_broadcast(self):
-        self.state.enter(self.context)
         self.context.level = 1
         self.context.ally_roster["fake"] = AllyInfo(
             level=1, last_seen_tick=0, is_rallying=True, direction=1
         )
+        self.state.enter(self.context)
         self.context.broadcasts = [
             BroadcastMessage(
                 direction=1,
