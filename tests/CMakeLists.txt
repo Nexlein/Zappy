@@ -138,6 +138,7 @@ if(ZAPPY_BUILD_SERVER)
         e2e/test_e2e_ai_command.cpp
         e2e/test_e2e_gui.cpp
         e2e/test_e2e_incantation.cpp
+        e2e/test_e2e_starvation.cpp
     )
 
     target_link_libraries(zappy_server_e2e_tests PRIVATE
