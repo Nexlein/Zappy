@@ -19,7 +19,7 @@ class JsonFormatter(logging.Formatter):
             "response",
             "event",
             "level",
-            "food",
+            "inventory",
         ]:
             if hasattr(record, attr):
                 log_obj[attr] = getattr(record, attr)
@@ -45,8 +45,12 @@ class AILogger:
         self.run_id = ""
 
     def configure(self, team_name: str, config_dict: dict | None = None):
+        run_id_env = os.environ.get("ZAPPY_RUN_ID")
+        if not run_id_env:
+            run_id_env = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            os.environ["ZAPPY_RUN_ID"] = run_id_env
+        self.run_id = str(run_id_env)
 
-        self.run_id = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         log_dir = os.path.join(os.path.dirname(__file__), "..", "logs", self.run_id)
         self.log_dir = log_dir
         os.makedirs(log_dir, exist_ok=True)
@@ -103,8 +107,9 @@ class AILogger:
     def error(self, msg: str):
         self.logger.error("error", extra={"event": f"ERROR: {msg}"})
 
-    def log_state(self, state: str, action: str, level: int | str, food: int | str):
-        msg = f"Lvl:{level} | Food:{food} | State:{state} | Action:{action}"
+    def log_state(self, state: str, action: str, level: int | str, inventory):
+        inv_str = f"Food:{inventory.food} Lm:{inventory.linemate} Der:{inventory.deraumere} Sib:{inventory.sibur} Men:{inventory.mendiane} Phi:{inventory.phiras} Thy:{inventory.thystame}"
+        msg = f"Lvl:{level} | {inv_str} | State:{state} | Action:{action}"
 
         if isinstance(level, int):
             self.highest_level = max(self.highest_level, level)
@@ -116,7 +121,7 @@ class AILogger:
                     "state": state,
                     "action": action,
                     "level": level,
-                    "food": food,
+                    "inventory": inv_str,
                 },
             )
             self.last_state_log = msg
@@ -124,9 +129,6 @@ class AILogger:
     def log_send(self, message: str):
         self.last_command_time = time.perf_counter()
         self.last_command = message
-        self.net_logger.info(
-            f"[NETWORK OUT] Sent: {repr(message)}", extra={"command": message}
-        )
 
     def log_receive(self, response: str):
         if self.last_command_time > 0:

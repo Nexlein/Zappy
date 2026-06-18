@@ -245,6 +245,6 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
             best_behavior,
             action or "None",
             self.context.level,
-            self.context.inventory.food,
+            self.context.inventory,
         )
         return action

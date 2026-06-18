@@ -66,7 +66,7 @@ class AIController:
             self.current_state_name,
             action or "None",
             self.context.level,
-            self.context.inventory.food,
+            self.context.inventory,
         )
         return action
 
