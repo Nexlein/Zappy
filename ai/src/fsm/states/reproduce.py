@@ -38,7 +38,7 @@ class Reproduce(AState):
     def update(self, context: DroneContext) -> str | None:
         repr_cfg = get_reproduction_config()
         if self.forks_done >= repr_cfg.get("MAX_FORKS_PER_DRONE", 10):
-            return "SearchStone"
+            return "BroadcastHelp"
         if context.inventory.food < repr_cfg.get("FORK_FOOD_THRESHOLD", 10):
             return "ForageFood"
 
@@ -46,14 +46,24 @@ class Reproduce(AState):
             if context.last_command_successful:
                 self.forks_done += 1
                 self.last_fork_tick = context.total_ticks
-            return "SearchStone"
+            return "BroadcastHelp"
 
-        if context.total_ticks - self.last_fork_tick < 800:
-            return "SearchStone"
+        # Wait 600 ticks (the time it takes for an egg to hatch) before allowing another fork.
+        # This prevents the drone from spamming its entire max fork budget instantly.
+        if context.total_ticks - self.last_fork_tick < 600:
+            return "BroadcastHelp"
 
         return None
 
     def get_action(self, context: DroneContext) -> str | None:
+        repr_cfg = get_reproduction_config()
+        if self.forks_done >= repr_cfg.get("MAX_FORKS_PER_DRONE", 10):
+            return "Look"
+        if context.inventory.food < repr_cfg.get("FORK_FOOD_THRESHOLD", 10):
+            return "Look"
+        if context.total_ticks - self.last_fork_tick < 100:
+            return "Look"
+
         if not self._fork_sent:
             self._fork_sent = True
             return "Fork"
