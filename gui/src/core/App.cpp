@@ -40,6 +40,7 @@ void App::run()
 
     renderer->init();
 
+    _rendererActive = true;
     while (!renderer->shouldClose() && !g_interrupted) {
         try {
             while (!renderer->shouldClose() && !g_interrupted) {
@@ -55,16 +56,18 @@ void App::run()
         } catch (const TcpException& e) {
             std::cerr << "[Network] " << e.what() << "\n";
             renderer->shutdown();
+            _rendererActive = false;
             socket = std::make_unique<TcpSocket>();
             if (!_connectWithRetry(*socket, config.machine, config.port)) break;
             state = GameState{};
             eventQueue.clear();
             renderer->init();
+            _rendererActive = true;
         }
     }
 
     if (g_interrupted) std::cerr << "[GUI] Stopping\n";
-    renderer->shutdown();
+    if (_rendererActive) renderer->shutdown();
     delete renderer;
 }
 

@@ -35,6 +35,7 @@ class App {
     protected:  // <- Protected for testing purposes, acts as private in practice
     Args args;
     GameState state;
+    bool _rendererActive = false;
 
     /**
      * @brief Polls the socket for new data and enqueues any received events.
