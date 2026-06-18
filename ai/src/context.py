@@ -54,6 +54,7 @@ class AllyInfo:
     last_seen_tick: int
     is_ready: bool = False
     is_rallying: bool = False
+    is_coming: bool = False
     direction: int = -1
 
 

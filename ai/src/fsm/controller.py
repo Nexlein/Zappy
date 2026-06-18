@@ -63,13 +63,16 @@ class AIController:
 
                 info.direction = bcst.direction
 
-                if bcst.content.msg_type == MessageType.RALLY:
+                if bcst.content.msg_type in (MessageType.RALLY, MessageType.RALLY_FULL):
                     info.is_rallying = True
                     info.is_ready = False
+                    info.is_coming = False
                 elif bcst.content.msg_type == MessageType.READY:
                     info.is_ready = True
+                    info.is_coming = False
                 elif bcst.content.msg_type == MessageType.COMING:
                     info.is_ready = False
+                    info.is_coming = True
                 elif bcst.content.msg_type in (
                     MessageType.LEAVING,
                     MessageType.ABORT,
@@ -77,6 +80,7 @@ class AIController:
                 ):
                     info.is_ready = False
                     info.is_rallying = False
+                    info.is_coming = False
 
         dead_allies = [
             drone_id

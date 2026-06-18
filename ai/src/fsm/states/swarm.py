@@ -15,7 +15,6 @@ from utils.config_loader import (
     get_evolution_config,
 )
 from BroadcastProtocol import BroadcastProtocol, MessageType
-from look_parser import generate_path_to_tile
 
 
 # BroadcastHelp: Yell across the map and wait for allies to arrive.
@@ -80,13 +79,15 @@ class BroadcastHelp(AState):
         if context.inventory.food < surv_cfg.get("SURVIVAL_THRESHOLD", 5):
             self._abort_target = "ForageFood"
         elif self.ticks_waited > swarm_cfg.get("RALLY_TIMEOUT", 100):
-            helpful_allies = sum(
+            # Count ALL active allies on the team, not just those of our level.
+            # If the team is large enough overall, we just wait for them to catch up.
+            active_allies = sum(
                 1
                 for info in context.ally_roster.values()
-                if info.level == context.level
+                if context.total_ticks - info.last_seen_tick < 1500
             )
             players_req = evo_cfg.get("PLAYERS_REQUIRED", {}).get(str(context.level), 0)
-            if helpful_allies < players_req - 1:
+            if active_allies < players_req + 1:
                 self._abort_target = "Reproduce"
             else:
                 self.ticks_waited = 0
@@ -113,7 +114,24 @@ class BroadcastHelp(AState):
             and a.is_ready
             and a.direction in BROADCAST_DIRECTION_ARRIVED
         )
+        committed_count = sum(
+            1
+            for a in context.ally_roster.values()
+            if a.level == context.level and (a.is_ready or a.is_coming)
+        )
+
+        surv_cfg = get_survival_config()
+        safe_food = surv_cfg.get("SAFE_FOOD_THRESHOLD", 10)
+
+        can_start_now = False
         if actual_ready_count + 1 >= players_req:
+            if (
+                actual_ready_count == committed_count
+                or context.inventory.food < safe_food
+            ):
+                can_start_now = True
+
+        if can_start_now:
             stone_to_take = next_stone_to_take(context.level, context.vision[0])
             if stone_to_take:
                 return f"Take {stone_to_take}"
@@ -124,42 +142,34 @@ class BroadcastHelp(AState):
             if stone:
                 return f"Set {stone}"
 
-        # Periodically re-broadcast the RALLY signal (only if higher than solo).
+        # Periodically re-broadcast the RALLY signal (only if higher than solo)
         if context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
+            msg_type = (
+                MessageType.RALLY_FULL
+                if committed_count + 1 >= players_req
+                else MessageType.RALLY
+            )
             swarm_cfg = get_swarm_config()
             if self.tick_since_bcast >= swarm_cfg.get("BCAST_INTERVAL", 2):
                 self.tick_since_bcast = 0
                 payload = BroadcastProtocol.encode(
                     context.team_name,
-                    MessageType.RALLY,
+                    msg_type,
                     context.level,
                     context.drone_id,
                 )
+                context.vision.clear()
                 return f"Broadcast {payload}"
 
         self.tick_since_bcast += 1
 
+        # Idle ticks: periodically Look to refresh tile.player count
+        if self.tick_since_bcast % 2 == 0:
+            context.vision.clear()
+            return "Look"
+
         if context.path_queue:
             return context.path_queue.pop(0)
-
-        # Forage while waiting if hungry to avoid starvation loop
-        surv_cfg = get_survival_config()
-        if context.inventory.food < surv_cfg.get("FOOD_TARGET", 15):
-            if context.vision[0].food > 0:
-                return "Take food"
-
-            best_path = None
-            for i, tile in enumerate(context.vision):
-                if i == 0:
-                    continue
-                if tile.food > 0:
-                    path = generate_path_to_tile(i)
-                    if best_path is None or len(path) < len(best_path):
-                        best_path = path
-
-            if best_path:
-                context.path_queue.extend(best_path)
-                return context.path_queue.pop(0)
 
         return "Look"
 
@@ -184,6 +194,14 @@ class MapsToAlly(AState):
         self._leave_target = None
         self._leave_emitted = False
         self.tick_since_bcast = 0
+        self.leader_id = max(
+            (
+                id
+                for id, info in context.ally_roster.items()
+                if info.level == self._entry_level and info.is_rallying
+            ),
+            default="",
+        )
 
     def _leave(self, target: str) -> str | None:
         """Exit toward `target`, emitting LEAVING first if we said READY."""
@@ -201,7 +219,8 @@ class MapsToAlly(AState):
         if self._leave_target:
             return self._leave_target if self._leave_emitted else None
 
-        self.ticks_waited += 1
+        if not getattr(self, "waiting_incant", False):
+            self.ticks_waited += 1
 
         surv_cfg = get_survival_config()
         if context.inventory.food < surv_cfg.get("SURVIVAL_THRESHOLD", 5):
@@ -223,20 +242,16 @@ class MapsToAlly(AState):
                 else:
                     return "SearchStone"
 
-        target_leader_id = max(
-            (
-                id
-                for id, info in context.ally_roster.items()
-                if info.level == self._entry_level and info.is_rallying
-            ),
-            default="",
-        )
+        if not self.leader_id:
+            return self._leave("SearchStone")
 
-        if target_leader_id:
-            # Check if we heard the leader recently (e.g. within the timeout window)
-            leader_info = context.ally_roster[target_leader_id]
-            if context.total_ticks - leader_info.last_seen_tick < 100:
-                self.ticks_waited = 0
+        leader_info = context.ally_roster.get(self.leader_id)
+        if not leader_info or not leader_info.is_rallying:
+            return self._leave("SearchStone")
+
+        # Check if we heard the leader recently (e.g. within the timeout window)
+        if context.total_ticks - leader_info.last_seen_tick < 100:
+            self.ticks_waited = 0
 
         swarm_cfg = get_swarm_config()
         if self.ticks_waited > swarm_cfg.get("RALLY_TIMEOUT", 100):
@@ -263,22 +278,14 @@ class MapsToAlly(AState):
         if self.waiting_incant:
             return None
 
-        # -- Track the highest leader from global roster --
-        target_leader_id = max(
-            (
-                id
-                for id, info in context.ally_roster.items()
-                if info.level == self._entry_level and info.is_rallying
-            ),
-            default="",
-        )
         best_direction = None
-        if target_leader_id:
+        if self.leader_id:
             # ONLY act on fresh directional data from the current tick
             for bcst in context.broadcasts:
                 if (
-                    bcst.content.drone_id == target_leader_id
-                    and bcst.content.msg_type == MessageType.RALLY
+                    bcst.content.drone_id == self.leader_id
+                    and bcst.content.msg_type
+                    in (MessageType.RALLY, MessageType.RALLY_FULL)
                 ):
                     best_direction = bcst.direction
                     break
