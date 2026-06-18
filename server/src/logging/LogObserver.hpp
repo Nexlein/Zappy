@@ -3,19 +3,30 @@
 #include <string>
 #include <vector>
 
+#include "interfaces/INetworkObserver.hpp"
 #include "interfaces/IWorldObserver.hpp"
-#include "network/ClientManager.hpp"
+#include "logging/Logger.hpp"
 
-class GuiNotifier : public IWorldObserver {
+/**
+ * @brief Bridges the Observer hooks to the Logger.
+ *
+ * Registered on both World (IWorldObserver) and ClientManager (INetworkObserver),
+ * so every world mutation and every raw protocol line is logged automatically,
+ * without scattering log calls across the game logic.
+ *
+ * Raw I/O is logged at Debug; world events at Info.
+ */
+class LogObserver : public IWorldObserver, public INetworkObserver {
     public:
-    explicit GuiNotifier(ClientManager& clients);
+    explicit LogObserver(Logger& logger);
 
-    void addGui(int connectionId);
-    void removeGui(int connectionId);
+    // INetworkObserver
+    void onClientConnected(int connectionId) override;
+    void onClientDisconnected(int connectionId) override;
+    void onLineReceived(int connectionId, const std::string& line) override;
+    void onLineSent(int connectionId, const std::string& line) override;
 
-    void send(int connectionId, const std::string& msg);
-    void broadcast(const std::string& msg);
-
+    // IWorldObserver
     void onPlayerAdded(int playerId, int x, int y, Orientation orientation, int level,
                        const std::string& teamName) override;
     void onPlayerMoved(int playerId, int nx, int ny, Orientation newOrientation) override;
@@ -38,6 +49,5 @@ class GuiNotifier : public IWorldObserver {
     void onTileChanged(int x, int y, Resources resources) override;
 
     private:
-    ClientManager& _clients;
-    std::vector<int> _guiIds;
+    Logger& _logger;
 };

@@ -86,13 +86,6 @@ void CommandDispatcher::_dispatchAi(int connectionId, const std::string& line)
         return;
     }
 
-    if (std::holds_alternative<Ai::ConnectNbr>(*cmd)) {
-        auto& player = _world.getPlayer(_clients.getConnection(connectionId).playerId());
-        int slots = _config.clientsNb - _world.teamPlayerCount(player.teamName);
-        _clients.send(connectionId, std::to_string(slots) + "\n");
-        return;
-    }
-
     if (_queues[connectionId].size() >= 10) return;
     _queues[connectionId].push_back(*cmd);
     if (!_hasActive[connectionId]) _executeNext(connectionId);
@@ -122,9 +115,20 @@ void CommandDispatcher::_executeNext(int connectionId)
                    [&](Ai::Take& t) { _handleTake(connectionId, t.resource); },
                    [&](Ai::Set& s) { _handleSet(connectionId, s.resource); },
                    [&](Ai::Incantation) { _handleIncantation(connectionId); },
-                   [&](Ai::ConnectNbr) {},
+                   [&](Ai::ConnectNbr) { _handleConnectNbr(connectionId); },
                },
                cmd);
+}
+
+void CommandDispatcher::_handleConnectNbr(int connectionId)
+{
+    int playerId = _clients.getConnection(connectionId).playerId();
+    if (_world.getPlayers().count(playerId)) {
+        auto& player = _world.getPlayer(playerId);
+        int slots = _world.teamEggCount(player.teamName);
+        _clients.send(connectionId, std::to_string(slots) + "\n");
+    }
+    _executeNext(connectionId);
 }
 
 void CommandDispatcher::_startStarvationTimer(int connectionId, int playerId)
@@ -132,9 +136,7 @@ void CommandDispatcher::_startStarvationTimer(int connectionId, int playerId)
     _scheduler.schedule(std::chrono::milliseconds(STARVATION_INTERVAL_MS) / _freq,
                         [this, connectionId, playerId] {
                             if (!_world.getPlayers().count(playerId)) return;
-                            auto& p = _world.getPlayer(playerId);
-                            p.inventory.food--;
-                            if (p.inventory.food <= 0) {
+                            if (!_world.consumeFood(playerId)) {
                                 _world.removePlayer(playerId);
                                 _clients.send(connectionId, "dead\n");
                                 _pendingDisconnects.push_back(connectionId);

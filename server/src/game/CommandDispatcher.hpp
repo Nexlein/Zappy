@@ -56,6 +56,7 @@ class CommandDispatcher {
     void _handleTake(int connectionId, ResourceType resource);
     void _handleSet(int connectionId, ResourceType resource);
     void _handleIncantation(int connectionId);
+    void _handleConnectNbr(int connectionId);
 
     ClientManager& _clients;
     World& _world;

@@ -64,6 +64,7 @@ struct DispatcherFixture : public ::testing::Test {
         listener = new Listener(port);
         cm = new ClientManager(*listener);
         world = new World(config.width, config.height, config.teamNames);
+        world->spawnInitialEggs(config.clientsNb);
         notifier = new GuiNotifier(*cm);
         scheduler = new Scheduler();
         dispatcher = new CommandDispatcher(*cm, *world, *notifier, config, *scheduler);
@@ -231,10 +232,15 @@ TEST_F(DispatcherTest, AiForwardMovesPlayerAfterTick)
 
     auto& moved = world->getPlayer(playerId);
     // Player moved one step in their orientation direction
-    if (ori == Orientation::N) EXPECT_EQ(moved.y, ((startY - 1 + 20) % 20));
-    else if (ori == Orientation::S) EXPECT_EQ(moved.y, (startY + 1) % 20);
-    else if (ori == Orientation::E) EXPECT_EQ(moved.x, (startX + 1) % 20);
-    else if (ori == Orientation::W) EXPECT_EQ(moved.x, ((startX - 1 + 20) % 20));
+    if (ori == Orientation::N) {
+        EXPECT_EQ(moved.y, ((startY - 1 + 20) % 20));
+    } else if (ori == Orientation::S) {
+        EXPECT_EQ(moved.y, (startY + 1) % 20);
+    } else if (ori == Orientation::E) {
+        EXPECT_EQ(moved.x, (startX + 1) % 20);
+    } else if (ori == Orientation::W) {
+        EXPECT_EQ(moved.x, ((startX - 1 + 20) % 20));
+    }
 
     close(fd);
 }

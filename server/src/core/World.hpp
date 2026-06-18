@@ -58,17 +58,33 @@ class World {
                   Orientation orientation);
     void removePlayer(int id);
     void movePlayer(int id, int x, int y);
+    void turnPlayer(int id, Orientation orientation);
 
     bool takeResource(int playerId, ResourceType type);
     bool setResource(int playerId, ResourceType type);
 
+    /**
+     * @brief Consume one unit of food from @p playerId (starvation tick).
+     * Fires onPlayerInventoryChanged so observers stay in sync.
+     * @return true if the player is still alive (food > 0), false if it starved.
+     */
+    bool consumeFood(int playerId);
+
     Player& getPlayer(int id);
 
+    /// Fire onBroadcast to observers (GUI animation, logging). No state change.
+    void playerBroadcast(int playerId, const std::string& message);
+
     EjectResult ejectPlayers(int ejectorId);
+
+    /// Spawn @p countPerTeam eggs for every team at random tiles (server startup).
+    void spawnInitialEggs(int countPerTeam);
 
     int addEgg(int playerId);
     bool hatchEgg(int eggId);
     std::optional<Egg> popEggForTeam(const std::string& teamName);
+
+    int teamEggCount(const std::string& team) const;
 
     /**
      * @brief Validate and start an incantation for @p playerId.
@@ -95,6 +111,8 @@ class World {
     void addWorldObserver(IWorldObserver* observer);
 
     private:
+    int _spawnEgg(const std::string& teamName, int x, int y, int parentPlayerId);
+
     int _width;
     int _height;
     std::vector<Tile> _tiles;

@@ -13,6 +13,7 @@ class IWorldObserver {
     virtual void onPlayerAdded(int playerId, int x, int y, Orientation orientation, int level,
                                const std::string& teamName) = 0;
     virtual void onPlayerMoved(int playerId, int nx, int ny, Orientation newOrientation) = 0;
+    virtual void onPlayerInventoryChanged(int playerId, int x, int y, Resources inventory) = 0;
     virtual void onPlayerRemoved(int playerId) = 0;
     virtual void onPlayerEjected(int playerId) = 0;
     virtual void onBroadcast(int playerId, const std::string& message) = 0;
@@ -21,6 +22,7 @@ class IWorldObserver {
     virtual void onResourceDropped(int playerId, ResourceType resourceType, int tileX, int tileY,
                                    Resources resources) = 0;
     virtual void onEggLaid(int eggId, int playerId, int x, int y) = 0;
+    virtual void onInitialEggSpawned(int eggId, const std::string& teamName, int x, int y) = 0;
     virtual void onEggHatched(int eggId) = 0;
     virtual void onIncantationStart(int x, int y, int level,
                                     const std::vector<int>& participantIds) = 0;
