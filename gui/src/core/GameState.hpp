@@ -1,7 +1,11 @@
 #pragma once
 
+#include <memory>
+
 #include "Event.hpp"
+#include "VisualState.hpp"
 #include "WorldState.hpp"
+#include "behaviors/IBehavior.hpp"
 
 /**
  * @brief Represents the current state of the game.
@@ -59,4 +63,6 @@ class GameState {
     void applyTimeUnit(const TimeUnit& e);
     void applyTimeUnitChange(const TimeUnitChange& e);
     void applyGameEnd(const GameEnd& e);
+
+    static void _pushBehavior(VisualState& visual, std::unique_ptr<IBehavior> b);
 };

@@ -42,4 +42,7 @@ class App {
      * @param queue The event queue to enqueue events into.
      */
     void pollAndEnqueue(TcpSocket& socket, EventQueue& queue);
+
+    /** @brief Attempts to connect with exponential backoff. Returns true on success. */
+    bool _connectWithRetry(TcpSocket& socket, const std::string& host, int port);
 };
