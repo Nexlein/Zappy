@@ -131,6 +131,26 @@ if(ZAPPY_BUILD_SERVER)
     gtest_discover_tests(zappy_server_tests)
 endif()
 
+if(ZAPPY_BUILD_SERVER)
+    # E2E tests: spawn the real zappy_server binary over TCP, no server internals linked.
+    add_executable(zappy_server_e2e_tests
+        e2e/test_e2e_handshake.cpp
+    )
+
+    target_link_libraries(zappy_server_e2e_tests PRIVATE
+        ${GTEST_TARGET}
+    )
+
+    target_compile_options(zappy_server_e2e_tests PRIVATE
+        -Wall -Wextra
+    )
+
+    # Run e2e tests from the project root so ./zappy_server resolves correctly.
+    gtest_discover_tests(zappy_server_e2e_tests
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+endif()
+
 if(ZAPPY_BUILD_AI)
     # Python AI tests
     find_package(Python3 COMPONENTS Interpreter)

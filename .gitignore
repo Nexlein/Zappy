@@ -23,6 +23,7 @@ _deps/
 /zappy_ai
 /zappy_ai_tests
 /zappy_tests
+/zappy_server_e2e_tests
 
 # IDE and editor files
 .vscode/
