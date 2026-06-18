@@ -1,6 +1,11 @@
 #include "core/Server.hpp"
 
 #include <iostream>
+#include <memory>
+
+#include "logging/CompositeSink.hpp"
+#include "logging/ConsoleSink.hpp"
+#include "logging/FileSink.hpp"
 
 Server::Server(const ServerConfig& config)
     : _config(config),
@@ -8,9 +13,19 @@ Server::Server(const ServerConfig& config)
       _clients(_listener),
       _world(config.width, config.height, config.teamNames),
       _notifier(_clients),
+      _logObserver(_logger),
       _dispatcher(_clients, _world, _notifier, _config, _scheduler)
 {
+    auto sinks = std::make_unique<CompositeSink>();
+    sinks->add(std::make_unique<ConsoleSink>());
+    sinks->add(std::make_unique<FileSink>("zappy_server.log"));
+    _logger.setSink(std::move(sinks));
+
     _world.addWorldObserver(&_notifier);
+    _world.addWorldObserver(&_logObserver);
+    _clients.addNetworkObserver(&_logObserver);
+
+    _world.spawnInitialEggs(_config.clientsNb);
     _world.spawnResources();
 }
 
