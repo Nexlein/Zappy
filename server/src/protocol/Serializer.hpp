@@ -42,6 +42,7 @@ namespace Serializer {
 
     std::string sgt(int freq);
     std::string sst(int freq);
+    std::string stu(int seconds);
 
     std::string seg(const std::string& team);
     std::string smg(const std::string& msg);

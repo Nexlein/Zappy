@@ -79,6 +79,7 @@ std::string Serializer::edi(int eggId) { return "edi " + id(eggId) + "\n"; }
 
 std::string Serializer::sgt(int freq) { return "sgt " + n(freq) + "\n"; }
 std::string Serializer::sst(int freq) { return "sst " + n(freq) + "\n"; }
+std::string Serializer::stu(int seconds) { return "Stu " + n(seconds) + "\n"; }
 
 std::string Serializer::seg(const std::string& team) { return "seg " + team + "\n"; }
 std::string Serializer::smg(const std::string& msg) { return "smg " + msg + "\n"; }

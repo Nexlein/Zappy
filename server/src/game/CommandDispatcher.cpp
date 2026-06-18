@@ -18,7 +18,8 @@ CommandDispatcher::CommandDispatcher(ClientManager& clients, World& world, GuiNo
                         [this](int connectionId, int playerId) {
                             this->_startStarvationTimer(connectionId, playerId);
                         }),
-      _freq(config.freq)
+      _freq(config.freq),
+      _startTime(time(nullptr))
 {
 }
 
@@ -71,6 +72,7 @@ void CommandDispatcher::_dispatchGui(int connectionId, const std::string& line)
                    [&](Gui::Pin p) { _handlePin(connectionId, p.id); },
                    [&](Gui::Sgt) { _handleSgt(connectionId); },
                    [&](Gui::Sst s) { _handleSst(s.freq); },
+                   [&](Gui::Stu) { _handleStu(connectionId); },
                    [&](auto&) { _clients.send(connectionId, "suc\n"); },
                },
                *req);

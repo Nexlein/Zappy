@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ctime>
 #include <deque>
 #include <unordered_map>
 #include <vector>
@@ -41,6 +42,7 @@ class CommandDispatcher {
     void _handlePin(int connectionId, int playerId);
     void _handleSgt(int connectionId);
     void _handleSst(int freq);
+    void _handleStu(int connectionId);
 
     // AI command handlers
     void _handleForward(int connectionId);
@@ -62,6 +64,7 @@ class CommandDispatcher {
     const ServerConfig& _config;
     HandshakeHandler _handshakeHandler;
     int _freq;
+    time_t _startTime;
 
     std::unordered_map<int, std::deque<Ai::Command>> _queues;
     std::unordered_map<int, bool> _hasActive;
