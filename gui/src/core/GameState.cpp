@@ -19,51 +19,55 @@ void GameState::applyEvent(const Event& e)
         [this](const auto& event) {
             using T = std::decay_t<decltype(event)>;
             if constexpr (std::is_same_v<T, MapSize>)
-                applyMapSize(event);
+                _applyMapSize(event);
             else if constexpr (std::is_same_v<T, TileContent>)
-                applyTileContent(event);
+                _applyTileContent(event);
             else if constexpr (std::is_same_v<T, TeamName>)
-                applyTeamName(event);
+                _applyTeamName(event);
             else if constexpr (std::is_same_v<T, PlayerNew>)
-                applyPlayerNew(event);
+                _applyPlayerNew(event);
             else if constexpr (std::is_same_v<T, PlayerPosition>)
-                applyPlayerPosition(event);
+                _applyPlayerPosition(event);
             else if constexpr (std::is_same_v<T, PlayerLevel>)
-                applyPlayerLevel(event);
+                _applyPlayerLevel(event);
             else if constexpr (std::is_same_v<T, PlayerInventory>)
-                applyPlayerInventory(event);
+                _applyPlayerInventory(event);
             else if constexpr (std::is_same_v<T, PlayerExpulsion>)
-                applyPlayerExpulsion(event);
+                _applyPlayerExpulsion(event);
             else if constexpr (std::is_same_v<T, PlayerBroadcast>)
-                applyPlayerBroadcast(event);
+                _applyPlayerBroadcast(event);
             else if constexpr (std::is_same_v<T, IncantationStart>)
-                applyIncantationStart(event);
+                _applyIncantationStart(event);
             else if constexpr (std::is_same_v<T, IncantationEnd>)
-                applyIncantationEnd(event);
+                _applyIncantationEnd(event);
             else if constexpr (std::is_same_v<T, PlayerFork>)
-                applyPlayerFork(event);
+                _applyPlayerFork(event);
             else if constexpr (std::is_same_v<T, PlayerResourceDrop>)
-                applyPlayerResourceDrop(event);
+                _applyPlayerResourceDrop(event);
             else if constexpr (std::is_same_v<T, PlayerResourceTake>)
-                applyPlayerResourceTake(event);
+                _applyPlayerResourceTake(event);
             else if constexpr (std::is_same_v<T, PlayerDeath>)
-                applyPlayerDeath(event);
+                _applyPlayerDeath(event);
             else if constexpr (std::is_same_v<T, EggNew>)
-                applyEggNew(event);
+                _applyEggNew(event);
             else if constexpr (std::is_same_v<T, EggHatch>)
-                applyEggHatch(event);
+                _applyEggHatch(event);
             else if constexpr (std::is_same_v<T, EggDeath>)
-                applyEggDeath(event);
+                _applyEggDeath(event);
             else if constexpr (std::is_same_v<T, TimeUnit>)
-                applyTimeUnit(event);
+                _applyTimeUnit(event);
             else if constexpr (std::is_same_v<T, TimeUnitChange>)
-                applyTimeUnitChange(event);
+                _applyTimeUnitChange(event);
             else if constexpr (std::is_same_v<T, GameEnd>)
-                applyGameEnd(event);
+                _applyGameEnd(event);
             else if constexpr (std::is_same_v<T, ServerMessage>) {
                 // Likely temporary
                 std::cout << "[SERVER MESSAGE] " << event.message << std::endl;
-            } else {
+            } else if constexpr (std::is_same_v<T, ServerUptime>)
+                _applyServerUptime(event);
+            else if constexpr (std::is_same_v<T, ServerSpawnedEgg>)
+                _applyServerSpawnedEgg(event);
+            else {
                 // Is a UnknownCommand or BadParameters, we can ignore them for now
             }
         },
@@ -71,18 +75,18 @@ void GameState::applyEvent(const Event& e)
     dirty = true;
 }
 
-void GameState::applyMapSize(const MapSize& e)
+void GameState::_applyMapSize(const MapSize& e)
 {
     world.width = e.width;
     world.height = e.height;
     world.tiles.resize(e.width * e.height);
 }
 
-void GameState::applyTileContent(const TileContent& e) { world.at(e.x, e.y) = e.resources; }
+void GameState::_applyTileContent(const TileContent& e) { world.at(e.x, e.y) = e.resources; }
 
-void GameState::applyTeamName(const TeamName& e) { world.teams.push_back(e.name); }
+void GameState::_applyTeamName(const TeamName& e) { world.teams.push_back(e.name); }
 
-void GameState::applyPlayerNew(const PlayerNew& e)
+void GameState::_applyPlayerNew(const PlayerNew& e)
 {
     auto [it, _] = world.players.emplace(e.id, Player{.id = e.id,
                                                       .x = e.x,
@@ -95,7 +99,7 @@ void GameState::applyPlayerNew(const PlayerNew& e)
     it->second.visual.angle = toAngle(e.orientation);
 }
 
-void GameState::applyPlayerPosition(const PlayerPosition& e)
+void GameState::_applyPlayerPosition(const PlayerPosition& e)
 {
     auto it = world.players.find(e.id);
     if (it != world.players.end()) {
@@ -124,7 +128,7 @@ void GameState::applyPlayerPosition(const PlayerPosition& e)
     }
 }
 
-void GameState::applyPlayerLevel(const PlayerLevel& e)
+void GameState::_applyPlayerLevel(const PlayerLevel& e)
 {
     auto it = world.players.find(e.id);
     if (it == world.players.end()) return;
@@ -133,7 +137,7 @@ void GameState::applyPlayerLevel(const PlayerLevel& e)
                                          it->second.visual, static_cast<float>(timeUnit)));
 }
 
-void GameState::applyPlayerInventory(const PlayerInventory& e)
+void GameState::_applyPlayerInventory(const PlayerInventory& e)
 {
     auto it = world.players.find(e.id);
     if (it != world.players.end()) {
@@ -141,12 +145,12 @@ void GameState::applyPlayerInventory(const PlayerInventory& e)
     }
 }
 
-void GameState::applyPlayerExpulsion([[maybe_unused]] const PlayerExpulsion& e)
+void GameState::_applyPlayerExpulsion([[maybe_unused]] const PlayerExpulsion& e)
 {
     // Seemingly nothing tbd for now
 }
 
-void GameState::applyPlayerBroadcast(const PlayerBroadcast& e)
+void GameState::_applyPlayerBroadcast(const PlayerBroadcast& e)
 {
     auto it = world.players.find(e.id);
     if (it == world.players.end()) return;
@@ -158,7 +162,7 @@ void GameState::applyPlayerBroadcast(const PlayerBroadcast& e)
                       static_cast<float>(world.width), static_cast<float>(world.height)));
 }
 
-void GameState::applyIncantationStart(const IncantationStart& e)
+void GameState::_applyIncantationStart(const IncantationStart& e)
 {
     for (int playerId : e.playerIds) {
         auto it = world.players.find(playerId);
@@ -168,7 +172,7 @@ void GameState::applyIncantationStart(const IncantationStart& e)
     }
 }
 
-void GameState::applyIncantationEnd(const IncantationEnd& e)
+void GameState::_applyIncantationEnd(const IncantationEnd& e)
 {
     for (auto& [id, player] : world.players) {
         if (player.x == e.x && player.y == e.y && player.incanting) {
@@ -177,12 +181,12 @@ void GameState::applyIncantationEnd(const IncantationEnd& e)
     }
 }
 
-void GameState::applyPlayerFork([[maybe_unused]] const PlayerFork& e)
+void GameState::_applyPlayerFork([[maybe_unused]] const PlayerFork& e)
 {
     // Seemingly nothing tbd for now
 }
 
-void GameState::applyPlayerResourceDrop(const PlayerResourceDrop& e)
+void GameState::_applyPlayerResourceDrop(const PlayerResourceDrop& e)
 {
     auto it = world.players.find(e.playerId);
     if (it != world.players.end()) {
@@ -191,7 +195,7 @@ void GameState::applyPlayerResourceDrop(const PlayerResourceDrop& e)
     }
 }
 
-void GameState::applyPlayerResourceTake(const PlayerResourceTake& e)
+void GameState::_applyPlayerResourceTake(const PlayerResourceTake& e)
 {
     auto it = world.players.find(e.playerId);
     if (it != world.players.end()) {
@@ -200,7 +204,7 @@ void GameState::applyPlayerResourceTake(const PlayerResourceTake& e)
     }
 }
 
-void GameState::applyPlayerDeath(const PlayerDeath& e)
+void GameState::_applyPlayerDeath(const PlayerDeath& e)
 {
     auto it = world.players.find(e.id);
     if (it == world.players.end()) return;
@@ -213,7 +217,7 @@ void GameState::applyPlayerDeath(const PlayerDeath& e)
                   std::make_unique<DeathBehavior>(settled.visual, static_cast<float>(timeUnit)));
 }
 
-void GameState::applyEggNew(const EggNew& e)
+void GameState::_applyEggNew(const EggNew& e)
 {
     auto it = world.players.find(e.playerId);
     if (it == world.players.end()) {
@@ -227,19 +231,33 @@ void GameState::applyEggNew(const EggNew& e)
                   std::make_unique<ForkBehavior>(settled.visual, static_cast<float>(timeUnit)));
 }
 
-void GameState::applyEggHatch(const EggHatch& e)
+void GameState::_applyEggHatch(const EggHatch& e)
 {
     world.eggs.erase(e.id);
     // Spawning handled by PlayerNew event, so nothing else to do here
 }
 
-void GameState::applyEggDeath(const EggDeath& e) { world.eggs.erase(e.id); }
+void GameState::_applyEggDeath(const EggDeath& e) { world.eggs.erase(e.id); }
 
-void GameState::applyTimeUnit(const TimeUnit& e) { timeUnit = e.timeUnit; }
+void GameState::_applyTimeUnit(const TimeUnit& e) { timeUnit = e.timeUnit; }
 
-void GameState::applyTimeUnitChange(const TimeUnitChange& e) { timeUnit = e.timeUnit; }
+void GameState::_applyTimeUnitChange(const TimeUnitChange& e) { timeUnit = e.timeUnit; }
 
-void GameState::applyGameEnd(const GameEnd& e) { winnerTeam = e.winningTeam; }
+void GameState::_applyGameEnd(const GameEnd& e) { winnerTeam = e.winningTeam; }
+
+void GameState::_applyServerUptime(const ServerUptime& e) { serverUptimeSeconds = e.uptimeSeconds; }
+
+void GameState::_applyServerSpawnedEgg(const ServerSpawnedEgg& e)
+{
+    std::cout << "Server spawned egg: id=" << e.eggId << ", team=" << e.team
+              << ", x=" << e.x << ", y=" << e.y << std::endl;
+    Egg egg{.id = e.eggId, .x = e.x, .y = e.y, .team = e.team};
+    egg.visual.pos = RenderingHelper::tileToWorld(e.x, e.y, world.width, world.height, tileSize);
+    world.eggs[e.eggId] = std::move(egg);
+    Egg& settled = world.eggs[e.eggId];
+    _pushBehavior(settled.visual,
+                  std::make_unique<ForkBehavior>(settled.visual, static_cast<float>(timeUnit)));
+}
 
 void GameState::_pushBehavior(VisualState& visual, std::unique_ptr<IBehavior> b)
 {

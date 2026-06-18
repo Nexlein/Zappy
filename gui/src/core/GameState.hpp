@@ -18,6 +18,7 @@ class GameState {
     int timeUnit = -1;
     std::string winnerTeam = "";
     float tileSize = 1.0f;
+    unsigned int serverUptimeSeconds = 0;
 
     /**
      * @brief Applies an event to the game state, modifying it accordingly and setting the dirty
@@ -42,27 +43,29 @@ class GameState {
     private:
     mutable bool dirty = false;
 
-    void applyMapSize(const MapSize& e);
-    void applyTileContent(const TileContent& e);
-    void applyTeamName(const TeamName& e);
-    void applyPlayerNew(const PlayerNew& e);
-    void applyPlayerPosition(const PlayerPosition& e);
-    void applyPlayerLevel(const PlayerLevel& e);
-    void applyPlayerInventory(const PlayerInventory& e);
-    void applyPlayerExpulsion(const PlayerExpulsion& e);
-    void applyPlayerBroadcast(const PlayerBroadcast& e);
-    void applyIncantationStart(const IncantationStart& e);
-    void applyIncantationEnd(const IncantationEnd& e);
-    void applyPlayerFork(const PlayerFork& e);
-    void applyPlayerResourceDrop(const PlayerResourceDrop& e);
-    void applyPlayerResourceTake(const PlayerResourceTake& e);
-    void applyPlayerDeath(const PlayerDeath& e);
-    void applyEggNew(const EggNew& e);
-    void applyEggHatch(const EggHatch& e);
-    void applyEggDeath(const EggDeath& e);
-    void applyTimeUnit(const TimeUnit& e);
-    void applyTimeUnitChange(const TimeUnitChange& e);
-    void applyGameEnd(const GameEnd& e);
+    void _applyMapSize(const MapSize& e);
+    void _applyTileContent(const TileContent& e);
+    void _applyTeamName(const TeamName& e);
+    void _applyPlayerNew(const PlayerNew& e);
+    void _applyPlayerPosition(const PlayerPosition& e);
+    void _applyPlayerLevel(const PlayerLevel& e);
+    void _applyPlayerInventory(const PlayerInventory& e);
+    void _applyPlayerExpulsion(const PlayerExpulsion& e);
+    void _applyPlayerBroadcast(const PlayerBroadcast& e);
+    void _applyIncantationStart(const IncantationStart& e);
+    void _applyIncantationEnd(const IncantationEnd& e);
+    void _applyPlayerFork(const PlayerFork& e);
+    void _applyPlayerResourceDrop(const PlayerResourceDrop& e);
+    void _applyPlayerResourceTake(const PlayerResourceTake& e);
+    void _applyPlayerDeath(const PlayerDeath& e);
+    void _applyEggNew(const EggNew& e);
+    void _applyEggHatch(const EggHatch& e);
+    void _applyEggDeath(const EggDeath& e);
+    void _applyTimeUnit(const TimeUnit& e);
+    void _applyTimeUnitChange(const TimeUnitChange& e);
+    void _applyGameEnd(const GameEnd& e);
+    void _applyServerUptime(const ServerUptime& e);
+    void _applyServerSpawnedEgg(const ServerSpawnedEgg& e);
 
     static void _pushBehavior(VisualState& visual, std::unique_ptr<IBehavior> b);
 };
