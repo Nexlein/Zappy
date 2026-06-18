@@ -45,7 +45,7 @@ void App::run()
         try {
             while (!renderer->shouldClose() && !g_interrupted) {
                 socket->send("mct\n");
-                socket->send("stu\n");
+                socket->send("stu\n"); // custom protocol to get server uptime in seconds
                 pollAndEnqueue(*socket, eventQueue);
 
                 while (auto event = eventQueue.pop()) state.applyEvent(*event);
