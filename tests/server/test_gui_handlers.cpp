@@ -38,8 +38,8 @@ static int connectTo(int port)
 static int acceptOne(ClientManager& cm)
 {
     auto result = cm.poll(200);
-    if (result.newFds.empty()) return -1;
-    return result.newFds[0];
+    if (result.newConnections.empty()) return -1;
+    return result.newConnections[0];
 }
 
 // --- Fixture ---
@@ -163,10 +163,11 @@ TEST_F(GuiHandlersTest, PpoKnownPlayerQueuesResponse)
     close(guiFd);
 }
 
-TEST_F(GuiHandlersTest, PpoUnknownPlayerThrows)
+TEST_F(GuiHandlersTest, PpoUnknownPlayerSendsSuc)
 {
     auto [fd, id] = connectAsGui();
-    EXPECT_THROW(dispatcher->dispatch(id, "ppo #9999"), std::out_of_range);
+    EXPECT_NO_THROW(dispatcher->dispatch(id, "ppo #9999"));
+    EXPECT_TRUE(cm->getConnection(id).hasPendingWrite());
     close(fd);
 }
 
@@ -185,10 +186,11 @@ TEST_F(GuiHandlersTest, PlvKnownPlayerQueuesResponse)
     close(guiFd);
 }
 
-TEST_F(GuiHandlersTest, PlvUnknownPlayerThrows)
+TEST_F(GuiHandlersTest, PlvUnknownPlayerSendsSuc)
 {
     auto [fd, id] = connectAsGui();
-    EXPECT_THROW(dispatcher->dispatch(id, "plv #9999"), std::out_of_range);
+    EXPECT_NO_THROW(dispatcher->dispatch(id, "plv #9999"));
+    EXPECT_TRUE(cm->getConnection(id).hasPendingWrite());
     close(fd);
 }
 
@@ -207,10 +209,11 @@ TEST_F(GuiHandlersTest, PinKnownPlayerQueuesResponse)
     close(guiFd);
 }
 
-TEST_F(GuiHandlersTest, PinUnknownPlayerThrows)
+TEST_F(GuiHandlersTest, PinUnknownPlayerSendsSuc)
 {
     auto [fd, id] = connectAsGui();
-    EXPECT_THROW(dispatcher->dispatch(id, "pin #9999"), std::out_of_range);
+    EXPECT_NO_THROW(dispatcher->dispatch(id, "pin #9999"));
+    EXPECT_TRUE(cm->getConnection(id).hasPendingWrite());
     close(fd);
 }
 

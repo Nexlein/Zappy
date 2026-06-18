@@ -41,8 +41,8 @@ static int connectTo(int port)
 static int acceptOne(ClientManager& cm)
 {
     auto result = cm.poll(200);
-    if (result.newFds.empty()) return -1;
-    return result.newFds[0];
+    if (result.newConnections.empty()) return -1;
+    return result.newConnections[0];
 }
 
 // --- Fixture ---
@@ -156,15 +156,17 @@ TEST_F(DispatcherTest, AiUnknownCommandSendsKo)
     close(fd);
 }
 
-TEST_F(DispatcherTest, AiUnknownCommandDoesNotSchedule)
+TEST_F(DispatcherTest, AiUnknownCommandDoesNotScheduleExtra)
 {
     auto [fd, id] = connectAsAi();
 
+    // Starvation timer is already scheduled after handshake — record baseline
+    int msBefore = scheduler->msUntilNext();
+
     dispatcher->dispatch(id, "garbage");
 
-    // No scheduled event → msUntilNext returns -1
-    // (world moves from handshake don't schedule anything)
-    EXPECT_EQ(scheduler->msUntilNext(), -1);
+    // Unknown command must not add a new scheduled event (msUntilNext unchanged)
+    EXPECT_EQ(scheduler->msUntilNext(), msBefore);
 
     close(fd);
 }
@@ -175,10 +177,14 @@ TEST_F(DispatcherTest, AiConnectNbrRespondsImmediately)
 {
     auto [fd, id] = connectAsAi();
 
+    // Starvation timer already scheduled — record baseline before dispatch
+    int msBefore = scheduler->msUntilNext();
+
     dispatcher->dispatch(id, "Connect nbr");
 
+    // ConnectNbr responds immediately and does not schedule anything extra
     EXPECT_TRUE(cm->getConnection(id).hasPendingWrite());
-    EXPECT_EQ(scheduler->msUntilNext(), -1);
+    EXPECT_EQ(scheduler->msUntilNext(), msBefore);
 
     close(fd);
 }

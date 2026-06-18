@@ -30,8 +30,8 @@ static int connectTo(int port)
 static int acceptOne(ClientManager& cm)
 {
     auto result = cm.poll(200);
-    EXPECT_EQ(result.newFds.size(), 1u);
-    return result.newFds.empty() ? -1 : result.newFds[0];
+    EXPECT_EQ(result.newConnections.size(), 1u);
+    return result.newConnections.empty() ? -1 : result.newConnections[0];
 }
 
 TEST(GuiNotifier, BroadcastWithNoGuisIsNoOp)
@@ -183,7 +183,7 @@ TEST(GuiNotifier, SendTargetsOneConnection)
     close(fd2);
 }
 
-TEST(GuiNotifier, OnPlayerNewBroadcastsPnw)
+TEST(GuiNotifier, OnPlayerAddedBroadcastsPnw)
 {
     Listener l(14267);
     ClientManager cm(l);
@@ -195,22 +195,14 @@ TEST(GuiNotifier, OnPlayerNewBroadcastsPnw)
     ASSERT_GE(id, 0);
 
     notifier.addGui(id);
-
-    Player p;
-    p.id = 7;
-    p.x = 2;
-    p.y = 3;
-    p.orientation = Orientation::N;
-    p.level = 1;
-    p.teamName = "TeamA";
-    notifier.onPlayerNew(p);
+    notifier.onPlayerAdded(7, 2, 3, Orientation::N, 1, "TeamA");
 
     EXPECT_TRUE(cm.getConnection(id).hasPendingWrite());
 
     close(clientFd);
 }
 
-TEST(GuiNotifier, OnPlayerDeathBroadcastsPdi)
+TEST(GuiNotifier, OnPlayerRemovedBroadcastsPdi)
 {
     Listener l(14268);
     ClientManager cm(l);
@@ -222,7 +214,7 @@ TEST(GuiNotifier, OnPlayerDeathBroadcastsPdi)
     ASSERT_GE(id, 0);
 
     notifier.addGui(id);
-    notifier.onPlayerDeath(5);
+    notifier.onPlayerRemoved(5);
 
     EXPECT_TRUE(cm.getConnection(id).hasPendingWrite());
 

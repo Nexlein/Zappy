@@ -36,8 +36,8 @@ static int connectTo(int port)
 static int acceptOne(ClientManager& cm)
 {
     auto result = cm.poll(200);
-    if (result.newFds.empty()) return -1;
-    return result.newFds[0];
+    if (result.newConnections.empty()) return -1;
+    return result.newConnections[0];
 }
 
 // --- Fixture ---
@@ -59,7 +59,9 @@ struct HandshakeFixture : public ::testing::Test {
         cm = new ClientManager(*listener);
         world = new World(config.width, config.height, config.teamNames);
         notifier = new GuiNotifier(*cm);
-        handler = new HandshakeHandler(*cm, *world, *notifier, config);
+        world->addWorldObserver(notifier);
+        handler = new HandshakeHandler(*cm, *world, *notifier, config,
+                                       [](int, int) {});
     }
 
     void TearDown() override

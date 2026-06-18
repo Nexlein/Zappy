@@ -58,7 +58,7 @@ TEST(ClientManager, PollAcceptsIncomingConnection)
 
     auto result = cm.poll(200);
 
-    EXPECT_EQ(result.newFds.size(), 1u);
+    EXPECT_EQ(result.newConnections.size(), 1u);
     close(clientFd);
 }
 
@@ -71,8 +71,8 @@ TEST(ClientManager, AcceptedConnectionIsRetrievable)
     ASSERT_GE(clientFd, 0);
 
     auto result = cm.poll(200);
-    ASSERT_EQ(result.newFds.size(), 1u);
-    int id = result.newFds[0];
+    ASSERT_EQ(result.newConnections.size(), 1u);
+    int id = result.newConnections[0];
 
     EXPECT_NO_THROW(cm.getConnection(id));
 
@@ -88,9 +88,9 @@ TEST(ClientManager, AcceptedConnectionHasDefaultTypePending)
     ASSERT_GE(clientFd, 0);
 
     auto result = cm.poll(200);
-    ASSERT_EQ(result.newFds.size(), 1u);
+    ASSERT_EQ(result.newConnections.size(), 1u);
 
-    EXPECT_EQ(cm.getConnection(result.newFds[0]).type(), ClientType::PENDING);
+    EXPECT_EQ(cm.getConnection(result.newConnections[0]).type(), ClientType::PENDING);
 
     close(clientFd);
 }
@@ -103,14 +103,14 @@ TEST(ClientManager, MultipleConnectionsAcceptedSequentially)
     int fd1 = connectTo(14256);
     ASSERT_GE(fd1, 0);
     auto r1 = cm.poll(200);
-    ASSERT_EQ(r1.newFds.size(), 1u);
-    int id1 = r1.newFds[0];
+    ASSERT_EQ(r1.newConnections.size(), 1u);
+    int id1 = r1.newConnections[0];
 
     int fd2 = connectTo(14256);
     ASSERT_GE(fd2, 0);
     auto r2 = cm.poll(200);
-    ASSERT_EQ(r2.newFds.size(), 1u);
-    int id2 = r2.newFds[0];
+    ASSERT_EQ(r2.newConnections.size(), 1u);
+    int id2 = r2.newConnections[0];
 
     EXPECT_NE(id1, id2);
     EXPECT_NO_THROW(cm.getConnection(id1));
@@ -131,8 +131,8 @@ TEST(ClientManager, SendQueuesPendingWrite)
     ASSERT_GE(clientFd, 0);
 
     auto result = cm.poll(200);
-    ASSERT_EQ(result.newFds.size(), 1u);
-    int id = result.newFds[0];
+    ASSERT_EQ(result.newConnections.size(), 1u);
+    int id = result.newConnections[0];
 
     cm.send(id, "hello\n");
 
@@ -150,8 +150,8 @@ TEST(ClientManager, SendDataReachesClient)
     ASSERT_GE(clientFd, 0);
 
     auto result = cm.poll(200);
-    ASSERT_EQ(result.newFds.size(), 1u);
-    int id = result.newFds[0];
+    ASSERT_EQ(result.newConnections.size(), 1u);
+    int id = result.newConnections[0];
 
     cm.send(id, "hello\n");
 
@@ -181,8 +181,8 @@ TEST(ClientManager, DisconnectRemovesConnection)
     ASSERT_GE(clientFd, 0);
 
     auto result = cm.poll(200);
-    ASSERT_EQ(result.newFds.size(), 1u);
-    int id = result.newFds[0];
+    ASSERT_EQ(result.newConnections.size(), 1u);
+    int id = result.newConnections[0];
 
     cm.disconnect(id);
 
@@ -198,11 +198,11 @@ TEST(ClientManager, DisconnectDoesNotAffectOtherConnections)
 
     int fd1 = connectTo(14260);
     ASSERT_GE(fd1, 0);
-    int id1 = cm.poll(200).newFds[0];
+    int id1 = cm.poll(200).newConnections[0];
 
     int fd2 = connectTo(14260);
     ASSERT_GE(fd2, 0);
-    int id2 = cm.poll(200).newFds[0];
+    int id2 = cm.poll(200).newConnections[0];
 
     cm.disconnect(id1);
 
@@ -224,7 +224,7 @@ TEST(ClientManager, ReceivedLineAppearsInPollResult)
     ASSERT_GE(clientFd, 0);
 
     auto accepted = cm.poll(200);
-    ASSERT_EQ(accepted.newFds.size(), 1u);
+    ASSERT_EQ(accepted.newConnections.size(), 1u);
 
     // Client sends a line
     const char* msg = "Forward\n";
@@ -247,13 +247,18 @@ TEST(ClientManager, ClientDisconnectDetectedOnPoll)
     ASSERT_GE(clientFd, 0);
 
     auto accepted = cm.poll(200);
-    ASSERT_EQ(accepted.newFds.size(), 1u);
-    int id = accepted.newFds[0];
+    ASSERT_EQ(accepted.newConnections.size(), 1u);
+    int id = accepted.newConnections[0];
 
     // Client closes — server detects on next poll
     close(clientFd);
 
-    cm.poll(200);
+    auto result = cm.poll(200);
 
+    // poll() reports the disconnect in disconnectedIds; caller must clean up
+    ASSERT_EQ(result.disconnectedIds.size(), 1u);
+    EXPECT_EQ(result.disconnectedIds[0], id);
+
+    cm.disconnect(id);
     EXPECT_THROW(cm.getConnection(id), std::out_of_range);
 }
