@@ -18,7 +18,8 @@ CommandDispatcher::CommandDispatcher(ClientManager& clients, World& world, GuiNo
                         [this](int connectionId, int playerId) {
                             this->_startStarvationTimer(connectionId, playerId);
                         }),
-      _freq(config.freq)
+      _freq(config.freq),
+      _startTime(time(nullptr))
 {
 }
 
