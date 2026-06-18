@@ -249,8 +249,6 @@ void GameState::_applyServerUptime(const ServerUptime& e) { serverUptimeSeconds 
 
 void GameState::_applyServerSpawnedEgg(const ServerSpawnedEgg& e)
 {
-    std::cout << "Server spawned egg: id=" << e.eggId << ", team=" << e.team
-              << ", x=" << e.x << ", y=" << e.y << std::endl;
     Egg egg{.id = e.eggId, .x = e.x, .y = e.y, .team = e.team};
     egg.visual.pos = RenderingHelper::tileToWorld(e.x, e.y, world.width, world.height, tileSize);
     world.eggs[e.eggId] = std::move(egg);
