@@ -151,6 +151,19 @@ struct UnknownCommand {};
 // sbp
 struct BadParameters {};
 
+// stu x (this is a custom event, not part of the official protocol, representing the server uptime in seconds)
+struct ServerUptime {
+    int uptimeSeconds;
+};
+
+// sse #e N X Y (this is a custom event, not part of the official protocol, representing an egg spawned by the server)
+struct ServerSpawnedEgg {
+    int eggId;
+    std::string team;
+    int x;
+    int y;
+};
+
 /**
  * @brief Represents an event received from the server.
  * Is a variant of all possible events, each with their own parameters.
@@ -159,4 +172,4 @@ using Event = std::variant<MapSize, TileContent, TeamName, PlayerNew, PlayerPosi
                            PlayerInventory, PlayerExpulsion, PlayerBroadcast, IncantationStart,
                            IncantationEnd, PlayerFork, PlayerResourceDrop, PlayerResourceTake,
                            PlayerDeath, EggNew, EggHatch, EggDeath, TimeUnit, TimeUnitChange,
-                           GameEnd, ServerMessage, UnknownCommand, BadParameters>;
+                           GameEnd, ServerMessage, UnknownCommand, BadParameters, ServerUptime, ServerSpawnedEgg>;
