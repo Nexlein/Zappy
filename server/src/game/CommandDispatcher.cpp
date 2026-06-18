@@ -123,7 +123,7 @@ void CommandDispatcher::_handleConnectNbr(int connectionId)
     int playerId = _clients.getConnection(connectionId).playerId();
     if (_world.getPlayers().count(playerId)) {
         auto& player = _world.getPlayer(playerId);
-        int slots = _config.clientsNb - _world.teamPlayerCount(player.teamName);
+        int slots = _world.teamEggCount(player.teamName);
         _clients.send(connectionId, std::to_string(slots) + "\n");
     }
     _executeNext(connectionId);
@@ -134,9 +134,7 @@ void CommandDispatcher::_startStarvationTimer(int connectionId, int playerId)
     _scheduler.schedule(std::chrono::milliseconds(STARVATION_INTERVAL_MS) / _freq,
                         [this, connectionId, playerId] {
                             if (!_world.getPlayers().count(playerId)) return;
-                            auto& p = _world.getPlayer(playerId);
-                            p.inventory.food--;
-                            if (p.inventory.food <= 0) {
+                            if (!_world.consumeFood(playerId)) {
                                 _world.removePlayer(playerId);
                                 _clients.send(connectionId, "dead\n");
                                 _pendingDisconnects.push_back(connectionId);

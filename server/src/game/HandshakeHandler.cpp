@@ -32,7 +32,7 @@ void HandshakeHandler::onLine(int connectionId, const std::string& line)
         _reject(connectionId);
         return;
     }
-    if (_world.teamPlayerCount(line) >= _config.clientsNb) {
+    if (_world.teamEggCount(line) == 0) {
         _reject(connectionId);
         return;
     }
@@ -64,29 +64,23 @@ void HandshakeHandler::_promoteToAi(int connectionId, const std::string& teamNam
     static std::mt19937 rng{std::random_device{}()};
     auto orientation = static_cast<Orientation>(dori(rng));
 
+    // A player only spawns by hatching one of the team's eggs. popEggForTeam
+    // fires onEggHatched through the observers (GUI ebo, logging).
     auto egg = _world.popEggForTeam(teamName);
-
-    int x, y;
-    if (egg) {
-        x = egg->x;
-        y = egg->y;
-    } else {
-        std::uniform_int_distribution<int> dx(0, _config.width - 1);
-        std::uniform_int_distribution<int> dy(0, _config.height - 1);
-        x = dx(rng);
-        y = dy(rng);
+    if (!egg) {
+        _reject(connectionId);
+        return;
     }
 
-    int playerId = _world.addPlayer(connectionId, teamName, x, y, orientation);
+    int playerId = _world.addPlayer(connectionId, teamName, egg->x, egg->y, orientation);
     _clients.getConnection(connectionId).setType(ClientType::AI);
     _clients.getConnection(connectionId).setPlayerId(playerId);
 
-    int slotsLeft = _config.clientsNb - _world.teamPlayerCount(teamName);
+    int slotsLeft = _world.teamEggCount(teamName);
     _clients.send(connectionId, std::to_string(slotsLeft) + "\n");
     _clients.send(connectionId,
                   std::to_string(_config.width) + " " + std::to_string(_config.height) + "\n");
 
-    if (egg) _notifier.broadcast(Serializer::ebo(egg->id));
     _onPromoted(connectionId, playerId);
 }
 
