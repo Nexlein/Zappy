@@ -67,7 +67,7 @@ class BroadcastHelp(AState):
         if context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
             for bcst in context.broadcasts:
                 if (
-                    bcst.content.msg_type == MessageType.RALLY
+                    bcst.content.msg_type in (MessageType.RALLY, MessageType.RALLY_FULL)
                     and bcst.content.level == context.level
                     and bcst.content.drone_id > context.drone_id
                 ):
