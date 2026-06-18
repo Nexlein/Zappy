@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include "DrawTypes.hpp"
+#include "raylib.h"
 #include "behaviors/IBehavior.hpp"
 
 /**
