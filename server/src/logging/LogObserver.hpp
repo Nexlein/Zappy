@@ -39,6 +39,7 @@ class LogObserver : public IWorldObserver, public INetworkObserver {
     void onResourceDropped(int playerId, ResourceType resourceType, int tileX, int tileY,
                            Resources resources) override;
     void onEggLaid(int eggId, int playerId, int x, int y) override;
+    void onInitialEggSpawned(int eggId, const std::string& teamName, int x, int y) override;
     void onEggHatched(int eggId) override;
     void onIncantationStart(int x, int y, int level,
                             const std::vector<int>& participantIds) override;

@@ -195,7 +195,10 @@ int World::_spawnEgg(const std::string& teamName, int x, int y, int parentPlayer
     Egg egg{eid, parentPlayerId, x, y, teamName};
     _eggs[eid] = egg;
     at(x, y).eggIds.push_back(eid);
-    for (auto* observer : _observers) observer->onEggLaid(eid, parentPlayerId, x, y);
+    if (parentPlayerId < 0)
+        for (auto* observer : _observers) observer->onInitialEggSpawned(eid, teamName, x, y);
+    else
+        for (auto* observer : _observers) observer->onEggLaid(eid, parentPlayerId, x, y);
     return eid;
 }
 

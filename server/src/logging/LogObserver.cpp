@@ -104,6 +104,12 @@ void LogObserver::onEggLaid(int eggId, int playerId, int x, int y)
                             " at (" + std::to_string(x) + "," + std::to_string(y) + ")");
 }
 
+void LogObserver::onInitialEggSpawned(int eggId, const std::string& teamName, int x, int y)
+{
+    _logger.info(WORLD, "initial egg #" + std::to_string(eggId) + " for team " + teamName +
+                            " at (" + std::to_string(x) + "," + std::to_string(y) + ")");
+}
+
 void LogObserver::onEggHatched(int eggId)
 {
     _logger.info(WORLD, "egg #" + std::to_string(eggId) + " hatched");

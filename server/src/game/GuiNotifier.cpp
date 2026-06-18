@@ -68,6 +68,11 @@ void GuiNotifier::onEggLaid(int eggId, int playerId, int x, int y)
     broadcast(Serializer::enw(eggId, playerId, x, y));
 }
 
+void GuiNotifier::onInitialEggSpawned(int eggId, const std::string& teamName, int x, int y)
+{
+    broadcast(Serializer::sse(eggId, teamName, x, y));
+}
+
 void GuiNotifier::onEggHatched(int eggId) { broadcast(Serializer::ebo(eggId)); }
 
 void GuiNotifier::onIncantationStart(int x, int y, int level,

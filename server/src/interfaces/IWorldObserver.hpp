@@ -22,6 +22,7 @@ class IWorldObserver {
     virtual void onResourceDropped(int playerId, ResourceType resourceType, int tileX, int tileY,
                                    Resources resources) = 0;
     virtual void onEggLaid(int eggId, int playerId, int x, int y) = 0;
+    virtual void onInitialEggSpawned(int eggId, const std::string& teamName, int x, int y) = 0;
     virtual void onEggHatched(int eggId) = 0;
     virtual void onIncantationStart(int x, int y, int level,
                                     const std::vector<int>& participantIds) = 0;

@@ -74,6 +74,11 @@ std::string Serializer::enw(int eggId, int playerId, int x, int y)
     return "enw " + id(eggId) + " " + id(playerId) + " " + n(x) + " " + n(y) + "\n";
 }
 
+std::string Serializer::sse(int eggId, const std::string& teamName, int x, int y)
+{
+    return "sse " + id(eggId) + " " + teamName + " " + n(x) + " " + n(y) + "\n";
+}
+
 std::string Serializer::ebo(int eggId) { return "ebo " + id(eggId) + "\n"; }
 std::string Serializer::edi(int eggId) { return "edi " + id(eggId) + "\n"; }
 
