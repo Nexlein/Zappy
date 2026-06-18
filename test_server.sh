@@ -34,12 +34,12 @@ run_client() {
     done
 }
 
-echo "=== teama + teamb (freq=$FREQ, step=${STEP}s, moves=$MOVES) ==="
+echo "=== TeamA + TeamB (freq=$FREQ, step=${STEP}s, moves=$MOVES) ==="
 
 (echo "GRAPHIC"; sleep $((MOVES / 10 + 5))) | nc -q 0 localhost "$PORT" | grep "^ppo" | sed 's/^/[GUI   ] /' &
 
-run_client "teama" &
-run_client "teamb" &
+run_client "TeamA" &
+run_client "TeamB" &
 
 wait
 echo "=== done ==="
