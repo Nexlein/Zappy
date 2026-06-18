@@ -6,7 +6,7 @@
 ##
 
 import math
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Iterable
 from context import Tile
 
 
@@ -126,3 +126,19 @@ def generate_path_to_tile(index: int) -> List[str]:
         path.extend(["Forward"] * x_offset)
 
     return path
+
+
+def find_closest_resource_path(
+    vision: List[Tile], resources: Iterable[str]
+) -> List[str] | None:
+    best_path = None
+    for i, tile in enumerate(vision):
+        if i == 0:
+            continue
+        for res in resources:
+            if getattr(tile, res, 0) > 0:
+                path = generate_path_to_tile(i)
+                if best_path is None or len(path) < len(best_path):
+                    best_path = path
+                break
+    return best_path
