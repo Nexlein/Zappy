@@ -12,7 +12,7 @@ import unittest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../ai/src"))
 
 from context import Tile
-from elevations import is_incantation_ready
+from utils.stones import is_incantation_ready
 
 
 class TestElevations(unittest.TestCase):

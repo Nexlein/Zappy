@@ -6,22 +6,16 @@
 ##
 
 import random
-from fsm.states.AStates import State
-from context import DroneContext
-from elevations import ELEVATION_REQUIREMENTS
-from BroadcastProtocol import MessageType
-from ai_logger import ai_logger
-from config import (
-    MAX_LEVEL,
-    SOLO_INCANTATION_LEVEL,
-    SURVIVAL_THRESHOLD,
-    EXPLORE_TURN_EVERY,
-)
+from utils.config_loader import get_survival_config, get_evolution_config
+from utils.stones import get_missing_stones
 from look_parser import generate_path_to_tile
-from BroadcastProtocol import BroadcastProtocol
+from BroadcastProtocol import BroadcastProtocol, MessageType
+from context import DroneContext
+
+from fsm.states.AState import AState
 
 
-class SearchStone(State):
+class SearchStone(AState):
     """
     Evolution state — Priority 2: Gather the stones required to level up.
 
@@ -32,50 +26,32 @@ class SearchStone(State):
     """
 
     def enter(self, context: DroneContext) -> None:
-        ai_logger.talk(
-            f"[SearchStone] Let's gather stones to reach level {context.level + 1}!"
-        )
         self._forward_streak = 0
 
-    def _get_missing_stones(self, context: DroneContext) -> dict[str, int]:
-        """Return stones still needed compared to the current inventory."""
-        requirements = ELEVATION_REQUIREMENTS.get(context.level, {})
-        return {
-            stone: required - getattr(context.inventory, stone, 0)
-            for stone, required in requirements.items()
-            if getattr(context.inventory, stone, 0) < required
-        }
+    def _get_missing_stones_for_drone(self, context: DroneContext) -> dict[str, int]:
+        return get_missing_stones(context.level, context.inventory)
 
     def update(self, context: DroneContext) -> str | None:
-        if context.level >= MAX_LEVEL:
-            ai_logger.talk(
-                "[SearchStone] I am already max level! Let's just eat and chill."
-            )
+        evo_cfg = get_evolution_config()
+        surv_cfg = get_survival_config()
+
+        if context.level >= evo_cfg.get("MAX_LEVEL", 8):
             return "ForageFood"
 
-        if context.inventory.food < SURVIVAL_THRESHOLD:
-            ai_logger.talk(
-                "[SearchStone] I am getting hungry while searching for stones... I need food!"
-            )
+        if context.inventory.food < surv_cfg.get("SURVIVAL_THRESHOLD", 5):
             return "ForageFood"
 
         # React to a teammate's RALLY call (solo levels can incant alone).
-        if context.level > SOLO_INCANTATION_LEVEL:
+        if context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
             for bcst in context.broadcasts:
                 if (
                     bcst.content.msg_type == MessageType.RALLY
                     and bcst.content.level == context.level
                 ):
-                    ai_logger.talk(
-                        f"[SearchStone] I hear my friends calling for level {context.level}! I am coming!"
-                    )
                     return "MapsToAlly"
 
-        missing = self._get_missing_stones(context)
+        missing = self._get_missing_stones_for_drone(context)
         if not missing:
-            ai_logger.talk(
-                "[SearchStone] I have found all the stones I need! I am ready!"
-            )
             return "BroadcastHelp"
 
         return None
@@ -87,7 +63,7 @@ class SearchStone(State):
         if not context.vision:
             return "Look"
 
-        missing_stones = self._get_missing_stones(context)
+        missing_stones = self._get_missing_stones_for_drone(context)
         current_tile = context.vision[0]
 
         # Pick up any needed stone on the current tile.
@@ -116,21 +92,22 @@ class SearchStone(State):
         # Nothing useful here — explore.
         # Rotate every 5 steps to avoid getting stuck in a straight line.
         self._forward_streak += 1
-        if self._forward_streak % EXPLORE_TURN_EVERY == 0:
+        surv_cfg = get_survival_config()
+        explore_turn_every = surv_cfg.get("EXPLORE_TURN_EVERY", 5)
+        if self._forward_streak % explore_turn_every == 0:
             return random.choice(["Right", "Left"])
         return "Forward"
 
     def exit(self, context: DroneContext) -> None:
-        ai_logger.talk("[SearchStone] Done looking for stones for now.")
+        pass
 
 
-class IncantationState(State):
+class IncantationState(AState):
     """
     Evolution state: Execute the incantation ritual.
     """
 
     def enter(self, context: DroneContext) -> None:
-        ai_logger.talk("[Incantation] Let the elevation ritual begin!")
         self.broadcast_sent = False
         self.command_sent = False
         self.need_abort = False
@@ -148,12 +125,9 @@ class IncantationState(State):
 
         if self.command_sent and context.last_command_successful is not None:
             if context.last_command_successful:
-                ai_logger.talk(
-                    f"[Incantation] Yes! I successfully reached level {context.level}!"
-                )
                 return "SearchStone"
-            ai_logger.talk("[Incantation] Oh no, the ritual failed. Let's try again...")
-            if context.level > SOLO_INCANTATION_LEVEL:
+            evo_cfg = get_evolution_config()
+            if context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
                 self.need_abort = True
                 return None
             return "SearchStone"
@@ -170,7 +144,10 @@ class IncantationState(State):
                 context.team_name, MessageType.ABORT, context.level, context.drone_id
             )
             return f"Broadcast {payload}"
-        if not self.broadcast_sent and context.level > SOLO_INCANTATION_LEVEL:
+        evo_cfg = get_evolution_config()
+        if not self.broadcast_sent and context.level > evo_cfg.get(
+            "SOLO_INCANTATION_LEVEL", 1
+        ):
             self.broadcast_sent = True
             payload = BroadcastProtocol.encode(
                 context.team_name, MessageType.INCANT, context.level, context.drone_id

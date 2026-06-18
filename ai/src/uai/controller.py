@@ -1,6 +1,10 @@
 from context import DroneContext
-from elevations import PLAYERS_REQUIRED, BROADCAST_DIRECTION_ARRIVED
-from config import BCAST_INTERVAL, MAX_LEVEL, FORK_FOOD_THRESHOLD
+from utils.navigation import BROADCAST_DIRECTION_ARRIVED
+from utils.config_loader import (
+    get_swarm_config,
+    get_evolution_config,
+    get_reproduction_config,
+)
 from BroadcastProtocol import BroadcastProtocol, MessageType
 from ai_logger import ai_logger
 
@@ -17,7 +21,8 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
     def __init__(self, context: DroneContext):
         self.context = context
         self._forward_streak = 0
-        self.tick_since_bcast = BCAST_INTERVAL
+        swarm_cfg = get_swarm_config()
+        self.tick_since_bcast = swarm_cfg.get("BCAST_INTERVAL", 2)
 
         # Leader state
         self.ready_count = 0
@@ -92,17 +97,14 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
                     decoded.msg_type == MessageType.ABORT
                     and decoded.drone_id == self.target_leader_id
                 ):
-                    ai_logger.talk("[UAI-Follower] Rally aborted. Resetting.")
                     self._reset_follower_state()
                 elif (
                     decoded.msg_type == MessageType.INCANT
                     and decoded.drone_id == self.target_leader_id
                 ):
                     if bcst.direction in BROADCAST_DIRECTION_ARRIVED:
-                        ai_logger.talk("[UAI-Follower] Ritual starting! Freezing.")
                         self.waiting_incant = True
                     else:
-                        ai_logger.talk("[UAI-Follower] Ritual started without me.")
                         self._reset_follower_state()
 
             # Leader listening to Followers / Other Leaders
@@ -113,21 +115,12 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
                 ):
                     self.ready_count += 1
                     self.rally_ticks = 0
-                    ai_logger.talk(
-                        f"[UAI-Leader] Teammate ready! ({self.ready_count + 1}/{PLAYERS_REQUIRED[self.context.level]})"
-                    )
                 elif decoded.msg_type == MessageType.LEAVING and self.ready_count > 0:
                     self.ready_count -= 1
-                    ai_logger.talk(
-                        f"[UAI-Leader] Teammate left... ({self.ready_count + 1}/{PLAYERS_REQUIRED[self.context.level]})"
-                    )
                 elif (
                     decoded.msg_type == MessageType.RALLY
                     and decoded.drone_id > self.context.drone_id
                 ):
-                    ai_logger.talk(
-                        f"[UAI-Leader] Yielding leadership to {decoded.drone_id[:4]}."
-                    )
                     self._reset_leader_state()
                     self.is_following = True
 
@@ -147,7 +140,8 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
         self.highest_rally_direction = None
         self._process_messages()
 
-        if self.context.level >= MAX_LEVEL:
+        evo_cfg = get_evolution_config()
+        if self.context.level >= evo_cfg.get("MAX_LEVEL", 8):
             return self._get_survival_action()
 
         # Hard overrides for sequences that must complete before utility is evaluated
@@ -176,7 +170,8 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
 
         # New hunger cycle: clear the reproduce suppressor + any half-done
         # sequence, so the next well-fed window gets a fresh fork attempt.
-        if self.context.inventory.food < FORK_FOOD_THRESHOLD:
+        repr_cfg = get_reproduction_config()
+        if self.context.inventory.food < repr_cfg.get("FORK_FOOD_THRESHOLD", 10):
             self.reproduce_attempted = False
             self.reproduce_connect_sent = False
             self.reproduce_fork_sent = False
@@ -220,9 +215,8 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
             self.is_leader = True
             self.is_following = False
             self.rally_ticks += 1
-            from config import RALLY_TIMEOUT
-
-            if self.rally_ticks > RALLY_TIMEOUT:
+            swarm_cfg = get_swarm_config()
+            if self.rally_ticks > swarm_cfg.get("RALLY_TIMEOUT", 100):
                 # Timed out waiting for followers. Abort and try to reproduce.
                 self.rally_ticks = 0
                 self.reproduce_attempted = False
@@ -247,5 +241,10 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
         else:
             action = self._get_survival_action()
 
-        ai_logger.log_state(best_behavior, action or "None", self.context)
+        ai_logger.log_state(
+            best_behavior,
+            action or "None",
+            self.context.level,
+            self.context.inventory,
+        )
         return action

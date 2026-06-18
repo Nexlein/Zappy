@@ -55,4 +55,4 @@ This creates a 20x20 map on port 4242 with two teams. Each team can have 5 playe
 ./zappy_ai -p 4242 -n TeamA -h 127.0.0.1 -s utility -v
 ```
 
-Use `-s fsm` or `-s utility` to choose the brain. Use `-v` to enable verbose terminal logging.
+Use `-s fsm` or `-s utility` to choose the brain.

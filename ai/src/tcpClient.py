@@ -8,7 +8,7 @@
 from dataclasses import dataclass
 import select
 import socket
-from config import TCP_RECV_BUFFER_SIZE
+from utils.config_loader import get_network_config
 
 
 @dataclass
@@ -17,6 +17,10 @@ class TcpClient:
     port: int
     _socket: socket.socket | None = None
     _buffer: str = ""
+    _recv_buffer_size: int = 4096
+
+    def __post_init__(self):
+        self._recv_buffer_size = get_network_config().get("TCP_RECV_BUFFER_SIZE", 4096)
 
     def connect(self):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -32,7 +36,7 @@ class TcpClient:
         if self._socket is None:
             raise RuntimeError("not connected")
         while "\n" not in self._buffer:
-            chunk = self._socket.recv(TCP_RECV_BUFFER_SIZE)
+            chunk = self._socket.recv(self._recv_buffer_size)
             if not chunk:
                 raise ConnectionError("server closed connection")
             self._buffer += chunk.decode()
@@ -51,7 +55,7 @@ class TcpClient:
         readable, _, _ = select.select([self._socket], [], [], 0)
         if not readable:
             return ""
-        chunk = self._socket.recv(TCP_RECV_BUFFER_SIZE)
+        chunk = self._socket.recv(self._recv_buffer_size)
         if not chunk:
             raise ConnectionError("server closed connection")
         return chunk.decode()
