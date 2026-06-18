@@ -37,6 +37,7 @@ namespace Serializer {
     std::string pdi(int id);
 
     std::string enw(int eggId, int playerId, int x, int y);
+    std::string sse(int eggId, const std::string& teamName, int x, int y);
     std::string ebo(int eggId);
     std::string edi(int eggId);
 

@@ -5,6 +5,8 @@
 #include "core/World.hpp"
 #include "game/CommandDispatcher.hpp"
 #include "game/GuiNotifier.hpp"
+#include "logging/LogObserver.hpp"
+#include "logging/Logger.hpp"
 #include "network/ClientManager.hpp"
 #include "network/Listener.hpp"
 
@@ -25,6 +27,8 @@ class Server {
     ClientManager _clients;
     World _world;
     GuiNotifier _notifier;
+    Logger _logger;
+    LogObserver _logObserver;
     Scheduler _scheduler;
     CommandDispatcher _dispatcher;
 };

@@ -12,6 +12,7 @@ from enum import Enum
 class MessageType(Enum):
     RALLY = "RALLY"
     READY = "READY"
+    COMING = "COMING"
     LEAVING = "LEAVING"
     INCANT = "INCANT"
     ABORT = "ABORT"

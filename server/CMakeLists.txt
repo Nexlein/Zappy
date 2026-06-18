@@ -33,6 +33,11 @@ set(SERVER_SOURCES
     src/game/CommandDispatcher.cpp
     src/game/GuiHandlers.cpp
     src/game/AiHandlers.cpp
+    src/logging/ConsoleSink.cpp
+    src/logging/FileSink.cpp
+    src/logging/CompositeSink.cpp
+    src/logging/Logger.cpp
+    src/logging/LogObserver.cpp
 )
 
 add_executable(zappy_server ${SERVER_SOURCES})

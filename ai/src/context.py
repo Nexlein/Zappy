@@ -47,6 +47,17 @@ class BroadcastMessage:
 
 
 @dataclass
+class AllyInfo:
+    """Stores known information about a teammate."""
+
+    level: int
+    last_seen_tick: int
+    is_ready: bool = False
+    is_rallying: bool = False
+    direction: int = -1
+
+
+@dataclass
 class DroneContext:
     """
     The shared state object modified by the network loop and read by the FSM.
@@ -62,6 +73,9 @@ class DroneContext:
     # Dynamic drone state
     level: int = 1
     inventory: Inventory = field(default_factory=Inventory)
+
+    # Global Tracker for the Swarm
+    ally_roster: dict[str, AllyInfo] = field(default_factory=dict)
 
     # Vision snapshot from the last Look command.
     vision: List[Tile] = field(default_factory=list)
@@ -80,3 +94,6 @@ class DroneContext:
 
     # True while a ritual freezes this drone
     elevation_in_progress: bool = False
+
+    # Total ticks the drone has been active
+    total_ticks: int = 0

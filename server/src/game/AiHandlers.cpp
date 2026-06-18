@@ -94,7 +94,7 @@ void CommandDispatcher::_handleRight(int connectionId)
         }
         auto& p = _world.getPlayer(playerId);
 
-        p.orientation = turnRight(p.orientation);
+        _world.turnPlayer(playerId, turnRight(p.orientation));
         _clients.send(connectionId, "ok\n");
         _executeNext(connectionId);
     });
@@ -111,7 +111,7 @@ void CommandDispatcher::_handleLeft(int connectionId)
             return;
         }
         auto& p = _world.getPlayer(playerId);
-        p.orientation = turnLeft(p.orientation);
+        _world.turnPlayer(playerId, turnLeft(p.orientation));
         _clients.send(connectionId, "ok\n");
         _executeNext(connectionId);
     });
@@ -193,6 +193,7 @@ void CommandDispatcher::_handleBroadcast(int connectionId, const std::string& ms
                                          _world.height(), dst.orientation);
             _clients.send(dst.connectionId, "message " + std::to_string(dir) + "," + msg + "\n");
         }
+        _world.playerBroadcast(playerId, msg);
         _clients.send(connectionId, "ok\n");
         _executeNext(connectionId);
     });
@@ -208,6 +209,7 @@ void CommandDispatcher::_handleFork(int connectionId)
             _executeNext(connectionId);
             return;
         }
+        _world.addEgg(playerId);
         _clients.send(connectionId, "ok\n");
         _executeNext(connectionId);
     });
