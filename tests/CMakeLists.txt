@@ -8,9 +8,11 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# GTest: to install locally: sudo apt install libgtest-dev
 find_package(GTest QUIET)
 if(NOT GTest_FOUND)
-    message(STATUS "GTest not found in system, downloading with FetchContent...")
+    message(WARNING "GTest not found on system — fetching via FetchContent\n"
+                    "   To avoid this next time: sudo apt install libgtest-dev")
     include(FetchContent)
     fetchcontent_declare(
         googletest
