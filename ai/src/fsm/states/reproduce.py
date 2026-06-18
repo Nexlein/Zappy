@@ -30,9 +30,9 @@ class Reproduce(AState):
 
     def __init__(self) -> None:
         self.forks_done = 0
+        self.last_fork_tick = -9999
 
     def enter(self, context: DroneContext) -> None:
-        self._connect_sent = False
         self._fork_sent = False
 
     def update(self, context: DroneContext) -> str | None:
@@ -42,23 +42,19 @@ class Reproduce(AState):
         if context.inventory.food < repr_cfg.get("FORK_FOOD_THRESHOLD", 10):
             return "SearchStone"
 
-        # Fork verdict: count the egg only on success, then leave.
         if self._fork_sent:
             if context.last_command_successful:
                 self.forks_done += 1
+                self.last_fork_tick = context.total_ticks
             return "SearchStone"
 
-        # After the refresh: an idle egg already exists — don't pile up.
-        if self._connect_sent and context.available_slots > 0:
+        if context.total_ticks - self.last_fork_tick < 800:
             return "SearchStone"
 
         return None
 
     def get_action(self, context: DroneContext) -> str | None:
-        if not self._connect_sent:
-            self._connect_sent = True
-            return "Connect_nbr"
-        if not self._fork_sent and context.available_slots == 0:
+        if not self._fork_sent:
             self._fork_sent = True
             return "Fork"
         return None

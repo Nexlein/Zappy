@@ -14,6 +14,7 @@ from context import BroadcastMessage
 from fsm.states.evolution import IncantationState
 from BroadcastProtocol import DecodedBroadcast, MessageType
 from utils.stones import get_missing_stones
+from context import AllyInfo
 
 
 def _rally(team: str, level: int, direction: int = 1) -> BroadcastMessage:
@@ -206,6 +207,7 @@ class TestBroadcastHelp(unittest.TestCase):
     def test_update_timeout(self):
         self.state.enter(self.context)
         self.context.inventory.food = 15  # Food secure
+        self.context.level = 2  # Require 2 players
         self.state.ticks_waited = 301  # Greater than RALLY_TIMEOUT (300)
         res = self.state.update(self.context)
         self.assertIsNone(res)
@@ -216,7 +218,9 @@ class TestBroadcastHelp(unittest.TestCase):
         self.context.inventory.food = 15  # Food secure
         self.context.vision = [Tile(player=2, linemate=1, deraumere=1, sibur=1)]
         self.context.level = 2
-        self.state.ready_count = 1  # Faking 1 teammate ready
+        self.context.ally_roster["fake"] = AllyInfo(
+            level=2, last_seen_tick=0, is_ready=True, direction=0
+        )
         res = self.state.update(self.context)
         self.assertEqual(res, "Incantation")
 
@@ -247,7 +251,19 @@ class TestMapsToAlly(unittest.TestCase):
     def test_get_action_follow_broadcast(self):
         self.state.enter(self.context)
         self.context.level = 1
-        self.context.team_name = "team5"
-        self.context.broadcasts = [_rally("team5", 1)]
+        self.context.ally_roster["fake"] = AllyInfo(
+            level=1, last_seen_tick=0, is_rallying=True, direction=1
+        )
+        self.context.broadcasts = [
+            BroadcastMessage(
+                direction=1,
+                content=DecodedBroadcast(
+                    team_name="team1",
+                    msg_type=MessageType.RALLY,
+                    level=1,
+                    drone_id="fake",
+                ),
+            )
+        ]
         action = self.state.get_action(self.context)
         self.assertEqual(action, "Forward")
