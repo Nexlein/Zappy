@@ -29,6 +29,7 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
         self.is_leader = False
         self.leader_aborted = False
         self.rally_ticks = 0
+        self.eject_done = False
 
         # Incantation sequence state
         self.incant_bcast_sent = False
@@ -62,6 +63,7 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
         self.is_leader = False
         self.leader_aborted = False
         self.rally_ticks = 0
+        self.eject_done = False
         self.incant_bcast_sent = False
         self.incant_cmd_sent = False
 
