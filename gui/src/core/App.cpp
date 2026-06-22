@@ -12,6 +12,7 @@ extern volatile sig_atomic_t g_interrupted;
 #include "renderer/HeadlessRenderer.hpp"
 #include "renderer/IRenderer.hpp"
 #include "renderer/RaylibRenderer.hpp"
+#include "renderer/raylib_helpers/I18n.hpp"
 
 static constexpr int MAX_RETRIES = 5;
 
@@ -24,6 +25,7 @@ int App::exitCode() const { return args.exitCode(); }
 void App::run()
 {
     AppConfig config = args.getConfig();
+    I18n::setLanguage(config.language);
 
     auto socket = std::make_unique<TcpSocket>();
     if (!_connectWithRetry(*socket, config.machine, config.port)) return;
