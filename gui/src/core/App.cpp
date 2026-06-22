@@ -45,7 +45,7 @@ void App::run()
         try {
             while (!renderer->shouldClose() && !g_interrupted) {
                 socket->send("mct\n");
-                socket->send("stu\n");  // custom protocol to get server uptime in seconds
+                _trySendStu(*socket);
                 pollAndEnqueue(*socket, eventQueue);
 
                 while (auto event = eventQueue.pop()) state.applyEvent(*event);
@@ -62,6 +62,7 @@ void App::run()
             if (!_connectWithRetry(*socket, config.machine, config.port)) break;
             state = GameState{};
             eventQueue.clear();
+            _resetStuState();
             renderer->init();
             _rendererActive = true;
         }
@@ -82,6 +83,35 @@ void App::pollAndEnqueue(TcpSocket& socket, EventQueue& queue)
     }
 }
 
+void App::_trySendStu(TcpSocket& socket)
+{
+    if (_stuSilenced) return;
+
+    auto now = std::chrono::steady_clock::now();
+    if (now - _lastStuSent < std::chrono::seconds(1)) return;
+
+    if (_lastStuSent.time_since_epoch().count() != 0) {
+        if (state.receivedStuResponse)
+            _stuMissedResponses = 0;
+        else if (++_stuMissedResponses >= 3) {
+            _stuSilenced = true;
+            std::cerr << "[Network] stu: no response after 3 attempts, disabling uptime polling\n";
+            return;
+        }
+        state.receivedStuResponse = false;
+    }
+
+    socket.send("stu\n");
+    _lastStuSent = now;
+}
+
+void App::_resetStuState()
+{
+    _lastStuSent = {};
+    _stuMissedResponses = 0;
+    _stuSilenced = false;
+}
+
 bool App::_connectWithRetry(TcpSocket& socket, const std::string& host, int port)
 {
     int delay = 1;
@@ -89,6 +119,7 @@ bool App::_connectWithRetry(TcpSocket& socket, const std::string& host, int port
         try {
             socket.connect(host, port);
             socket.send("GRAPHIC\n");
+            std::cerr << "[Network] Connected to " << host << ":" << port << "\n";
             return true;
         } catch (const TcpException& e) {
             std::cerr << "[Network] " << e.what() << " (attempt " << attempt << "/" << MAX_RETRIES

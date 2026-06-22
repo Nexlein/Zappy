@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+
 #include "Args.hpp"
 #include "EventQueue.hpp"
 #include "GameState.hpp"
@@ -46,4 +48,14 @@ class App {
 
     /** @brief Attempts to connect with exponential backoff. Returns true on success. */
     bool _connectWithRetry(TcpSocket& socket, const std::string& host, int port);
+
+    /** @brief Sends stu once per real second and silences it after 3 consecutive non-responses. */
+    void _trySendStu(TcpSocket& socket);
+
+    /** @brief Resets stu polling state, called on reconnect. */
+    void _resetStuState();
+
+    std::chrono::steady_clock::time_point _lastStuSent{};
+    int _stuMissedResponses = 0;
+    bool _stuSilenced = false;
 };

@@ -293,13 +293,18 @@ void RaylibRenderer::_drawHUD()
         "Map: " + std::to_string(_state->world.width) + "x" + std::to_string(_state->world.height);
     std::string timeUnitText = "Time unit: " + std::to_string(_state->timeUnit);
 
-    int uptimeHours = _state->serverUptimeSeconds / 3600;
-    int uptimeMinutes = (_state->serverUptimeSeconds % 3600) / 60;
-    int uptimeSeconds = _state->serverUptimeSeconds % 60;
-    std::string uptimeText = "Time ";
-    if (uptimeHours > 0) uptimeText += std::to_string(uptimeHours) + "h ";
-    if (uptimeMinutes > 0 || uptimeHours > 0) uptimeText += std::to_string(uptimeMinutes) + "m ";
-    uptimeText += std::to_string(uptimeSeconds) + "s";
+    std::string uptimeText;
+    if (_state->serverUptimeSeconds == 0) {
+        uptimeText = "Time --:--";
+    } else {
+        int uptimeHours = _state->serverUptimeSeconds / 3600;
+        int uptimeMinutes = (_state->serverUptimeSeconds % 3600) / 60;
+        int uptimeSeconds = _state->serverUptimeSeconds % 60;
+        uptimeText = "Time ";
+        if (uptimeHours > 0) uptimeText += std::to_string(uptimeHours) + "h ";
+        if (uptimeMinutes > 0 || uptimeHours > 0) uptimeText += std::to_string(uptimeMinutes) + "m ";
+        uptimeText += std::to_string(uptimeSeconds) + "s";
+    }
 
     std::unordered_map<std::string, int> teamPlayerCounts;
     for (const auto& teamName : _state->world.teams) teamPlayerCounts[teamName] = 0;

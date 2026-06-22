@@ -245,7 +245,11 @@ void GameState::_applyTimeUnitChange(const TimeUnitChange& e) { timeUnit = e.tim
 
 void GameState::_applyGameEnd(const GameEnd& e) { winnerTeam = e.winningTeam; }
 
-void GameState::_applyServerUptime(const ServerUptime& e) { serverUptimeSeconds = e.uptimeSeconds; }
+void GameState::_applyServerUptime(const ServerUptime& e)
+{
+    serverUptimeSeconds = e.uptimeSeconds;
+    receivedStuResponse = true;
+}
 
 void GameState::_applyServerSpawnedEgg(const ServerSpawnedEgg& e)
 {

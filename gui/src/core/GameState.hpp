@@ -19,6 +19,7 @@ class GameState {
     std::string winnerTeam = "";
     float tileSize = 1.0f;
     unsigned int serverUptimeSeconds = 0;
+    bool receivedStuResponse = false;
 
     /**
      * @brief Applies an event to the game state, modifying it accordingly and setting the dirty
