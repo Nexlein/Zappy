@@ -47,3 +47,4 @@ Testing/
 # tui
 /zappy_tui
 tui/.venv/
+tui/*.md
