@@ -12,6 +12,7 @@ struct AppConfig {
     int port;
     std::string machine;
     bool headless;
+    bool dev = false;
     I18n::Language language = I18n::Language::EN;
 };
 
