@@ -87,10 +87,14 @@ SelectionFinder::Selection SelectionFinder::getEmptySelection()
 std::ostream& operator<<(std::ostream& os, const SelectionFinder::EntityType& type)
 {
     switch (type) {
-        case SelectionFinder::EntityType::None:   return os << "None";
-        case SelectionFinder::EntityType::Player: return os << "Player";
-        case SelectionFinder::EntityType::Egg:    return os << "Egg";
-        case SelectionFinder::EntityType::Tile:   return os << "Tile";
+        case SelectionFinder::EntityType::None:
+            return os << "None";
+        case SelectionFinder::EntityType::Player:
+            return os << "Player";
+        case SelectionFinder::EntityType::Egg:
+            return os << "Egg";
+        case SelectionFinder::EntityType::Tile:
+            return os << "Tile";
     }
     return os << "Unknown";
 }

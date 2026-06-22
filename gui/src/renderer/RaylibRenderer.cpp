@@ -80,8 +80,7 @@ void RaylibRenderer::handleInput()
     if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
         _cameraAngle -= CAMERA_MOVE_SPEED * GetFrameTime();
 
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-        _performRaycast();
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) _performRaycast();
 }
 
 bool RaylibRenderer::shouldClose() { return WindowShouldClose(); }

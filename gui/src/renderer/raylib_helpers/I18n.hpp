@@ -118,7 +118,7 @@ class I18n {
             "Carte: ",           // HUD_MAP
             "Unité de temps: ",  // HUD_TIME_UNIT
             "Temps --:--",       // HUD_UPTIME_UNKNOWN
-            "Temps: ",            // HUD_UPTIME_PREFIX
+            "Temps: ",           // HUD_UPTIME_PREFIX
             "h ",                // HUD_UPTIME_H
             "m ",                // HUD_UPTIME_M
             "s",                 // HUD_UPTIME_S
