@@ -10,16 +10,26 @@
 #include "network/ClientManager.hpp"
 #include "network/Listener.hpp"
 
+/**
+ * @brief Owns every subsystem and runs the main game loop.
+ *
+ * run() loops forever: poll the sockets, pass new connections / lines /
+ * disconnects to the CommandDispatcher, then let the Scheduler fire any timers
+ * that are due (respawn, starvation, incantations...). Single thread.
+ */
 class Server {
     public:
     Server(const ServerConfig& config);
 
+    /// Run the game loop until the process is stopped.
     void run();
 
     private:
+    /// (Re)schedule the periodic world resource respawn.
     void _scheduleRespawn();
     void _logStartup() const;
 
+    /// Resources respawn every 20 time units (subject spec).
     static constexpr int RESPAWN_INTERVAL_MS = 20000;
 
     ServerConfig _config;
