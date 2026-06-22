@@ -8,6 +8,7 @@
 #include "raylib_helpers/ColorPalette.hpp"
 #include "raylib_helpers/EntityRenderer.hpp"
 #include "raylib_helpers/GridRenderer.hpp"
+#include "raylib_helpers/I18n.hpp"
 #include "raylib_helpers/RenderingHelper.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
 
@@ -199,7 +200,7 @@ void RaylibRenderer::_render2D()
                            .setFontSize(_getScaledFontSize(12));
 
         for (const Player* p : group)
-            builder.addLine("Level " + std::to_string(p->level), _getTeamColor(p->team));
+            builder.addLine(std::string(I18n::get(I18n::Key::PLAYER_HEAD_LEVEL)) + std::to_string(p->level), _getTeamColor(p->team));
 
         builder.draw(screenPos);
     }
@@ -272,9 +273,9 @@ void RaylibRenderer::_drawSelectedToolip()
         case SelectionFinder::EntityType::Tile: {
             const Resources& resources = _state->world.at(_selection.tileX, _selection.tileY);
             if (resources.isEmpty()) {
-                builder.addColoredText({"Tile", " is empty"}, {tileColor, textColor});
+                builder.addColoredText({I18n::get(I18n::Key::LABEL_TILE), I18n::get(I18n::Key::TILE_EMPTY)}, {tileColor, textColor});
             } else {
-                builder.addLine("Tile:", tileColor);
+                builder.addLine(I18n::get(I18n::Key::TILE_HEADER), tileColor);
                 _addResourceLines(builder, resources, "  ", textColor);
             }
             break;
@@ -283,15 +284,15 @@ void RaylibRenderer::_drawSelectedToolip()
         case SelectionFinder::EntityType::Player: {
             if (!_state->world.playerExists(_selection.id)) return;
             const Player& player = _state->world.players.at(_selection.id);
-            builder.addColoredText({"Player ", "#" + std::to_string(player.id)},
+            builder.addColoredText({I18n::get(I18n::Key::LABEL_PLAYER), " #" + std::to_string(player.id)},
                                    {playerColor, textColor});
-            builder.addColoredText({"  Team ", player.team},
+            builder.addColoredText({I18n::get(I18n::Key::PLAYER_TEAM), player.team},
                                    {textColor, _getTeamColor(player.team)});
-            builder.addLine("  Level " + std::to_string(player.level), textColor);
+            builder.addLine(std::string(I18n::get(I18n::Key::PLAYER_LEVEL)) + std::to_string(player.level), textColor);
             if (player.inventory.isEmpty()) {
-                builder.addLine("  Inventory is empty", textColor);
+                builder.addLine(I18n::get(I18n::Key::PLAYER_INVENTORY_EMPTY), textColor);
             } else {
-                builder.addLine("  Inventory:", textColor);
+                builder.addLine(I18n::get(I18n::Key::PLAYER_INVENTORY), textColor);
                 _addResourceLines(builder, player.inventory, "    ", textColor);
             }
             break;
@@ -300,8 +301,8 @@ void RaylibRenderer::_drawSelectedToolip()
         case SelectionFinder::EntityType::Egg: {
             if (!_state->world.eggExists(_selection.id)) return;
             const Egg& egg = _state->world.eggs.at(_selection.id);
-            builder.addColoredText({"Egg ", "#" + std::to_string(egg.id)}, {eggColor, textColor});
-            builder.addColoredText({"  Team ", egg.team}, {textColor, _getTeamColor(egg.team)});
+            builder.addColoredText({I18n::get(I18n::Key::LABEL_EGG), " #" + std::to_string(egg.id)}, {eggColor, textColor});
+            builder.addColoredText({I18n::get(I18n::Key::EGG_TEAM), egg.team}, {textColor, _getTeamColor(egg.team)});
             break;
         }
 
@@ -320,24 +321,24 @@ void RaylibRenderer::_drawHUD()
 
     int fps = GetFPS();
     Color fpsColor = fps >= 55 ? GREEN : (fps >= 30 ? YELLOW : RED);
-    std::string fpsText = "FPS: " + std::to_string(fps);
+    std::string fpsText = std::string(I18n::get(I18n::Key::HUD_FPS)) + std::to_string(fps);
 
-    std::string mapText =
-        "Map: " + std::to_string(_state->world.width) + "x" + std::to_string(_state->world.height);
-    std::string timeUnitText = "Time unit: " + std::to_string(_state->timeUnit);
+    std::string mapText = std::string(I18n::get(I18n::Key::HUD_MAP)) +
+        std::to_string(_state->world.width) + "x" + std::to_string(_state->world.height);
+    std::string timeUnitText = std::string(I18n::get(I18n::Key::HUD_TIME_UNIT)) + std::to_string(_state->timeUnit);
 
     std::string uptimeText;
     if (_state->serverUptimeSeconds == 0) {
-        uptimeText = "Time --:--";
+        uptimeText = I18n::get(I18n::Key::HUD_UPTIME_UNKNOWN);
     } else {
         int uptimeHours = _state->serverUptimeSeconds / 3600;
         int uptimeMinutes = (_state->serverUptimeSeconds % 3600) / 60;
         int uptimeSeconds = _state->serverUptimeSeconds % 60;
-        uptimeText = "Time ";
-        if (uptimeHours > 0) uptimeText += std::to_string(uptimeHours) + "h ";
+        uptimeText = I18n::get(I18n::Key::HUD_UPTIME_PREFIX);
+        if (uptimeHours > 0) uptimeText += std::to_string(uptimeHours) + I18n::get(I18n::Key::HUD_UPTIME_H);
         if (uptimeMinutes > 0 || uptimeHours > 0)
-            uptimeText += std::to_string(uptimeMinutes) + "m ";
-        uptimeText += std::to_string(uptimeSeconds) + "s";
+            uptimeText += std::to_string(uptimeMinutes) + I18n::get(I18n::Key::HUD_UPTIME_M);
+        uptimeText += std::to_string(uptimeSeconds) + I18n::get(I18n::Key::HUD_UPTIME_S);
     }
 
     std::unordered_map<std::string, int> teamPlayerCounts;
@@ -430,7 +431,7 @@ void RaylibRenderer::_performRaycast()
     Ray ray = GetMouseRay(GetMousePosition(), _camera);
     _selection =
         SelectionFinder::findFromRay(ray, *_state, TILE_SIZE, _playerModel, PLAYER_MODEL_SIZE,
-                                     _eggModel, EGG_MODEL_SIZE, SELECTION_TIMER);
+                                     _eggModel, EGG_MODEL_SIZE, _tileSlotMap, SELECTION_TIMER);
 
     if (_selection.type == SelectionFinder::EntityType::None) {
         _selection = SelectionFinder::getEmptySelection();
@@ -454,7 +455,7 @@ void RaylibRenderer::_addResourceLines(TooltipRenderer::Builder& builder, const 
     for (int i = 0; i < 7; i++) {
         int qty = res[i];
         if (qty <= 0) continue;
-        builder.addLine(indent + res.get_name(i) + ": " + std::to_string(qty), color);
+        builder.addLine(indent + I18n::resourceName(i) + ": " + std::to_string(qty), color);
     }
 }
 
