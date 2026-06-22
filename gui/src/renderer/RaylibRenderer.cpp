@@ -81,9 +81,23 @@ void RaylibRenderer::handleInput()
         _cameraAngle -= CAMERA_MOVE_SPEED * GetFrameTime();
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) _performRaycast();
+
+    if (IsKeyPressed(KEY_L)) {
+        auto lang = I18n::getLanguage();
+        I18n::setLanguage(lang == I18n::Language::EN ? I18n::Language::FR : I18n::Language::EN);
+    }
+
+    if (IsKeyPressed(KEY_F3)) _devMode = !_devMode;
 }
 
 bool RaylibRenderer::shouldClose() { return WindowShouldClose(); }
+
+void RaylibRenderer::setDevMode(bool dev, int port, const std::string& machine)
+{
+    _devMode = dev;
+    _devPort = port;
+    _devMachine = machine;
+}
 
 void RaylibRenderer::shutdown()
 {
@@ -321,15 +335,9 @@ void RaylibRenderer::_drawHUD()
     Color borderColor = {60, 70, 90, 200};
     Color accentColor = {210, 220, 240, 255};
 
-    int fps = GetFPS();
-    Color fpsColor = fps >= 55 ? GREEN : (fps >= 30 ? YELLOW : RED);
-    std::string fpsText = std::string(I18n::get(I18n::Key::HUD_FPS)) + std::to_string(fps);
-
     std::string mapText = std::string(I18n::get(I18n::Key::HUD_MAP)) +
                           std::to_string(_state->world.width) + "x" +
                           std::to_string(_state->world.height);
-    std::string timeUnitText =
-        std::string(I18n::get(I18n::Key::HUD_TIME_UNIT)) + std::to_string(_state->timeUnit);
 
     std::string uptimeText;
     if (_state->serverUptimeSeconds == 0) {
@@ -356,11 +364,21 @@ void RaylibRenderer::_drawHUD()
     std::sort(sortedTeams.begin(), sortedTeams.end(),
               [](const auto& a, const auto& b) { return a.second > b.second; });
 
-    auto builder = TooltipRenderer::create()
-                       .addLine(fpsText, fpsColor)
-                       .addLine(mapText, accentColor)
-                       .addLine(timeUnitText, accentColor)
-                       .addLine(uptimeText, accentColor);
+    auto builder = TooltipRenderer::create();
+
+    if (_devMode) {
+        int fps = GetFPS();
+        Color fpsColor = fps >= 55 ? GREEN : (fps >= 30 ? YELLOW : RED);
+        builder.addLine(std::string(I18n::get(I18n::Key::HUD_FPS)) + std::to_string(fps),
+                        fpsColor);
+        builder.addLine(
+            std::string(I18n::get(I18n::Key::HUD_TIME_UNIT)) + std::to_string(_state->timeUnit),
+            accentColor);
+        builder.addLine("Port: " + std::to_string(_devPort), accentColor);
+        builder.addLine("Machine: " + _devMachine, accentColor);
+    }
+
+    builder.addLine(mapText, accentColor).addLine(uptimeText, accentColor);
 
     // Add top 5 teams by population
     for (size_t i = 0; i < std::min(sortedTeams.size(), size_t(5)); i++) {

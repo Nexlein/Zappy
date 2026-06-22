@@ -23,6 +23,7 @@ class RaylibRenderer : public ARenderer {
     void handleInput() override;
     bool shouldClose() override;
     void shutdown() override;
+    void setDevMode(bool dev, int port, const std::string& machine) override;
 
     private:
     static constexpr std::string_view PLAYER_MODEL_PATH = "gui/assets/rimuru.glb";
@@ -60,6 +61,10 @@ class RaylibRenderer : public ARenderer {
         bool valid = false;
     };
     WindowSnapshot _savedWindow;
+
+    bool _devMode = false;
+    int _devPort = -1;
+    std::string _devMachine;
 
     void _render3D();
     void _render2D();
