@@ -302,7 +302,8 @@ void RaylibRenderer::_drawHUD()
         int uptimeSeconds = _state->serverUptimeSeconds % 60;
         uptimeText = "Time ";
         if (uptimeHours > 0) uptimeText += std::to_string(uptimeHours) + "h ";
-        if (uptimeMinutes > 0 || uptimeHours > 0) uptimeText += std::to_string(uptimeMinutes) + "m ";
+        if (uptimeMinutes > 0 || uptimeHours > 0)
+            uptimeText += std::to_string(uptimeMinutes) + "m ";
         uptimeText += std::to_string(uptimeSeconds) + "s";
     }
 
