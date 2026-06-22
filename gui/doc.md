@@ -41,7 +41,7 @@ Two commands added on top of the standard GUI protocol. Non-disruptive: server h
 | `stu` | GUI→Server, Server→GUI | `stu` / `stu T` | GUI polls each frame; server replies with uptime `T` in seconds |
 | `sse` | Server→GUI | `sse #e N X Y` | Server-spawned egg at startup; `#e` = egg ID, `N` = team name, `X Y` = tile position |
 
-**`stu`:** Enables the uptime display in the HUD. GUI sends `stu\n` every frame; server responds `stu <seconds>`. `GameState::serverUptimeSeconds` stores the last received value.
+**`stu`:** Enables the uptime display in the HUD. GUI sends `stu\n` at most once per real-time second (`App::_trySendStu`). If the server fails to respond 3 consecutive times, polling is silenced for the session and the HUD shows `Time --:--`. `GameState::serverUptimeSeconds` stores the last received value; `GameState::receivedStuResponse` is set to `true` on receipt so `_trySendStu` can detect a live response.
 
 **`sse`:** Each team starts with 10 server-spawned slots, represented as pre-placed eggs. The server sends one `sse` per egg at connection time. Parsed into `ServerSpawnedEgg` event, handled identically to `enw` eggs in `GameState`.
 
@@ -135,6 +135,8 @@ CLI argument parser with validation.
 - `-p port` (required): server port (1-65535)
 - `-h machine` (optional): server host (default: localhost)
 - `--headless` (optional): use headless renderer
+- `--dev true|false` (optional): enable dev HUD (FPS, time unit, port, machine); default false
+- `--language english|french` (optional): UI language at launch; default english
 - `--help`: show usage
 
 **Exit codes:**
@@ -169,18 +171,21 @@ Text-based state dump for testing/debugging. Prints game state updates to stdout
 - All world coordinates computed via `RenderingHelper::tileToWorld()`
 
 **Selection System**
-- Single click: raycast via `SelectionFinder`, selects closest entity (player, egg, or tile), auto-deselects after 5s timer
-- Double click (≤300ms): permanent selection, bypasses timer
+- Single click: raycast via `SelectionFinder`, selects closest entity (player, egg, or tile); selection is permanent
 - Click empty space: clears selection
 - Selected entity gets a wireframe highlight (players/eggs) or grid outline (tiles)
-- Selection state lives in `SelectionFinder::Selection` (type, id, tileX/Y, timer, permanent flag)
+- Selection state lives in `SelectionFinder::Selection` (type, id, tileX/Y)
+- Egg raycasts apply the same tile slot offset as the visual position so hitbox matches what is drawn
 
 **HUD (top-left)**
-- FPS counter (green ≥55, yellow ≥30, red <30)
 - Map dimensions
-- Current time unit
-- Server uptime (`Xh Ym Zs`, hours/minutes omitted when zero)
+- Server uptime (`Xh Ym Zs`, hours/minutes omitted when zero; `Time --:--` if unavailable)
 - Top 5 teams by player count, each in their team color
+- **Dev mode only** (`--dev true` or `F3` toggle): FPS counter (green ≥55, yellow ≥30, red <30), time unit, port, machine
+
+**Window persistence**
+- On `shutdown()`, window state (size, position, monitor, fullscreen) is saved to `_savedWindow`
+- On `init()` after reconnect, `_savedWindow` is restored — window reopens exactly where it closed
 
 **Entity Tooltip (top-right)**
 - Appears when an entity is selected
@@ -189,6 +194,11 @@ Text-based state dump for testing/debugging. Prints game state updates to stdout
 - Player: ID, team name (team color), level, inventory (non-zero resources)
 - Egg: ID, team name (team color)
 - Built with `TooltipRenderer` builder pattern
+
+**Keybinds**
+- `Q`/`A` or Left/Right arrows: rotate camera
+- `L`: cycle UI language (EN↔FR)
+- `F3`: toggle dev HUD on/off at runtime
 
 **Window**
 - Resizable; font sizes scale with screen height (base 600px = 1.0x, clamped 0.5x–2.5x)
@@ -205,7 +215,38 @@ Static helper classes extracted from RaylibRenderer for maintainability:
 | `GridRenderer` | Draw tile grid and tile highlights |
 | `TextRenderer` | Draw text anchored to 3D world positions |
 | `TooltipRenderer` | Builder-pattern 2D tooltip renderer (multi-line, colored segments, anchored) |
-| `SelectionFinder` | Raycast against world entities, returns closest hit |
+| `SelectionFinder` | Raycast against world entities, returns closest hit; takes `TileSlotMap` to apply egg slot offsets |
+| `TileSlotMap` | Per-tile slot occupancy: assigns and tracks stable visual positions for resources and eggs (8 slots/tile) |
+| `I18n` | Compile-time EN/FR string table; O(1) lookup via static constexpr 2D array indexed by `[Language][Key]` |
+
+**TileSlotMap — tile slot system**
+
+Resources and eggs are displayed at one of 8 fixed slots per tile rather than at tile center or random positions. This prevents visual overlap with players (always at tile center) and with each other.
+
+Slot layout (offsets are fractions of `tileSize`):
+
+| Index | Type   | dx    | dz    |
+|-------|--------|-------|-------|
+| 0–3   | corner | ±0.35 | ±0.35 |
+| 4–5   | edge   | 0.00  | ±0.35 |
+| 6–7   | edge   | ±0.35 | 0.00  |
+
+- Resources and eggs share the same per-tile occupancy — they cannot land on the same slot
+- Slot assignment is renderer-only; the data layer (`WorldState`, `GameState`) is unchanged
+- `updateResourceSlots(x, y, res)` — called each frame; assigns a slot on 0→nonzero transition, releases on nonzero→0; returns `std::array<int,7>` of slot indices (-1 = not present)
+- `syncEggs(eggs)` — diffs current egg map against known set; assigns slots to new eggs, releases slots for gone eggs
+- Overflow: if all 8 slots full, new entity picks `rand() % 8` (visual overlap accepted, no crash)
+- Slot selection is random among free slots (`rand() % freeCount`) for natural spread
+
+**I18n — compile-time localization**
+
+All UI strings are stored as a static `constexpr` 2D array indexed by `[Language][Key]`. Zero allocation, O(1) lookup, no file I/O — deliberately chosen over a config file because languages are a compile-time concern and a missing file is an unnecessary failure mode.
+
+- `I18n::get(Key)` — returns `const char*` for current language
+- `I18n::resourceName(int index)` — resource name by index 0–6, matching `Resources[]` ordering
+- `I18n::setLanguage(Language)` / `getLanguage()` — runtime language switch
+- Language set at startup via `--language` arg; toggled live with `L` key (EN↔FR cycle)
+- French typography: space before `:` in all FR label prefixes
 
 **TooltipRenderer builder API:**
 ```cpp
@@ -251,13 +292,14 @@ void App::run() {
     _connectWithRetry(*socket, host, port);  // exponential backoff, 5 attempts
 
     IRenderer* renderer = config.headless ? new HeadlessRenderer(...) : new RaylibRenderer(...);
+    renderer->setDevMode(config.dev, config.port, config.machine);
     renderer->init();
     _rendererActive = true;
 
     while (!renderer->shouldClose()) {
         try {
             socket->send("mct\n");
-            socket->send("stu\n");  // poll server uptime
+            _trySendStu(*socket);  // throttled: once/s, silenced after 3 missed responses
             pollAndEnqueue(*socket, queue);
             while (auto event = queue.pop()) state.applyEvent(*event);
             renderer->setState(state);
@@ -267,7 +309,7 @@ void App::run() {
             renderer->shutdown();
             _rendererActive = false;
             // reconnect with retry; if fails, break
-            state = {}; queue.clear();
+            state = {}; queue.clear(); _resetStuState();
             renderer->init();
             _rendererActive = true;
         }
@@ -290,14 +332,15 @@ Server → Client: ongoing events...
 
 ## Testing
 
-**Unit tests:** 102 tests across all components
+**Unit tests:** 117 tests across 8 suites
 - TcpSocket (11 tests)
 - EventQueue (7 tests)
 - ProtocolParser (36 tests)
 - GameState (24 tests)
 - Args (21 tests)
 - App (2 tests)
-- Stub (1 test)
+- TileSlotMap (11 tests)
+- I18n (6 tests) — including resource name index ordering, EN/FR parity check
 
 **E2E verification:** Manual testing against reference server (`bin/zappy_server`)
 
@@ -351,7 +394,9 @@ gui/
 │           ├── GridRenderer.hpp/cpp
 │           ├── TextRenderer.hpp/cpp
 │           ├── TooltipRenderer.hpp/cpp
-│           └── SelectionFinder.hpp/cpp
+│           ├── SelectionFinder.hpp/cpp
+│           ├── TileSlotMap.hpp/cpp
+│           └── I18n.hpp/cpp
 ├── CMakeLists.txt
 └── doc.md
 ```
@@ -381,3 +426,12 @@ RaylibRenderer grew large. Extracting stateless drawing concerns (grid, entities
 
 **Why blend elliptic+spherical orbit?**
 Pure circular orbit makes non-square maps look skewed. Pure elliptic stretches too far on wide maps. 50% blend gives a natural feel across all aspect ratios.
+
+**Why tile slots in the renderer, not the data layer?**
+Slot positions are purely visual — the server never communicates them and they carry no game semantics. `WorldState` represents what the server says happened; slot assignment is a display decision each renderer can make independently. `TileSlotMap` therefore lives in `raylib_helpers/` and is invisible to `HeadlessRenderer`.
+
+**Why I18n as a constexpr array instead of a config file?**
+Languages are a compile-time concern. A config file adds a runtime failure mode (file missing, bad path) for something that never changes without a recompile. The 2D array gives O(1) lookup with zero allocation — straightforward to extend (add a language = add a column, add a string = add a row).
+
+**Why `Oeuf` not `Œuf` in French?**
+Raylib's default font is ASCII-only. The `Œ` ligature renders as `?` at runtime. Accented letters like `É`, `é`, `à` work fine as they fall in the extended Latin range the bundled font covers.
