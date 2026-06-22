@@ -8,7 +8,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 import uuid
-from protocol.BroadcastProtocol import DecodedBroadcast
+from protocol.BroadcastProtocol import DecodedBroadcast, MessageType
 
 
 @dataclass
@@ -101,3 +101,46 @@ class DroneContext:
 
     # How many forks this drone has successfully completed
     forks_done: int = 0
+
+    def update_roster(self) -> None:
+        for bcst in self.broadcasts:
+            if bcst.content.drone_id and bcst.content.drone_id != self.drone_id:
+                info = self.ally_roster.get(bcst.content.drone_id)
+                if info is None:
+                    info = AllyInfo(
+                        level=bcst.content.level,
+                        last_seen_tick=self.total_ticks,
+                    )
+                    self.ally_roster[bcst.content.drone_id] = info
+                else:
+                    info.level = bcst.content.level
+                    info.last_seen_tick = self.total_ticks
+
+                info.direction = bcst.direction
+
+                if bcst.content.msg_type in (MessageType.RALLY, MessageType.RALLY_FULL):
+                    info.is_rallying = True
+                    info.is_ready = False
+                    info.is_coming = False
+                elif bcst.content.msg_type == MessageType.READY:
+                    info.is_ready = True
+                    info.is_coming = False
+                elif bcst.content.msg_type == MessageType.COMING:
+                    info.is_ready = False
+                    info.is_coming = True
+                elif bcst.content.msg_type in (
+                    MessageType.LEAVING,
+                    MessageType.ABORT,
+                    MessageType.INCANT,
+                ):
+                    info.is_ready = False
+                    info.is_rallying = False
+                    info.is_coming = False
+
+        dead_allies = [
+            drone_id
+            for drone_id, info in self.ally_roster.items()
+            if self.total_ticks - info.last_seen_tick > 2000
+        ]
+        for dead_id in dead_allies:
+            del self.ally_roster[dead_id]

@@ -6,9 +6,14 @@
 ##
 
 from fsm.states.AState import AState
+from fsm.states.StateNames import AIState
 from context import DroneContext
 from utils.stones import is_incantation_ready, next_stone_to_drop, next_stone_to_take
-from utils.navigation import get_action_for_broadcast, BROADCAST_DIRECTION_ARRIVED
+from utils.navigation import (
+    get_action_for_broadcast,
+    BROADCAST_DIRECTION_ARRIVED,
+    get_safe_navigation_action,
+)
 from utils.config_loader import (
     get_survival_config,
     get_swarm_config,
@@ -80,7 +85,7 @@ class BroadcastHelp(AState):
             if actual_ready_count + 1 >= players_req and is_incantation_ready(
                 context.level, tile
             ):
-                return "Incantation"
+                return AIState.INCANTATION
 
         # Yield to another drone with a higher ID if they are calling for the same level
         if context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
@@ -90,13 +95,13 @@ class BroadcastHelp(AState):
                     and bcst.content.level == context.level
                     and bcst.content.drone_id > context.drone_id
                 ):
-                    self._abort_target = "MapsToAlly"
+                    self._abort_target = AIState.MAPS_TO_ALLY
                     return None
 
         surv_cfg = get_survival_config()
         swarm_cfg = get_swarm_config()
         if context.inventory.food < surv_cfg.get("SURVIVAL_THRESHOLD", 5):
-            self._abort_target = "ForageFood"
+            self._abort_target = AIState.FORAGE_FOOD
         elif self.ticks_waited > swarm_cfg.get("RALLY_TIMEOUT", 100):
             # Count ALL active allies on the team, not just those of our level.
             # If the team is large enough overall, we just wait for them to catch up.
@@ -108,7 +113,7 @@ class BroadcastHelp(AState):
             )
             players_req = evo_cfg.get("PLAYERS_REQUIRED", {}).get(str(context.level), 0)
             if active_allies_able_to_help < players_req - 1:
-                self._abort_target = "Reproduce"
+                self._abort_target = AIState.REPRODUCE
             else:
                 self.ticks_waited = 0
 
@@ -218,6 +223,7 @@ class MapsToAlly(AState):
         self.tick_since_bcast = 0
         self.ready_sent = False
         self.ticks_waited = 0
+        self._last_turn_action: str | None = None
         self._leave_emitted = False
         self._leave_target = None
         self.waiting_incant = False
@@ -261,30 +267,30 @@ class MapsToAlly(AState):
 
         surv_cfg = get_survival_config()
         if context.inventory.food < surv_cfg.get("SURVIVAL_THRESHOLD", 5):
-            return self._leave("ForageFood")
+            return self._leave(AIState.FORAGE_FOOD)
 
         # Leveled up thanks to the elevations
         if context.level > self._entry_level:
-            return "SearchStone"
+            return AIState.SEARCH_STONE
 
         for bcst in context.broadcasts:
             if bcst.content.level != self._entry_level:
                 continue
             if bcst.content.msg_type == MessageType.ABORT:
-                return "SearchStone"
+                return AIState.SEARCH_STONE
             if bcst.content.msg_type == MessageType.INCANT:
                 if bcst.direction in BROADCAST_DIRECTION_ARRIVED:
                     self.arrived = True
                     self.waiting_incant = True
                 else:
-                    return "SearchStone"
+                    return AIState.SEARCH_STONE
 
         if not self.leader_id:
-            return self._leave("SearchStone")
+            return self._leave(AIState.SEARCH_STONE)
 
         leader_info = context.ally_roster.get(self.leader_id)
         if not leader_info or not leader_info.is_rallying:
-            return self._leave("SearchStone")
+            return self._leave(AIState.SEARCH_STONE)
 
         # Check if we heard the leader recently (e.g. within the timeout window)
         if context.total_ticks - leader_info.last_seen_tick < 100:
@@ -292,7 +298,7 @@ class MapsToAlly(AState):
 
         swarm_cfg = get_swarm_config()
         if self.ticks_waited > swarm_cfg.get("RALLY_TIMEOUT", 100):
-            return self._leave("SearchStone")
+            return self._leave(AIState.SEARCH_STONE)
 
         return None
 
@@ -349,6 +355,9 @@ class MapsToAlly(AState):
                         )
                         return f"Broadcast {payload}"
 
+                    action, self._last_turn_action = get_safe_navigation_action(
+                        action, self._last_turn_action
+                    )
                     return action
 
         # -- Already on the rally tile (or just arrived): wait for the leader. --

@@ -95,6 +95,7 @@ class Orchestrator:
                     self._pending_command is None
                     and not self._context.elevation_in_progress
                 ):
+                    self._context.update_roster()
                     command = self._controller.tick()
                     self._context.broadcasts.clear()
                     if command == "Spawn_child":

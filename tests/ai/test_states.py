@@ -21,7 +21,7 @@ def _rally(team: str, level: int, direction: int = 1) -> BroadcastMessage:
     """Build a pre-decoded RALLY message (decoding happens in the orchestrator)."""
     return BroadcastMessage(
         direction=direction,
-        content=DecodedBroadcast(team, MessageType.RALLY, level),
+        content=DecodedBroadcast(team, MessageType.RALLY, level, drone_id="ally_1"),
     )
 
 
@@ -141,6 +141,7 @@ class TestSearchStone(unittest.TestCase):
         self.context.level = 2
         self.context.team_name = "team5"
         self.context.broadcasts = [_rally("team5", 2)]
+        self.context.update_roster()
         res = self.state.update(self.context)
         self.assertEqual(res, "MapsToAlly")
 
@@ -150,6 +151,7 @@ class TestSearchStone(unittest.TestCase):
         self.context.level = 2
         self.context.team_name = "team5"
         self.context.broadcasts = [_rally("team5", 3)]
+        self.context.update_roster()
         res = self.state.update(self.context)
         self.assertNotEqual(res, "MapsToAlly")
 

@@ -21,3 +21,20 @@ def get_action_for_broadcast(direction: int) -> str | None:
     elif direction in BROADCAST_DIRECTION_LEFT:
         return "Left"
     return "Forward"  # Fallback
+
+
+def get_safe_navigation_action(
+    action: str | None, last_turn_action: str | None
+) -> tuple[str | None, str | None]:
+    """
+    Prevents the drone from getting stuck in an infinite Left/Right oscillation
+    due to Zappy server bugs on Torus borders.
+    Returns: (safe_action, new_last_turn_action)
+    """
+    if action in ("Left", "Right"):
+        if last_turn_action and last_turn_action != action:
+            return "Forward", None
+        return action, action
+    elif action == "Forward":
+        return action, None
+    return action, last_turn_action

@@ -6,6 +6,7 @@
 ##
 
 from fsm.states.AState import AState
+from fsm.states.StateNames import AIState
 from context import DroneContext
 from utils.config_loader import get_reproduction_config
 
@@ -42,18 +43,18 @@ class Reproduce(AState):
     def update(self, context: DroneContext) -> str | None:
         repr_cfg = get_reproduction_config()
         if context.forks_done >= repr_cfg.get("MAX_FORKS_PER_DRONE", 10):
-            return "BroadcastHelp"
+            return AIState.BROADCAST_HELP
         if context.inventory.food < repr_cfg.get("FORK_FOOD_THRESHOLD", 10):
-            return "ForageFood"
+            return AIState.FORAGE_FOOD
 
         if self._spawn_sent:
             self.last_fork_tick = context.total_ticks
-            return "BroadcastHelp"
+            return AIState.BROADCAST_HELP
 
         if self._fork_sent:
             if context.last_command_successful:
                 self.last_fork_tick = context.total_ticks
-            return "BroadcastHelp"
+            return AIState.BROADCAST_HELP
 
         if self._connect_sent:
             return None
@@ -61,7 +62,7 @@ class Reproduce(AState):
         # Wait 600 ticks (the time it takes for an egg to hatch) before allowing another fork.
         # This prevents the drone from spamming its entire max fork budget instantly.
         if context.total_ticks - self.last_fork_tick < 600:
-            return "BroadcastHelp"
+            return AIState.BROADCAST_HELP
 
         return None
 

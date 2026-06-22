@@ -5,14 +5,14 @@
 ## The Evolution Layer (Medium Priority)
 ##
 
-import random
 from utils.config_loader import get_survival_config, get_evolution_config
 from utils.stones import get_missing_stones
 from protocol.BroadcastProtocol import BroadcastProtocol, MessageType
 from context import DroneContext
-from protocol.look_parser import find_closest_resource_path
+from utils.exploration import get_exploration_action
 
 from fsm.states.AState import AState
+from fsm.states.StateNames import AIState
 
 
 class SearchStone(AState):
@@ -28,34 +28,30 @@ class SearchStone(AState):
     def enter(self, context: DroneContext) -> None:
         self._forward_streak = 0
 
-    def _get_missing_stones_for_drone(self, context: DroneContext) -> dict[str, int]:
-        return get_missing_stones(context.level, context.inventory)
-
     def update(self, context: DroneContext) -> str | None:
         evo_cfg = get_evolution_config()
         surv_cfg = get_survival_config()
 
         if context.level >= evo_cfg.get("MAX_LEVEL", 8):
-            return "ForageFood"
+            return AIState.FORAGE_FOOD
 
         if context.inventory.food < surv_cfg.get("SAFE_FOOD_THRESHOLD", 10):
-            return "ForageFood"
+            return AIState.FORAGE_FOOD
 
         # React to a teammate's RALLY call (solo levels can incant alone).
         if context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
-            for bcst in context.broadcasts:
-                if (
-                    bcst.content.msg_type == MessageType.RALLY
-                    and bcst.content.level == context.level
-                ):
-                    return "MapsToAlly"
+            if any(
+                info.is_rallying and info.level == context.level
+                for info in context.ally_roster.values()
+            ):
+                return AIState.MAPS_TO_ALLY
 
-        missing = self._get_missing_stones_for_drone(context)
+        missing = get_missing_stones(context.level, context.inventory)
         if not missing:
             # Force the leader to be full food
             if context.inventory.food < surv_cfg.get("FOOD_TARGET", 25):
-                return "ForageFood"
-            return "BroadcastHelp"
+                return AIState.FORAGE_FOOD
+            return AIState.BROADCAST_HELP
 
         return None
 
@@ -66,7 +62,7 @@ class SearchStone(AState):
         if not context.vision:
             return "Look"
 
-        missing_stones = self._get_missing_stones_for_drone(context)
+        missing_stones = get_missing_stones(context.level, context.inventory)
         current_tile = context.vision[0]
 
         # Pick up any needed stone on the current tile, unless there are other players here (could be a ritual).
@@ -76,21 +72,14 @@ class SearchStone(AState):
                     self._forward_streak = 0
                     return f"Take {stone}"
 
-        best_path = find_closest_resource_path(context.vision, missing_stones)
-
-        if best_path:
-            self._forward_streak = 0
-            context.path_queue.extend(best_path)
-            return context.path_queue.pop(0)
-
-        # Nothing useful here — explore.
-        # Rotate every 5 steps to avoid getting stuck in a straight line.
-        self._forward_streak += 1
         surv_cfg = get_survival_config()
-        explore_turn_every = surv_cfg.get("EXPLORE_TURN_EVERY", 5)
-        if self._forward_streak % explore_turn_every == 0:
-            return random.choice(["Right", "Left"])
-        return "Forward"
+        action, self._forward_streak = get_exploration_action(
+            context,
+            missing_stones,
+            surv_cfg.get("EXPLORE_TURN_EVERY", 5),
+            self._forward_streak,
+        )
+        return action
 
     def exit(self, context: DroneContext) -> None:
         pass
@@ -113,18 +102,18 @@ class IncantationState(AState):
         ABORT before the state exits to SearchStone.
         """
         if self.abort_sent:
-            return "SearchStone"
+            return AIState.SEARCH_STONE
         if self.need_abort:
             return None
 
         if self.command_sent and context.last_command_successful is not None:
             if context.last_command_successful:
-                return "SearchStone"
+                return AIState.SEARCH_STONE
             evo_cfg = get_evolution_config()
             if context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
                 self.need_abort = True
                 return None
-            return "SearchStone"
+            return AIState.SEARCH_STONE
         return None
 
     def get_action(self, context: DroneContext) -> str | None:
@@ -149,7 +138,7 @@ class IncantationState(AState):
             return f"Broadcast {payload}"
         if not self.command_sent:
             self.command_sent = True
-            return "Incantation"
+            return AIState.INCANTATION
         return None
 
     def exit(self, context: DroneContext) -> None:
