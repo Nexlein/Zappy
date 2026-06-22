@@ -4,6 +4,7 @@ from utils.navigation import get_action_for_broadcast
 from utils.config_loader import get_evolution_config, get_swarm_config
 from protocol.BroadcastProtocol import BroadcastProtocol, MessageType
 from protocol.look_parser import find_closest_resource_path
+from fsm.states.swarm import other_players_on_tile
 
 from typing import TYPE_CHECKING
 
@@ -24,6 +25,7 @@ class ActionGenerators:
         arrived: bool
         ready_sent: bool
         ready_count: int
+        eject_done: bool
         highest_rally_direction: int | None
         forks_done: int
         reproduce_connect_sent: bool
@@ -121,6 +123,15 @@ class ActionGenerators:
     def _get_rally_action(self) -> str | None:
         if not self.context.vision:
             return "Look"
+
+        # Defensive claim: clear the rally tile ONCE, before any ally has
+        # gathered (so eject can't scatter our own swarm). Only at group levels.
+        # Vision is invalidated by the orchestrator on the Eject 'ok'.
+        if not self.eject_done and (
+            other_players_on_tile(self.context, self.context.vision[0]) > 0
+        ):
+            self.eject_done = True
+            return "Eject"
 
         evo_cfg = get_evolution_config()
         players_req = evo_cfg.get("PLAYERS_REQUIRED", {}).get(

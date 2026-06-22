@@ -17,6 +17,24 @@ from utils.config_loader import (
 from protocol.BroadcastProtocol import BroadcastProtocol, MessageType
 
 
+def other_players_on_tile(context: DroneContext, tile) -> int:
+    """
+    Players on `tile` other than us.
+
+    Look returns an anonymous `player` token (no team, no level), so we cannot
+    tell allies from enemies. The defensive eject only runs from BroadcastHelp
+    before the first RALLY is sent — at that point no follower has been summoned
+    yet, so any stranger here can only be an outsider, never our own swarm.
+
+    Solo levels are skipped: spawn clustering would make eject noisy and an
+    extra body never changes a solo incantation.
+    """
+    evo_cfg = get_evolution_config()
+    if context.level <= evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
+        return 0
+    return max(0, tile.player - 1)
+
+
 # BroadcastHelp: Yell across the map and wait for allies to arrive.
 class BroadcastHelp(AState):
     """
@@ -35,6 +53,7 @@ class BroadcastHelp(AState):
         self.ready_count = 0
         self._abort_target = None
         self._abort_emitted = False
+        self._eject_done = False
 
     def update(self, context: DroneContext) -> str | None:
         """
@@ -105,6 +124,12 @@ class BroadcastHelp(AState):
 
         if not context.vision:
             return "Look"
+
+        if not self._eject_done and (
+            other_players_on_tile(context, context.vision[0]) > 0
+        ):
+            self._eject_done = True
+            return "Eject"
 
         evo_cfg = get_evolution_config()
         players_req = evo_cfg.get("PLAYERS_REQUIRED", {}).get(str(context.level), 0)

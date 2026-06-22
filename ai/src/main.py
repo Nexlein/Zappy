@@ -187,7 +187,7 @@ class Orchestrator:
             self._handle_take_response(command, response)
         elif command.startswith("Set "):
             self._handle_set_response(command, response)
-        elif command in ("Forward", "Right", "Left"):
+        elif command in ("Forward", "Right", "Left", "Eject"):
             if response == "ok":
                 self._context.vision.clear()
 
