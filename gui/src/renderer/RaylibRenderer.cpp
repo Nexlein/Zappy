@@ -373,8 +373,9 @@ void RaylibRenderer::_drawHUD()
         builder.addLine(
             std::string(I18n::get(I18n::Key::HUD_TIME_UNIT)) + std::to_string(_state->timeUnit),
             accentColor);
-        builder.addLine("Port: " + std::to_string(_devPort), accentColor);
-        builder.addLine("Machine: " + _devMachine, accentColor);
+        builder.addLine(std::string(I18n::get(I18n::Key::HUD_PORT)) + std::to_string(_devPort),
+                        accentColor);
+        builder.addLine(std::string(I18n::get(I18n::Key::HUD_MACHINE)) + _devMachine, accentColor);
     }
 
     builder.addLine(mapText, accentColor).addLine(uptimeText, accentColor);
