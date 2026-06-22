@@ -1,6 +1,7 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, Static
 
+
 class ZappyTUI(App):
     TITLE = "Zappy orchestrator"
 
@@ -8,4 +9,3 @@ class ZappyTUI(App):
         yield Header()
         yield Static("zappy tui scaffold")
         yield Footer()
-
