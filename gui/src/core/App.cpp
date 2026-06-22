@@ -40,6 +40,7 @@ void App::run()
         renderer = new RaylibRenderer();
     }
 
+    renderer->setDevMode(config.dev, config.port, config.machine);
     renderer->init();
 
     _rendererActive = true;
