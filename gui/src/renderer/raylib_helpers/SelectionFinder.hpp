@@ -39,8 +39,7 @@ class SelectionFinder {
     static Selection findFromRay(const Ray& ray, const GameState& state, float tileSize,
                                  const Model& playerModel, float playerModelSize,
                                  const Model& eggModel, float eggModelSize,
-                                 const TileSlotMap& slotMap,
-                                 float selectionDuration = 3.0f);
+                                 const TileSlotMap& slotMap, float selectionDuration = 3.0f);
     /**
      * @brief Returns an empty selection (type None).
      * @return Selection with type None and default values.

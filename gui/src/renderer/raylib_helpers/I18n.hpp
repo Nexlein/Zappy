@@ -79,73 +79,73 @@ class I18n {
     static constexpr const char* _strings[2][static_cast<int>(Key::_COUNT)] = {
         // EN
         {
-            "FPS: ",                 // HUD_FPS
-            "Map: ",                 // HUD_MAP
-            "Time unit: ",           // HUD_TIME_UNIT
-            "Time --:--",            // HUD_UPTIME_UNKNOWN
-            "Time ",                 // HUD_UPTIME_PREFIX
-            "h ",                    // HUD_UPTIME_H
-            "m ",                    // HUD_UPTIME_M
-            "s",                     // HUD_UPTIME_S
+            "FPS: ",        // HUD_FPS
+            "Map: ",        // HUD_MAP
+            "Time unit: ",  // HUD_TIME_UNIT
+            "Time --:--",   // HUD_UPTIME_UNKNOWN
+            "Time ",        // HUD_UPTIME_PREFIX
+            "h ",           // HUD_UPTIME_H
+            "m ",           // HUD_UPTIME_M
+            "s",            // HUD_UPTIME_S
 
-            "Tile",                  // LABEL_TILE
-            "Player",                // LABEL_PLAYER
-            "Egg",                   // LABEL_EGG
+            "Tile",    // LABEL_TILE
+            "Player",  // LABEL_PLAYER
+            "Egg",     // LABEL_EGG
 
-            " is empty",             // TILE_EMPTY
-            "Tile:",                 // TILE_HEADER
+            " is empty",  // TILE_EMPTY
+            "Tile:",      // TILE_HEADER
 
             "  Team ",               // PLAYER_TEAM
             "  Level ",              // PLAYER_LEVEL
             "  Inventory is empty",  // PLAYER_INVENTORY_EMPTY
             "  Inventory:",          // PLAYER_INVENTORY
 
-            "  Team ",               // EGG_TEAM
+            "  Team ",  // EGG_TEAM
 
-            "Level ",                // PLAYER_HEAD_LEVEL
+            "Level ",  // PLAYER_HEAD_LEVEL
 
-            "Food",                  // RESOURCE_FOOD
-            "Linemate",              // RESOURCE_LINEMATE
-            "Deraumere",             // RESOURCE_DERAUMERE
-            "Sibur",                 // RESOURCE_SIBUR
-            "Mendiane",              // RESOURCE_MENDIANE
-            "Phiras",                // RESOURCE_PHIRAS
-            "Thystame",              // RESOURCE_THYSTAME
+            "Food",       // RESOURCE_FOOD
+            "Linemate",   // RESOURCE_LINEMATE
+            "Deraumere",  // RESOURCE_DERAUMERE
+            "Sibur",      // RESOURCE_SIBUR
+            "Mendiane",   // RESOURCE_MENDIANE
+            "Phiras",     // RESOURCE_PHIRAS
+            "Thystame",   // RESOURCE_THYSTAME
         },
         // FR
         {
-            "IPS: ",                 // HUD_FPS
-            "Carte: ",               // HUD_MAP
-            "Unité de temps: ",      // HUD_TIME_UNIT
-            "Temps --:--",           // HUD_UPTIME_UNKNOWN
-            "Temps ",                // HUD_UPTIME_PREFIX
-            "h ",                    // HUD_UPTIME_H
-            "m ",                    // HUD_UPTIME_M
-            "s",                     // HUD_UPTIME_S
+            "IPS: ",             // HUD_FPS
+            "Carte: ",           // HUD_MAP
+            "Unité de temps: ",  // HUD_TIME_UNIT
+            "Temps --:--",       // HUD_UPTIME_UNKNOWN
+            "Temps ",            // HUD_UPTIME_PREFIX
+            "h ",                // HUD_UPTIME_H
+            "m ",                // HUD_UPTIME_M
+            "s",                 // HUD_UPTIME_S
 
-            "Case",                  // LABEL_TILE
-            "Joueur",                // LABEL_PLAYER
-            "Oeuf",                  // LABEL_EGG
+            "Case",    // LABEL_TILE
+            "Joueur",  // LABEL_PLAYER
+            "Oeuf",    // LABEL_EGG
 
-            " est vide",             // TILE_EMPTY
-            "Case :",                // TILE_HEADER
+            " est vide",  // TILE_EMPTY
+            "Case :",     // TILE_HEADER
 
-            "  Équipe ",             // PLAYER_TEAM
-            "  Niveau ",             // PLAYER_LEVEL
-            "  Inventaire vide",     // PLAYER_INVENTORY_EMPTY
-            "  Inventaire :",        // PLAYER_INVENTORY
+            "  Équipe ",          // PLAYER_TEAM
+            "  Niveau ",          // PLAYER_LEVEL
+            "  Inventaire vide",  // PLAYER_INVENTORY_EMPTY
+            "  Inventaire :",     // PLAYER_INVENTORY
 
-            "  Équipe ",             // EGG_TEAM
+            "  Équipe ",  // EGG_TEAM
 
-            "Niveau ",               // PLAYER_HEAD_LEVEL
+            "Niveau ",  // PLAYER_HEAD_LEVEL
 
-            "Nourriture",            // RESOURCE_FOOD
-            "Linemate",              // RESOURCE_LINEMATE
-            "Deraumere",             // RESOURCE_DERAUMERE
-            "Sibur",                 // RESOURCE_SIBUR
-            "Mendiane",              // RESOURCE_MENDIANE
-            "Phiras",                // RESOURCE_PHIRAS
-            "Thystame",              // RESOURCE_THYSTAME
+            "Nourriture",  // RESOURCE_FOOD
+            "Linemate",    // RESOURCE_LINEMATE
+            "Deraumere",   // RESOURCE_DERAUMERE
+            "Sibur",       // RESOURCE_SIBUR
+            "Mendiane",    // RESOURCE_MENDIANE
+            "Phiras",      // RESOURCE_PHIRAS
+            "Thystame",    // RESOURCE_THYSTAME
         },
     };
 };

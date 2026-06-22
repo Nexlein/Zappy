@@ -94,7 +94,8 @@ void Args::setError(const std::string& message, const std::string& progName)
 
 void Args::printUsage(const std::string& progName)
 {
-    std::cerr << "Usage: " << progName << " -p port [-h machine] [--headless] [--language english|french]\n";
+    std::cerr << "Usage: " << progName
+              << " -p port [-h machine] [--headless] [--language english|french]\n";
     std::cerr << "  -p port                    Port number to connect to (required)\n";
     std::cerr << "  -h machine                 Machine name or IP address (default: localhost)\n";
     std::cerr << "  --headless                 Run without graphics (text output only)\n";
