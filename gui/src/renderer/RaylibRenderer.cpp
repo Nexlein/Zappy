@@ -369,8 +369,7 @@ void RaylibRenderer::_drawHUD()
     if (_devMode) {
         int fps = GetFPS();
         Color fpsColor = fps >= 55 ? GREEN : (fps >= 30 ? YELLOW : RED);
-        builder.addLine(std::string(I18n::get(I18n::Key::HUD_FPS)) + std::to_string(fps),
-                        fpsColor);
+        builder.addLine(std::string(I18n::get(I18n::Key::HUD_FPS)) + std::to_string(fps), fpsColor);
         builder.addLine(
             std::string(I18n::get(I18n::Key::HUD_TIME_UNIT)) + std::to_string(_state->timeUnit),
             accentColor);

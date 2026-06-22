@@ -83,7 +83,7 @@ class I18n {
             "Map: ",        // HUD_MAP
             "Time unit: ",  // HUD_TIME_UNIT
             "Time --:--",   // HUD_UPTIME_UNKNOWN
-            "Time: ",        // HUD_UPTIME_PREFIX
+            "Time: ",       // HUD_UPTIME_PREFIX
             "h ",           // HUD_UPTIME_H
             "m ",           // HUD_UPTIME_M
             "s",            // HUD_UPTIME_S
