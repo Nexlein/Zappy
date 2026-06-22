@@ -9,7 +9,7 @@
 class CompositeSink : public ILogSink {
     public:
     void add(std::unique_ptr<ILogSink> sink);
-    void write(const std::string& line) override;
+    void write(LogLevel level, const std::string& line) override;
 
     private:
     std::vector<std::unique_ptr<ILogSink>> _sinks;
