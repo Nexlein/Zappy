@@ -7,17 +7,19 @@
 
 from ai_factory import create_ai_controller
 from context import DroneContext, BroadcastMessage
-from NetworkBuffer import NetworkBuffer
-from tcpClient import TcpClient
+from network.NetworkBuffer import NetworkBuffer
+from network.tcpClient import TcpClient
 from argsParser import parseArgs, Config
-from BroadcastProtocol import BroadcastProtocol, MessageType
-from look_parser import parse_look_to_tiles
-from inventory_parser import update_inventory
+from protocol.BroadcastProtocol import BroadcastProtocol, MessageType
+from protocol.look_parser import parse_look_to_tiles
+from protocol.inventory_parser import update_inventory
 from typing import Any
 from ai_logger import ai_logger
 import subprocess
 import sys
 import signal
+import time
+from utils.config_loader import get_network_config
 
 
 class DroneDied(Exception):
@@ -41,8 +43,6 @@ class Orchestrator:
     _config: Config
 
     def __init__(self, config: Config):
-        import time
-
         client = None
         while True:
             try:
@@ -83,6 +83,7 @@ class Orchestrator:
         self._pending_command: str | None = None
 
     def run(self):
+        sleep_sec = get_network_config().get("POLL_SLEEP_SEC", 0.005)
         try:
             while True:
                 self._net.poll()
@@ -103,7 +104,9 @@ class Orchestrator:
                 response = self._net.next_response()
                 if response is not None:
                     self._handle_response(self._pending_command, response)
-        except DroneDied:
+
+                time.sleep(sleep_sec)
+        except (DroneDied, ConnectionError):
             pass
 
     def _handle_event(self, event: str):

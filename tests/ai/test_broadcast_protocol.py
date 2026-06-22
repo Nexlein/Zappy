@@ -11,7 +11,7 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../ai/src"))
 
-from BroadcastProtocol import BroadcastProtocol, DecodedBroadcast, MessageType
+from protocol.BroadcastProtocol import BroadcastProtocol, DecodedBroadcast, MessageType
 
 
 class TestEncode(unittest.TestCase):

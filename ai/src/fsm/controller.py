@@ -13,6 +13,7 @@ from fsm.states.evolution import SearchStone, IncantationState
 from fsm.states.swarm import BroadcastHelp, MapsToAlly
 from fsm.states.reproduce import Reproduce
 from ai_logger import ai_logger
+from protocol.BroadcastProtocol import MessageType
 
 
 class AIController:
@@ -44,6 +45,50 @@ class AIController:
         """Evaluate state logic and return the next command to send, or None."""
         if not self.current_state:
             return None
+
+        self.context.total_ticks += 1
+
+        for bcst in self.context.broadcasts:
+            if bcst.content.drone_id and bcst.content.drone_id != self.context.drone_id:
+                info = self.context.ally_roster.get(bcst.content.drone_id)
+                if info is None:
+                    info = __import__("context").AllyInfo(
+                        level=bcst.content.level,
+                        last_seen_tick=self.context.total_ticks,
+                    )
+                    self.context.ally_roster[bcst.content.drone_id] = info
+                else:
+                    info.level = bcst.content.level
+                    info.last_seen_tick = self.context.total_ticks
+
+                info.direction = bcst.direction
+
+                if bcst.content.msg_type in (MessageType.RALLY, MessageType.RALLY_FULL):
+                    info.is_rallying = True
+                    info.is_ready = False
+                    info.is_coming = False
+                elif bcst.content.msg_type == MessageType.READY:
+                    info.is_ready = True
+                    info.is_coming = False
+                elif bcst.content.msg_type == MessageType.COMING:
+                    info.is_ready = False
+                    info.is_coming = True
+                elif bcst.content.msg_type in (
+                    MessageType.LEAVING,
+                    MessageType.ABORT,
+                    MessageType.INCANT,
+                ):
+                    info.is_ready = False
+                    info.is_rallying = False
+                    info.is_coming = False
+
+        dead_allies = [
+            drone_id
+            for drone_id, info in self.context.ally_roster.items()
+            if self.context.total_ticks - info.last_seen_tick > 2000
+        ]
+        for dead_id in dead_allies:
+            del self.context.ally_roster[dead_id]
 
         # 1. Check for a state transition. Must run every tick: it is also
         # where states consume context.broadcasts (cleared after each tick).

@@ -2,8 +2,8 @@ import random
 from utils.stones import next_stone_to_drop, next_stone_to_take, get_missing_stones
 from utils.navigation import get_action_for_broadcast
 from utils.config_loader import get_evolution_config, get_swarm_config
-from BroadcastProtocol import BroadcastProtocol, MessageType
-from look_parser import generate_path_to_tile
+from protocol.BroadcastProtocol import BroadcastProtocol, MessageType
+from protocol.look_parser import find_closest_resource_path
 from fsm.states.swarm import other_players_on_tile
 
 from typing import TYPE_CHECKING
@@ -42,14 +42,8 @@ class ActionGenerators:
         if self.context.vision[0].food > 0:
             self._forward_streak = 0
             return "Take food"
-        best_path = None
-        for i, tile in enumerate(self.context.vision):
-            if i == 0:
-                continue
-            if tile.food > 0:
-                path = generate_path_to_tile(i)
-                if best_path is None or len(path) < len(best_path):
-                    best_path = path
+
+        best_path = find_closest_resource_path(self.context.vision, ["food"])
 
         if best_path:
             self._forward_streak = 0
@@ -67,20 +61,13 @@ class ActionGenerators:
             return "Look"
         missing = get_missing_stones(self.context.level, self.context.inventory)
         current_tile = self.context.vision[0]
-        for stone in missing:
-            if getattr(current_tile, stone, 0) > 0:
-                self._forward_streak = 0
-                return f"Take {stone}"
-        best_path = None
-        for i, tile in enumerate(self.context.vision):
-            if i == 0:
-                continue
+        if current_tile.player <= 1:
             for stone in missing:
-                if getattr(tile, stone, 0) > 0:
-                    path = generate_path_to_tile(i)
-                    if best_path is None or len(path) < len(best_path):
-                        best_path = path
-                    break
+                if getattr(current_tile, stone, 0) > 0:
+                    self._forward_streak = 0
+                    return f"Take {stone}"
+
+        best_path = find_closest_resource_path(self.context.vision, missing)
 
         if best_path:
             self._forward_streak = 0

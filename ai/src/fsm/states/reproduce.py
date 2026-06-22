@@ -30,35 +30,41 @@ class Reproduce(AState):
 
     def __init__(self) -> None:
         self.forks_done = 0
+        self.last_fork_tick = -9999
 
     def enter(self, context: DroneContext) -> None:
-        self._connect_sent = False
         self._fork_sent = False
 
     def update(self, context: DroneContext) -> str | None:
         repr_cfg = get_reproduction_config()
         if self.forks_done >= repr_cfg.get("MAX_FORKS_PER_DRONE", 10):
-            return "SearchStone"
+            return "BroadcastHelp"
         if context.inventory.food < repr_cfg.get("FORK_FOOD_THRESHOLD", 10):
-            return "SearchStone"
+            return "ForageFood"
 
-        # Fork verdict: count the egg only on success, then leave.
         if self._fork_sent:
             if context.last_command_successful:
                 self.forks_done += 1
-            return "SearchStone"
+                self.last_fork_tick = context.total_ticks
+            return "BroadcastHelp"
 
-        # After the refresh: an idle egg already exists — don't pile up.
-        if self._connect_sent and context.available_slots > 0:
-            return "SearchStone"
+        # Wait 600 ticks (the time it takes for an egg to hatch) before allowing another fork.
+        # This prevents the drone from spamming its entire max fork budget instantly.
+        if context.total_ticks - self.last_fork_tick < 600:
+            return "BroadcastHelp"
 
         return None
 
     def get_action(self, context: DroneContext) -> str | None:
-        if not self._connect_sent:
-            self._connect_sent = True
-            return "Connect_nbr"
-        if not self._fork_sent and context.available_slots == 0:
+        repr_cfg = get_reproduction_config()
+        if self.forks_done >= repr_cfg.get("MAX_FORKS_PER_DRONE", 10):
+            return "Look"
+        if context.inventory.food < repr_cfg.get("FORK_FOOD_THRESHOLD", 10):
+            return "Look"
+        if context.total_ticks - self.last_fork_tick < 100:
+            return "Look"
+
+        if not self._fork_sent:
             self._fork_sent = True
             return "Fork"
         return None

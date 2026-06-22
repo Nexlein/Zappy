@@ -14,7 +14,7 @@ from utils.config_loader import (
     get_swarm_config,
     get_evolution_config,
 )
-from BroadcastProtocol import BroadcastProtocol, MessageType
+from protocol.BroadcastProtocol import BroadcastProtocol, MessageType
 
 
 def other_players_on_tile(context: DroneContext, tile) -> int:
@@ -66,22 +66,18 @@ class BroadcastHelp(AState):
 
         self.ticks_waited += 1
 
-        for bcst in context.broadcasts:
-            if bcst.content.level != context.level:
-                continue
-            if (
-                bcst.content.msg_type == MessageType.READY
-                and bcst.direction in BROADCAST_DIRECTION_ARRIVED
-            ):
-                self.ready_count += 1
-            elif bcst.content.msg_type == MessageType.LEAVING and self.ready_count > 0:
-                self.ready_count -= 1
-
         evo_cfg = get_evolution_config()
         if context.vision:
             tile = context.vision[0]
+            actual_ready_count = sum(
+                1
+                for a in context.ally_roster.values()
+                if a.level == context.level
+                and a.is_ready
+                and a.direction in BROADCAST_DIRECTION_ARRIVED
+            )
             players_req = evo_cfg.get("PLAYERS_REQUIRED", {}).get(str(context.level), 0)
-            if self.ready_count + 1 >= players_req and is_incantation_ready(
+            if actual_ready_count + 1 >= players_req and is_incantation_ready(
                 context.level, tile
             ):
                 return "Incantation"
@@ -102,7 +98,19 @@ class BroadcastHelp(AState):
         if context.inventory.food < surv_cfg.get("SURVIVAL_THRESHOLD", 5):
             self._abort_target = "ForageFood"
         elif self.ticks_waited > swarm_cfg.get("RALLY_TIMEOUT", 100):
-            self._abort_target = "Reproduce"
+            # Count ALL active allies on the team, not just those of our level.
+            # If the team is large enough overall, we just wait for them to catch up.
+            active_allies_able_to_help = sum(
+                1
+                for info in context.ally_roster.values()
+                if context.total_ticks - info.last_seen_tick < 1500
+                and info.level <= context.level
+            )
+            players_req = evo_cfg.get("PLAYERS_REQUIRED", {}).get(str(context.level), 0)
+            if active_allies_able_to_help < players_req - 1:
+                self._abort_target = "Reproduce"
+            else:
+                self.ticks_waited = 0
 
         return None
 
@@ -125,7 +133,31 @@ class BroadcastHelp(AState):
 
         evo_cfg = get_evolution_config()
         players_req = evo_cfg.get("PLAYERS_REQUIRED", {}).get(str(context.level), 0)
-        if self.ready_count + 1 >= players_req:
+        actual_ready_count = sum(
+            1
+            for a in context.ally_roster.values()
+            if a.level == context.level
+            and a.is_ready
+            and a.direction in BROADCAST_DIRECTION_ARRIVED
+        )
+        committed_count = sum(
+            1
+            for a in context.ally_roster.values()
+            if a.level == context.level and (a.is_ready or a.is_coming)
+        )
+
+        surv_cfg = get_survival_config()
+        safe_food = surv_cfg.get("SAFE_FOOD_THRESHOLD", 10)
+
+        can_start_now = False
+        if actual_ready_count + 1 >= players_req:
+            if (
+                actual_ready_count == committed_count
+                or context.inventory.food < safe_food
+            ):
+                can_start_now = True
+
+        if can_start_now:
             stone_to_take = next_stone_to_take(context.level, context.vision[0])
             if stone_to_take:
                 return f"Take {stone_to_take}"
@@ -136,20 +168,35 @@ class BroadcastHelp(AState):
             if stone:
                 return f"Set {stone}"
 
-        # Periodically re-broadcast the RALLY signal (only if higher than solo).
+        # Periodically re-broadcast the RALLY signal (only if higher than solo)
         if context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
+            msg_type = (
+                MessageType.RALLY_FULL
+                if committed_count + 1 >= players_req
+                else MessageType.RALLY
+            )
             swarm_cfg = get_swarm_config()
             if self.tick_since_bcast >= swarm_cfg.get("BCAST_INTERVAL", 2):
                 self.tick_since_bcast = 0
                 payload = BroadcastProtocol.encode(
                     context.team_name,
-                    MessageType.RALLY,
+                    msg_type,
                     context.level,
                     context.drone_id,
                 )
+                context.vision.clear()
                 return f"Broadcast {payload}"
 
         self.tick_since_bcast += 1
+
+        # Idle ticks: periodically Look to refresh tile.player count
+        if self.tick_since_bcast % 2 == 0:
+            context.vision.clear()
+            return "Look"
+
+        if context.path_queue:
+            return context.path_queue.pop(0)
+
         return "Look"
 
     def exit(self, context: DroneContext) -> None:
@@ -172,7 +219,15 @@ class MapsToAlly(AState):
         self.waiting_incant = False
         self._leave_target = None
         self._leave_emitted = False
-        self._target_leader_id = ""
+        self.tick_since_bcast = 0
+        self.leader_id = max(
+            (
+                id
+                for id, info in context.ally_roster.items()
+                if info.level == self._entry_level and info.is_rallying
+            ),
+            default="",
+        )
 
     def _leave(self, target: str) -> str | None:
         """Exit toward `target`, emitting LEAVING first if we said READY."""
@@ -190,7 +245,8 @@ class MapsToAlly(AState):
         if self._leave_target:
             return self._leave_target if self._leave_emitted else None
 
-        self.ticks_waited += 1
+        if not getattr(self, "waiting_incant", False):
+            self.ticks_waited += 1
 
         surv_cfg = get_survival_config()
         if context.inventory.food < surv_cfg.get("SURVIVAL_THRESHOLD", 5):
@@ -212,19 +268,15 @@ class MapsToAlly(AState):
                 else:
                     return "SearchStone"
 
-        # Also switch to the highest known leader in update so we don't ignore ABORTs from them.
-        heard_leader = False
-        for bcst in context.broadcasts:
-            if (
-                bcst.content.msg_type == MessageType.RALLY
-                and bcst.content.level == self._entry_level
-            ):
-                if bcst.content.drone_id > self._target_leader_id:
-                    self._target_leader_id = bcst.content.drone_id
-                if bcst.content.drone_id == self._target_leader_id:
-                    heard_leader = True
+        if not self.leader_id:
+            return self._leave("SearchStone")
 
-        if heard_leader:
+        leader_info = context.ally_roster.get(self.leader_id)
+        if not leader_info or not leader_info.is_rallying:
+            return self._leave("SearchStone")
+
+        # Check if we heard the leader recently (e.g. within the timeout window)
+        if context.total_ticks - leader_info.last_seen_tick < 100:
             self.ticks_waited = 0
 
         swarm_cfg = get_swarm_config()
@@ -252,16 +304,17 @@ class MapsToAlly(AState):
         if self.waiting_incant:
             return None
 
-        # -- Process new broadcasts first to track the highest leader --
         best_direction = None
-        for bcst in context.broadcasts:
-            if (
-                bcst.content.msg_type == MessageType.RALLY
-                and bcst.content.level == self._entry_level
-                and bcst.content.drone_id >= self._target_leader_id
-            ):
-                self._target_leader_id = bcst.content.drone_id
-                best_direction = bcst.direction
+        if self.leader_id:
+            # ONLY act on fresh directional data from the current tick
+            for bcst in context.broadcasts:
+                if (
+                    bcst.content.drone_id == self.leader_id
+                    and bcst.content.msg_type
+                    in (MessageType.RALLY, MessageType.RALLY_FULL)
+                ):
+                    best_direction = bcst.direction
+                    break
 
         if best_direction is not None:
             if best_direction != 0 and self.arrived:
@@ -274,6 +327,16 @@ class MapsToAlly(AState):
                 if action is None:
                     self.arrived = True
                 else:
+                    self.tick_since_bcast += 1
+                    if self.tick_since_bcast > 5:
+                        self.tick_since_bcast = 0
+                        payload = BroadcastProtocol.encode(
+                            context.team_name,
+                            MessageType.COMING,
+                            self._entry_level,
+                            context.drone_id,
+                        )
+                        return f"Broadcast {payload}"
                     return action
 
         # -- Already on the rally tile (or just arrived): wait for the leader. --

@@ -7,7 +7,7 @@
 
 from collections import deque
 from dataclasses import dataclass, field
-from tcpClient import TcpClient
+from network.tcpClient import TcpClient
 from ai_logger import ai_logger
 
 EVENT_PREFIXES = (

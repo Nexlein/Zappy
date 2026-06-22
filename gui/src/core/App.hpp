@@ -35,6 +35,7 @@ class App {
     protected:  // <- Protected for testing purposes, acts as private in practice
     Args args;
     GameState state;
+    bool _rendererActive = false;
 
     /**
      * @brief Polls the socket for new data and enqueues any received events.
@@ -42,4 +43,7 @@ class App {
      * @param queue The event queue to enqueue events into.
      */
     void pollAndEnqueue(TcpSocket& socket, EventQueue& queue);
+
+    /** @brief Attempts to connect with exponential backoff. Returns true on success. */
+    bool _connectWithRetry(TcpSocket& socket, const std::string& host, int port);
 };

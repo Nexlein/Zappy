@@ -15,3 +15,9 @@ std::optional<Event> EventQueue::pop()
     _queue.pop();
     return event;
 }
+
+void EventQueue::clear()
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    _queue = {};
+}

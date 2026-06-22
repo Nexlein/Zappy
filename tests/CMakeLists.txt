@@ -8,9 +8,11 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# GTest: to install locally: sudo apt install libgtest-dev
 find_package(GTest QUIET)
 if(NOT GTest_FOUND)
-    message(STATUS "GTest not found in system, downloading with FetchContent...")
+    message(WARNING "GTest not found on system — fetching via FetchContent\n"
+                    "   To avoid this next time: sudo apt install libgtest-dev")
     include(FetchContent)
     fetchcontent_declare(
         googletest
@@ -43,6 +45,7 @@ if(ZAPPY_BUILD_GUI)
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/DeathBehavior.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/ForkBehavior.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/LevelUpBehavior.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/BroadcastBehavior.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/renderer/raylib_helpers/RenderingHelper.cpp
     )
 
@@ -103,6 +106,11 @@ if(ZAPPY_BUILD_SERVER)
         server/test_listener.cpp
         server/test_connection.cpp
         server/test_client_manager.cpp
+        server/test_gui_notifier.cpp
+        server/test_handshake_handler.cpp
+        server/test_command_dispatcher.cpp
+        server/test_gui_handlers.cpp
+        server/test_ai_handlers.cpp
     )
 
     add_executable(zappy_server_tests ${SERVER_TEST_SOURCES} ${SERVER_SOURCES})
@@ -121,6 +129,34 @@ if(ZAPPY_BUILD_SERVER)
     )
 
     gtest_discover_tests(zappy_server_tests)
+endif()
+
+if(ZAPPY_BUILD_SERVER)
+    # E2E tests: spawn the real zappy_server binary over TCP, no server internals linked.
+    add_executable(zappy_server_e2e_tests
+        e2e/test_e2e_handshake.cpp
+        e2e/test_e2e_ai_command.cpp
+        e2e/test_e2e_gui.cpp
+        e2e/test_e2e_incantation.cpp
+        e2e/test_e2e_starvation.cpp
+        e2e/test_e2e_slot_exhaustion.cpp
+    )
+
+    target_link_libraries(zappy_server_e2e_tests PRIVATE
+        ${GTEST_TARGET}
+    )
+
+    target_compile_options(zappy_server_e2e_tests PRIVATE
+        -Wall -Wextra
+    )
+
+    # $<TARGET_FILE:...> gives the absolute path to the binary so CTest finds
+    # it regardless of working directory. WORKING_DIRECTORY is CMAKE_SOURCE_DIR
+    # so that ./zappy_server resolves correctly when the tests spawn it.
+    add_test(NAME zappy_server_e2e_tests
+        COMMAND $<TARGET_FILE:zappy_server_e2e_tests>
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
 endif()
 
 if(ZAPPY_BUILD_AI)

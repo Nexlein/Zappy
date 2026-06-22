@@ -204,7 +204,7 @@ TEST(WorldInventory, SetResourceMovesFromPlayerToTile)
     bool ok = w.setResource(id, ResourceType::FOOD);
 
     EXPECT_TRUE(ok);
-    EXPECT_EQ(w.getPlayer(id).inventory[ResourceType::FOOD], 0);
+    EXPECT_EQ(w.getPlayer(id).inventory[ResourceType::FOOD], 10);
     EXPECT_EQ(w.at(2, 2).resources[ResourceType::FOOD], 1);
 }
 
@@ -385,7 +385,7 @@ TEST(Incantation, FinalizeSuccessLevelsUpAndConsumesStones)
     auto participants = w.startIncantation(pid);
     ASSERT_TRUE(participants.has_value());
 
-    bool ok = w.finalizeIncantation(*participants);
+    bool ok = w.finalizeIncantation(0, 0, *participants);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(w.getPlayer(pid).level, 2);
@@ -403,7 +403,7 @@ TEST(Incantation, FinalizeFailsIfPlayerDied)
     ASSERT_TRUE(participants.has_value());
 
     w.removePlayer(pid);  // player dies mid-ritual
-    bool ok = w.finalizeIncantation(*participants);
+    bool ok = w.finalizeIncantation(0, 0, *participants);
 
     EXPECT_FALSE(ok);
 }
@@ -421,7 +421,7 @@ TEST(Incantation, FinalizeStonesConsumedMatchLevel)
 
     auto participants = w.startIncantation(p1);
     ASSERT_TRUE(participants.has_value());
-    w.finalizeIncantation(*participants);
+    w.finalizeIncantation(1, 1, *participants);
 
     EXPECT_EQ(w.at(1, 1).resources[ResourceType::LINEMATE], 0);
     EXPECT_EQ(w.at(1, 1).resources[ResourceType::DERAUMERE], 0);
@@ -461,4 +461,118 @@ TEST(Incantation, CheckWinRequiresSixPlayers)
     }
 
     EXPECT_FALSE(w.checkWin().has_value());
+}
+
+// --- popEggForTeam() ---
+
+TEST(WorldEgg, PopEggForTeamReturnsMatchingEgg)
+{
+    auto w = makeWorld(10, 10);
+    int pid = w.addPlayer(0, "TeamA", 2, 2, Orientation::N);
+    w.addEgg(pid);
+
+    auto egg = w.popEggForTeam("TeamA");
+
+    ASSERT_TRUE(egg.has_value());
+    EXPECT_EQ(egg->teamName, "TeamA");
+}
+
+TEST(WorldEgg, PopEggForTeamRemovesItFromWorld)
+{
+    auto w = makeWorld(10, 10);
+    int pid = w.addPlayer(0, "TeamA", 2, 2, Orientation::N);
+    w.addEgg(pid);
+
+    w.popEggForTeam("TeamA");
+
+    EXPECT_FALSE(w.popEggForTeam("TeamA").has_value());
+}
+
+TEST(WorldEgg, PopEggForTeamRemovesItFromTile)
+{
+    auto w = makeWorld(10, 10);
+    int pid = w.addPlayer(0, "TeamA", 3, 3, Orientation::N);
+    w.addEgg(pid);
+
+    w.popEggForTeam("TeamA");
+
+    EXPECT_EQ(w.at(3, 3).eggIds.size(), 0u);
+}
+
+TEST(WorldEgg, PopEggForTeamReturnsNulloptWhenNone)
+{
+    auto w = makeWorld(10, 10);
+
+    EXPECT_FALSE(w.popEggForTeam("TeamA").has_value());
+}
+
+TEST(WorldEgg, PopEggForTeamIgnoresOtherTeams)
+{
+    auto w = makeWorld(10, 10);
+    int pid = w.addPlayer(0, "TeamB", 1, 1, Orientation::N);
+    w.addEgg(pid);
+
+    EXPECT_FALSE(w.popEggForTeam("TeamA").has_value());
+    // TeamB egg is still there
+    EXPECT_TRUE(w.popEggForTeam("TeamB").has_value());
+}
+
+TEST(WorldEgg, PopEggForTeamPopsOnlyOne)
+{
+    auto w = makeWorld(10, 10);
+    int pid = w.addPlayer(0, "TeamA", 0, 0, Orientation::N);
+    w.addEgg(pid);
+    w.addEgg(pid);
+
+    w.popEggForTeam("TeamA");
+
+    EXPECT_TRUE(w.popEggForTeam("TeamA").has_value());
+}
+
+// --- teamPlayerCount() ---
+
+TEST(WorldTeam, TeamPlayerCountZeroWhenEmpty)
+{
+    auto w = makeWorld(10, 10);
+
+    EXPECT_EQ(w.teamPlayerCount("TeamA"), 0);
+}
+
+TEST(WorldTeam, TeamPlayerCountIncrementsOnAdd)
+{
+    auto w = makeWorld(10, 10);
+    w.addPlayer(0, "TeamA", 0, 0, Orientation::N);
+    w.addPlayer(1, "TeamA", 1, 0, Orientation::N);
+
+    EXPECT_EQ(w.teamPlayerCount("TeamA"), 2);
+}
+
+TEST(WorldTeam, TeamPlayerCountDecrementsOnRemove)
+{
+    auto w = makeWorld(10, 10);
+    int id = w.addPlayer(0, "TeamA", 0, 0, Orientation::N);
+    w.addPlayer(1, "TeamA", 1, 0, Orientation::N);
+
+    w.removePlayer(id);
+
+    EXPECT_EQ(w.teamPlayerCount("TeamA"), 1);
+}
+
+TEST(WorldTeam, TeamPlayerCountIsolatedPerTeam)
+{
+    auto w = makeWorld(10, 10);
+    w.addPlayer(0, "TeamA", 0, 0, Orientation::N);
+    w.addPlayer(1, "TeamA", 1, 0, Orientation::N);
+    w.addPlayer(2, "TeamB", 2, 0, Orientation::N);
+
+    EXPECT_EQ(w.teamPlayerCount("TeamA"), 2);
+    EXPECT_EQ(w.teamPlayerCount("TeamB"), 1);
+}
+
+TEST(WorldTeam, TeamPlayerCountUnknownTeamIsZero)
+{
+    auto w = makeWorld(10, 10);
+    w.addPlayer(0, "TeamA", 0, 0, Orientation::N);
+
+    EXPECT_EQ(w.teamPlayerCount("NoSuchTeam"), 0);
 }

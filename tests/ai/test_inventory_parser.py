@@ -7,7 +7,7 @@
 
 import unittest
 from context import Inventory
-from inventory_parser import _parse_inventory, update_inventory
+from protocol.inventory_parser import _parse_inventory, update_inventory
 
 
 class TestInventoryParser(unittest.TestCase):

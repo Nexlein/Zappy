@@ -73,7 +73,7 @@ class TestBehavior(unittest.TestCase):
         Simulate picking up stones and attempting elevation at level 1.
         """
         # Start with safe food to trigger SearchStone
-        self.context.inventory.food = 20
+        self.context.inventory.food = 25
         self.context.level = 1
 
         # We need 1 linemate to elevate to level 2.

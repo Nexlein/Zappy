@@ -4,7 +4,7 @@
 #include <cfloat>
 #include <cmath>
 
-#include "core/behaviors/ABehavior.hpp"
+#include "core/behaviors/ADrawableBehavior.hpp"
 #include "raylib_helpers/ColorPalette.hpp"
 #include "raylib_helpers/EntityRenderer.hpp"
 #include "raylib_helpers/GridRenderer.hpp"
@@ -136,8 +136,14 @@ void RaylibRenderer::_render3D()
 void RaylibRenderer::_drawBehaviorParticles(const VisualState& visual)
 {
     for (const auto& b : visual.behaviors) {
-        const auto* ab = dynamic_cast<const ABehavior*>(b.get());
+        const auto* ab = dynamic_cast<const ADrawableBehavior*>(b.get());
         if (!ab) continue;
+        for (const auto& line : ab->getLines()) {
+            if (line.alpha <= 0.0f) continue;
+            Color c = {line.color.r, line.color.g, line.color.b,
+                       static_cast<unsigned char>(line.alpha * 255)};
+            DrawLine3D(line.a, line.b, c);
+        }
         for (const auto& p : ab->getParticles()) {
             if (!p.active) continue;
             Color c = {p.color.r, p.color.g, p.color.b, static_cast<unsigned char>(p.alpha * 255)};
@@ -277,7 +283,6 @@ void RaylibRenderer::_drawHUD()
 {
     Color bgColor = {20, 25, 35, 220};
     Color borderColor = {60, 70, 90, 200};
-    Color textColor = {150, 160, 180, 255};
     Color accentColor = {210, 220, 240, 255};
 
     int fps = GetFPS();
@@ -286,7 +291,15 @@ void RaylibRenderer::_drawHUD()
 
     std::string mapText =
         "Map: " + std::to_string(_state->world.width) + "x" + std::to_string(_state->world.height);
-    std::string timeText = "Time unit: " + std::to_string(_state->timeUnit);
+    std::string timeUnitText = "Time unit: " + std::to_string(_state->timeUnit);
+
+    int uptimeHours = _state->serverUptimeSeconds / 3600;
+    int uptimeMinutes = (_state->serverUptimeSeconds % 3600) / 60;
+    int uptimeSeconds = _state->serverUptimeSeconds % 60;
+    std::string uptimeText = "Time ";
+    if (uptimeHours > 0) uptimeText += std::to_string(uptimeHours) + "h ";
+    if (uptimeMinutes > 0 || uptimeHours > 0) uptimeText += std::to_string(uptimeMinutes) + "m ";
+    uptimeText += std::to_string(uptimeSeconds) + "s";
 
     std::unordered_map<std::string, int> teamPlayerCounts;
     for (const auto& teamName : _state->world.teams) teamPlayerCounts[teamName] = 0;
@@ -301,8 +314,8 @@ void RaylibRenderer::_drawHUD()
     auto builder = TooltipRenderer::create()
                        .addLine(fpsText, fpsColor)
                        .addLine(mapText, accentColor)
-                       .addLine(timeText, accentColor)
-                       .addLine("Time: --:--", textColor);
+                       .addLine(timeUnitText, accentColor)
+                       .addLine(uptimeText, accentColor);
 
     // Add top 5 teams by population
     for (size_t i = 0; i < std::min(sortedTeams.size(), size_t(5)); i++) {

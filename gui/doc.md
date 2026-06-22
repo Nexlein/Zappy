@@ -30,7 +30,20 @@ Static factory that parses protocol lines into Event variants.
 - Token-based parsing (split by space, match command, parse args)
 - Returns `std::optional<Event>` (nullopt on malformed input)
 - Supports multi-word fields (team names, broadcast messages)
-- All 24 protocol commands implemented
+- All 24 standard protocol commands implemented, plus 2 custom extensions (see below)
+
+### Custom Protocol Extensions
+
+Two commands added on top of the standard GUI protocol. Non-disruptive: server handles them only for GUI clients, AI clients are unaffected.
+
+| Command | Direction | Format | Description |
+|---------|-----------|--------|-------------|
+| `stu` | GUI→Server, Server→GUI | `stu` / `stu T` | GUI polls each frame; server replies with uptime `T` in seconds |
+| `sse` | Server→GUI | `sse #e N X Y` | Server-spawned egg at startup; `#e` = egg ID, `N` = team name, `X Y` = tile position |
+
+**`stu`:** Enables the uptime display in the HUD. GUI sends `stu\n` every frame; server responds `stu <seconds>`. `GameState::serverUptimeSeconds` stores the last received value.
+
+**`sse`:** Each team starts with 10 server-spawned slots, represented as pre-placed eggs. The server sends one `sse` per egg at connection time. Parsed into `ServerSpawnedEgg` event, handled identically to `enw` eggs in `GameState`.
 
 ### core/EventQueue
 Thread-safe queue for parsed events.
@@ -75,20 +88,22 @@ private:
 Visual behavior system. Each `IBehavior` subclass owns a piece of per-entity visual state and ticks every frame via `VisualState::update(dt)`.
 
 ```
-IBehavior (pure virtual: update, isDone)
-├── MoveBehavior    — smoothstep lerp of visual.pos between tiles, handles toroidal wrap
-├── TurnBehavior    — smoothstep lerp of visual.angle with 0/360 wraparound
-└── ABehavior       — abstract base for particle-emitting behaviors; owns mutable _particles + getParticles()
-    ├── DeathBehavior    — smoothstep shrink of visual.scale (1.0→0.05) + omnidirectional particle burst (10 ticks / freq)
-    └── LevelUpBehavior  — staggered upward particle burst, yellow/orange palette (20 ticks / freq)
+IBehavior (pure virtual: update, isDone, getDuration, minDuration)
+├── MoveBehavior         — smoothstep lerp of visual.pos between tiles, handles toroidal wrap
+├── TurnBehavior         — smoothstep lerp of visual.angle with 0/360 wraparound
+└── ADrawableBehavior    — abstract base for visual effects; owns mutable _particles + _lines, exposes getParticles()/getLines()
+    ├── DeathBehavior        — smoothstep shrink of visual.scale (1.0→0.05) + omnidirectional particle burst (10 ticks / freq)
+    ├── LevelUpBehavior      — staggered upward particle burst, yellow/orange palette (20 ticks / freq)
+    ├── BroadcastBehavior    — expanding ring wave (64-point circle of particles + 30 scatter seeds) centered on broadcaster, fades over 7 ticks / freq
+    └── ForkBehavior         — scale-up animation on egg spawn, particle burst at full size (10 ticks / freq)
 ```
 
 **Design:**
 - Logical state (`x`, `y`, `orientation`) stays server-authoritative in `Player`
 - Visual state (`visual.pos`, `visual.angle`, `visual.scale`) is driven by behaviors
-- Particles are owned per-behavior in `ABehavior::_particles` — isolated, no cross-contamination
-- `applyPlayerPosition` erases only `MoveBehavior`/`TurnBehavior` — other behaviors (e.g. `LevelUpBehavior`) survive movement events
-- New behaviors: subclass `IBehavior` or `ABehavior`, push onto `player.visual.behaviors` from relevant `GameState::apply*`, add `.cpp` to both `gui/CMakeLists.txt` and `tests/CMakeLists.txt`
+- Particles and lines are owned per-behavior in `ADrawableBehavior` — isolated, no cross-contamination
+- `applyPlayerPosition` erases only `MoveBehavior`/`TurnBehavior` — other behaviors (e.g. `LevelUpBehavior`, `BroadcastBehavior`) survive movement events
+- New behaviors: subclass `IBehavior` or `ADrawableBehavior`, push onto `player.visual.behaviors` (or `egg.visual.behaviors`) from relevant `GameState::apply*`, add `.cpp` to both `gui/CMakeLists.txt` and `tests/CMakeLists.txt`
 
 **Death flow:**
 - `applyPlayerDeath` moves `Player` from `world.players` → `world.dyingPlayers`, pushes `DeathBehavior` onto the settled entry's visual
@@ -101,8 +116,17 @@ IBehavior (pure virtual: update, isDone)
 - Particles staggered with random delay up to 60% of duration; each activates at `_visual.pos` at delay expiry (follows player movement)
 - Behavior removes itself and clears `_particles` when done
 
-**Renderer particle draw:**
-- `_drawBehaviorParticles(visual)` — iterates `visual.behaviors`, casts to `ABehavior*`, draws active particles via `DrawSphere`
+**Broadcast flow:**
+- `applyBroadcast` pushes `BroadcastBehavior` onto the broadcasting player's visual
+- Ring expands outward from player position; map half-dimensions passed in for toroidal clamping
+- 30 scatter seeds add jitter to the ring for a natural look
+
+**Fork flow:**
+- `applyPlayerFork` / egg spawn pushes `ForkBehavior` onto the new egg's visual
+- Egg scales from 0 to full size over duration, then fires a particle burst and marks itself done
+
+**Renderer drawable draw:**
+- `_drawBehaviorParticles(visual)` — iterates `visual.behaviors`, casts to `ADrawableBehavior*`, draws active particles via `DrawSphere` and lines via `DrawLine3D`
 
 ### core/Args
 CLI argument parser with validation.
@@ -155,6 +179,7 @@ Text-based state dump for testing/debugging. Prints game state updates to stdout
 - FPS counter (green ≥55, yellow ≥30, red <30)
 - Map dimensions
 - Current time unit
+- Server uptime (`Xh Ym Zs`, hours/minutes omitted when zero)
 - Top 5 teams by player count, each in their team color
 
 **Entity Tooltip (top-right)**
@@ -203,13 +228,7 @@ TooltipRenderer::create()
 - Improved resource visuals (3D models or icons instead of dots)
 - Map aesthetics: skybox, ground texture, decorative elements
 - Incantation visual feedback (glow, particle effect, frozen player indicator)
-- Broadcast visual feedback (directional wave or floating message)
-- ~~Death visual~~ — **done**: shrink + team-colored particle burst via `DeathBehavior`
 - Win screen / end game display when a team reaches 6 players at level 8
-- Fork visual (egg appearing animation on tile when player forks)
-- Level-up visual (burst/flash effect on all players participating in a successful elevation)
-- ~~Smooth movement animation~~ — **done**: `MoveBehavior` smoothstep-lerps position, toroidal wrap slides to edge then teleports
-- ~~Turn animation~~ — **done**: `TurnBehavior` smoothstep-lerps `visual.angle` with 0/360 wraparound
 - Incantation progress bar on the tile (300/f duration, visual countdown until success or failure)
 - Player history trail — faint path showing recent movement of selected player (style TBD based on overall visual direction)
 - Spectate / follow mode — camera locks onto and follows a selected player (3rd person or overhead, TBD)
@@ -228,19 +247,33 @@ int main(int argc, char** argv) {
 Inside `App::run()`:
 ```cpp
 void App::run() {
-    TcpSocket socket;
-    socket.connect(config.machine, config.port);
-    socket.send("GRAPHIC\n");
+    auto socket = make_unique<TcpSocket>();
+    _connectWithRetry(*socket, host, port);  // exponential backoff, 5 attempts
 
-    EventQueue queue;
     IRenderer* renderer = config.headless ? new HeadlessRenderer(...) : new RaylibRenderer(...);
+    renderer->init();
+    _rendererActive = true;
 
     while (!renderer->shouldClose()) {
-        pollAndEnqueue(socket, queue);
-        while (auto event = queue.pop()) state.applyEvent(*event);
-        renderer->render(state);
+        try {
+            socket->send("mct\n");
+            socket->send("stu\n");  // poll server uptime
+            pollAndEnqueue(*socket, queue);
+            while (auto event = queue.pop()) state.applyEvent(*event);
+            renderer->setState(state);
+            renderer->handleInput();
+            renderer->render();
+        } catch (const TcpException&) {
+            renderer->shutdown();
+            _rendererActive = false;
+            // reconnect with retry; if fails, break
+            state = {}; queue.clear();
+            renderer->init();
+            _rendererActive = true;
+        }
     }
 
+    if (_rendererActive) renderer->shutdown();
     delete renderer;
 }
 ```
@@ -296,11 +329,13 @@ gui/
 │   │   ├── App.hpp/cpp
 │   │   └── behaviors/
 │   │       ├── IBehavior.hpp
-│   │       ├── ABehavior.hpp
+│   │       ├── ADrawableBehavior.hpp
 │   │       ├── MoveBehavior.hpp/cpp
 │   │       ├── TurnBehavior.hpp/cpp
 │   │       ├── DeathBehavior.hpp/cpp
-│   │       └── LevelUpBehavior.hpp/cpp
+│   │       ├── LevelUpBehavior.hpp/cpp
+│   │       ├── BroadcastBehavior.hpp/cpp
+│   │       └── ForkBehavior.hpp/cpp
 │   ├── network/
 │   │   ├── TcpSocket.hpp/cpp
 │   │   └── ProtocolParser.hpp/cpp

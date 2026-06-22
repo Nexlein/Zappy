@@ -7,11 +7,13 @@
 #include <utility>
 #include <vector>
 
+#include "interfaces/INetworkObserver.hpp"
 #include "network/Connection.hpp"
 #include "network/Listener.hpp"
 
 struct PollResult {
-    std::vector<int> newFds;
+    std::vector<int> newConnections;
+    std::vector<int> disconnectedIds;
     std::vector<std::pair<int, std::string>> lines;
 };
 
@@ -24,6 +26,8 @@ class ClientManager {
     void disconnect(int connectionId);
     Connection& getConnection(int connectionId);
 
+    void addNetworkObserver(INetworkObserver* observer);
+
     private:
     void _acceptNew(PollResult& result);
     void _handleEvents(const pollfd& pfd, PollResult& result);
@@ -34,4 +38,5 @@ class ClientManager {
     std::unordered_map<int, int> _fdToId;
     std::vector<pollfd> _pollFds;
     int _nextId = 0;
+    std::vector<INetworkObserver*> _observers;
 };

@@ -29,6 +29,7 @@ class ProtocolParser {
                                                 char stopAt = '\n');
     static std::string _joinTokens(const std::vector<std::string_view>& tokens, size_t start);
 
+    static std::optional<Event> _parseWelcome(const std::vector<std::string_view>& tokens);
     static std::optional<Event> _parseMSZ(const std::vector<std::string_view>& tokens);
     static std::optional<Event> _parseBCT(const std::vector<std::string_view>& tokens);
     static std::optional<Event> _parseTNA(const std::vector<std::string_view>& tokens);
@@ -53,4 +54,6 @@ class ProtocolParser {
     static std::optional<Event> _parseSMG(const std::vector<std::string_view>& tokens);
     static std::optional<Event> _parseSUC(const std::vector<std::string_view>& tokens);
     static std::optional<Event> _parseSBP(const std::vector<std::string_view>& tokens);
+    static std::optional<Event> _parseSTU(const std::vector<std::string_view>& tokens);
+    static std::optional<Event> _parseSSE(const std::vector<std::string_view>& tokens);
 };

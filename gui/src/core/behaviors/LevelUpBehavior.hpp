@@ -1,17 +1,19 @@
 #pragma once
 
-#include "ABehavior.hpp"
+#include "ADrawableBehavior.hpp"
 #include "core/VisualState.hpp"
 
 /**
  * @brief Plays a rising particle burst when a player levels up.
  */
-class LevelUpBehavior : public ABehavior {
+class LevelUpBehavior : public ADrawableBehavior {
     public:
     LevelUpBehavior(VisualState& visual, float server_tick_rate);
 
     void update(float dt) override;
     bool isDone() const override;
+    float getDuration() const override { return _duration; }
+    float minDuration() const override { return 0.5f; }
 
     private:
     void _spawnParticles();

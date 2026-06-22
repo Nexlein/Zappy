@@ -12,4 +12,10 @@ class IBehavior {
 
     /** @brief Returns true when the behavior has completed and can be removed. */
     virtual bool isDone() const = 0;
+
+    /** @brief Total duration of this behavior in seconds. */
+    virtual float getDuration() const = 0;
+
+    /** @brief Minimum duration below which this behavior is skipped entirely. */
+    virtual float minDuration() const = 0;
 };

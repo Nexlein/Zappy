@@ -7,8 +7,12 @@
 #include "protocol/Serializer.hpp"
 
 HandshakeHandler::HandshakeHandler(ClientManager& clients, World& world, GuiNotifier& notifier,
-                                   const ServerConfig& config)
-    : _clients(clients), _world(world), _notifier(notifier), _config(config)
+                                   const ServerConfig& config, PromotedCallback onPromoted)
+    : _clients(clients),
+      _world(world),
+      _notifier(notifier),
+      _config(config),
+      _onPromoted(onPromoted)
 {
 }
 
@@ -28,7 +32,7 @@ void HandshakeHandler::onLine(int connectionId, const std::string& line)
         _reject(connectionId);
         return;
     }
-    if (_world.teamPlayerCount(line) >= _config.clientsNb) {
+    if (_world.teamEggCount(line) == 0) {
         _reject(connectionId);
         return;
     }
@@ -50,40 +54,40 @@ void HandshakeHandler::_promoteToGui(int connectionId)
     for (auto& [id, p] : _world.getPlayers())
         _notifier.send(connectionId,
                        Serializer::pnw(p.id, p.x, p.y, p.orientation, p.level, p.teamName));
-    for (auto& [id, egg] : _world.getEggs())
-        _notifier.send(connectionId, Serializer::enw(egg.id, egg.parentPlayerId, egg.x, egg.y));
+    // Initial eggs (parentPlayerId < 0) replay as sse; player-laid eggs as enw,
+    // matching how World::_spawnEgg first announced them.
+    for (auto& [id, egg] : _world.getEggs()) {
+        if (egg.parentPlayerId < 0)
+            _notifier.send(connectionId, Serializer::sse(egg.id, egg.teamName, egg.x, egg.y));
+        else
+            _notifier.send(connectionId, Serializer::enw(egg.id, egg.parentPlayerId, egg.x, egg.y));
+    }
 }
 
 void HandshakeHandler::_promoteToAi(int connectionId, const std::string& teamName)
 {
-    std::uniform_int_distribution<int> dori(0, 3);
+    std::uniform_int_distribution<int> dori(1, 4);
     static std::mt19937 rng{std::random_device{}()};
     auto orientation = static_cast<Orientation>(dori(rng));
 
+    // A player only spawns by hatching one of the team's eggs. popEggForTeam
+    // fires onEggHatched through the observers (GUI ebo, logging).
     auto egg = _world.popEggForTeam(teamName);
-
-    int x, y;
-    if (egg) {
-        x = egg->x;
-        y = egg->y;
-    } else {
-        std::uniform_int_distribution<int> dx(0, _config.width - 1);
-        std::uniform_int_distribution<int> dy(0, _config.height - 1);
-        x = dx(rng);
-        y = dy(rng);
+    if (!egg) {
+        _reject(connectionId);
+        return;
     }
 
-    int playerId = _world.addPlayer(connectionId, teamName, x, y, orientation);
+    int playerId = _world.addPlayer(connectionId, teamName, egg->x, egg->y, orientation);
     _clients.getConnection(connectionId).setType(ClientType::AI);
     _clients.getConnection(connectionId).setPlayerId(playerId);
 
-    int slotsLeft = _config.clientsNb - _world.teamPlayerCount(teamName);
+    int slotsLeft = _world.teamEggCount(teamName);
     _clients.send(connectionId, std::to_string(slotsLeft) + "\n");
     _clients.send(connectionId,
                   std::to_string(_config.width) + " " + std::to_string(_config.height) + "\n");
 
-    if (egg) _notifier.broadcast(Serializer::ebo(egg->id));
-    _notifier.onPlayerNew(_world.getPlayer(playerId));
+    _onPromoted(connectionId, playerId);
 }
 
 void HandshakeHandler::_reject(int connectionId)

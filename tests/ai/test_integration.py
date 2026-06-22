@@ -13,7 +13,7 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../ai/src"))
 
-from tcpClient import TcpClient
+from network.tcpClient import TcpClient
 
 
 class DummyZappyServer:

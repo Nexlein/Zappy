@@ -74,11 +74,17 @@ std::string Serializer::enw(int eggId, int playerId, int x, int y)
     return "enw " + id(eggId) + " " + id(playerId) + " " + n(x) + " " + n(y) + "\n";
 }
 
+std::string Serializer::sse(int eggId, const std::string& teamName, int x, int y)
+{
+    return "sse " + id(eggId) + " " + teamName + " " + n(x) + " " + n(y) + "\n";
+}
+
 std::string Serializer::ebo(int eggId) { return "ebo " + id(eggId) + "\n"; }
 std::string Serializer::edi(int eggId) { return "edi " + id(eggId) + "\n"; }
 
 std::string Serializer::sgt(int freq) { return "sgt " + n(freq) + "\n"; }
 std::string Serializer::sst(int freq) { return "sst " + n(freq) + "\n"; }
+std::string Serializer::stu(int seconds) { return "stu " + n(seconds) + "\n"; }
 
 std::string Serializer::seg(const std::string& team) { return "seg " + team + "\n"; }
 std::string Serializer::smg(const std::string& msg) { return "smg " + msg + "\n"; }

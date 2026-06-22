@@ -1,5 +1,6 @@
 #include "CommandDispatcher.hpp"
 
+#include <chrono>
 #include <variant>
 
 #include "protocol/AiParser.hpp"
@@ -13,8 +14,12 @@ CommandDispatcher::CommandDispatcher(ClientManager& clients, World& world, GuiNo
       _notifier(notifier),
       _scheduler(scheduler),
       _config(config),
-      _handshakeHandler(clients, world, notifier, config),
-      _freq(config.freq)
+      _handshakeHandler(clients, world, notifier, config,
+                        [this](int connectionId, int playerId) {
+                            this->_startStarvationTimer(connectionId, playerId);
+                        }),
+      _freq(config.freq),
+      _startTime(time(nullptr))
 {
 }
 
@@ -37,7 +42,14 @@ void CommandDispatcher::dispatch(int connectionId, const std::string& line)
 void CommandDispatcher::onDisconnect(int connectionId)
 {
     auto& conn = _clients.getConnection(connectionId);
-    if (conn.type() == ClientType::GUI) _notifier.removeGui(connectionId);
+    if (conn.type() == ClientType::GUI) {
+        _notifier.removeGui(connectionId);
+    } else if (conn.type() == ClientType::AI) {
+        int playerId = conn.playerId();
+        if (_world.getPlayers().count(playerId)) {
+            _world.removePlayer(playerId);
+        }
+    }
     _queues.erase(connectionId);
     _hasActive.erase(connectionId);
 }
@@ -60,6 +72,7 @@ void CommandDispatcher::_dispatchGui(int connectionId, const std::string& line)
                    [&](Gui::Pin p) { _handlePin(connectionId, p.id); },
                    [&](Gui::Sgt) { _handleSgt(connectionId); },
                    [&](Gui::Sst s) { _handleSst(s.freq); },
+                   [&](Gui::Stu) { _handleStu(connectionId); },
                    [&](auto&) { _clients.send(connectionId, "suc\n"); },
                },
                *req);
@@ -70,13 +83,6 @@ void CommandDispatcher::_dispatchAi(int connectionId, const std::string& line)
     auto cmd = AiParser::parse(line);
     if (!cmd) {
         _clients.send(connectionId, "ko\n");
-        return;
-    }
-
-    if (std::holds_alternative<Ai::ConnectNbr>(*cmd)) {
-        auto& player = _world.getPlayer(_clients.getConnection(connectionId).playerId());
-        int slots = _config.clientsNb - _world.teamPlayerCount(player.teamName);
-        _clients.send(connectionId, std::to_string(slots) + "\n");
         return;
     }
 
@@ -109,7 +115,40 @@ void CommandDispatcher::_executeNext(int connectionId)
                    [&](Ai::Take& t) { _handleTake(connectionId, t.resource); },
                    [&](Ai::Set& s) { _handleSet(connectionId, s.resource); },
                    [&](Ai::Incantation) { _handleIncantation(connectionId); },
-                   [&](Ai::ConnectNbr) {},
+                   [&](Ai::ConnectNbr) { _handleConnectNbr(connectionId); },
                },
                cmd);
+}
+
+void CommandDispatcher::_handleConnectNbr(int connectionId)
+{
+    int playerId = _clients.getConnection(connectionId).playerId();
+    if (_world.getPlayers().count(playerId)) {
+        auto& player = _world.getPlayer(playerId);
+        int slots = _world.teamEggCount(player.teamName);
+        _clients.send(connectionId, std::to_string(slots) + "\n");
+    }
+    _executeNext(connectionId);
+}
+
+void CommandDispatcher::_startStarvationTimer(int connectionId, int playerId)
+{
+    _scheduler.schedule(std::chrono::milliseconds(STARVATION_INTERVAL_MS) / _freq,
+                        [this, connectionId, playerId] {
+                            if (!_world.getPlayers().count(playerId)) return;
+                            if (!_world.consumeFood(playerId)) {
+                                _world.removePlayer(playerId);
+                                _clients.send(connectionId, "dead\n");
+                                _pendingDisconnects.push_back(connectionId);
+                            } else {
+                                _startStarvationTimer(connectionId, playerId);
+                            }
+                        });
+}
+
+std::vector<int> CommandDispatcher::drainPendingDisconnects()
+{
+    std::vector<int> result;
+    std::swap(result, _pendingDisconnects);
+    return result;
 }

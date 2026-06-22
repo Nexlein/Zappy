@@ -12,8 +12,8 @@ from collections import deque
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../ai/src"))
 
-from NetworkBuffer import NetworkBuffer
-from tcpClient import TcpClient
+from network.NetworkBuffer import NetworkBuffer
+from network.tcpClient import TcpClient
 
 
 class FakeClient(TcpClient):
