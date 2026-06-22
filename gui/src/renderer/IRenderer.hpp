@@ -15,4 +15,5 @@ class IRenderer {
     virtual void handleInput() = 0;
     virtual bool shouldClose() = 0;
     virtual void shutdown() = 0;
+    virtual void setDevMode(bool dev, int port, const std::string& machine) = 0;
 };
