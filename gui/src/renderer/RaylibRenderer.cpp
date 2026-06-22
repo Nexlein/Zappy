@@ -13,6 +13,7 @@
 
 void RaylibRenderer::init()
 {
+    _tileSlotMap.clear();
     SetTraceLogLevel(LOG_WARNING);
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(800, 600, "Zappy");
@@ -111,10 +112,17 @@ void RaylibRenderer::_render3D()
     }
     _state->world.purgeDyingPlayers();
 
+    _tileSlotMap.syncEggs(_state->world.eggs);
     for (auto& [id, egg] : _state->world.eggs) {
         egg.visual.update(GetFrameTime());
         Vector3 worldPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
                                                         _state->world.height, TILE_SIZE);
+        int slot = _tileSlotMap.eggSlot(id);
+        if (slot >= 0) {
+            auto [dx, dz] = TileSlotMap::slotOffset(slot);
+            worldPos.x += dx * TILE_SIZE;
+            worldPos.z += dz * TILE_SIZE;
+        }
         EntityRenderer::drawEgg(worldPos, _getTeamColor(egg.team), _eggModel, egg.rotation,
                                 _eggModelBaseMats, EGG_MODEL_SIZE * egg.visual.scale);
         _drawBehaviorParticles(egg.visual);
@@ -122,8 +130,10 @@ void RaylibRenderer::_render3D()
 
     for (int x = 0; x < _state->world.width; x++) {
         for (int y = 0; y < _state->world.height; y++) {
+            const Resources& res = _state->world.at(x, y);
+            auto slotIndices = _tileSlotMap.updateResourceSlots(x, y, res);
             EntityRenderer::drawResources(
-                _state->world.at(x, y), x, y,
+                res, slotIndices,
                 RenderingHelper::tileToWorld(x, y, _state->world.width, _state->world.height,
                                              TILE_SIZE),
                 TILE_SIZE, RESOURCE_SPHERE_BASE_SIZE);
@@ -205,6 +215,12 @@ void RaylibRenderer::_drawSelectionHighlight()
                 const Egg& egg = _state->world.eggs.at(_selection.id);
                 Vector3 eggPos = RenderingHelper::tileToWorld(egg.x, egg.y, _state->world.width,
                                                               _state->world.height, TILE_SIZE);
+                int slot = _tileSlotMap.eggSlot(_selection.id);
+                if (slot >= 0) {
+                    auto [dx, dz] = TileSlotMap::slotOffset(slot);
+                    eggPos.x += dx * TILE_SIZE;
+                    eggPos.z += dz * TILE_SIZE;
+                }
                 BoundingBox bbox = GetModelBoundingBox(_eggModel);
                 float topY = bbox.max.y * EGG_MODEL_SIZE * egg.visual.scale;
                 _drawSelectionArrow(eggPos, topY);
