@@ -10,6 +10,7 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
                                                         float tileSize, const Model& playerModel,
                                                         float playerModelSize,
                                                         const Model& eggModel, float eggModelSize,
+                                                        const TileSlotMap& slotMap,
                                                         float selectionDuration)
 {
     float closestDist = FLT_MAX;
@@ -37,6 +38,12 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
     for (const auto& [id, egg] : state.world.eggs) {
         Vector3 pos = RenderingHelper::tileToWorld(egg.x, egg.y, state.world.width,
                                                    state.world.height, tileSize);
+        int slot = slotMap.eggSlot(id);
+        if (slot >= 0) {
+            auto [dx, dz] = TileSlotMap::slotOffset(slot);
+            pos.x += dx * tileSize;
+            pos.z += dz * tileSize;
+        }
         Matrix transform = MatrixMultiply(MatrixScale(eggModelSize, eggModelSize, eggModelSize),
                                           MatrixTranslate(pos.x, pos.y, pos.z));
 
