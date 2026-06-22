@@ -54,6 +54,15 @@ class RaylibRenderer : public ARenderer {
     SelectionFinder::Selection _selection;
     TileSlotMap _tileSlotMap;
 
+    struct WindowSnapshot {
+        int width = 800, height = 600;
+        Vector2 position = {0, 0};
+        int monitor = 0;
+        bool fullscreen = false;
+        bool valid = false;
+    };
+    WindowSnapshot _savedWindow;
+
     void _render3D();
     void _render2D();
 

@@ -19,6 +19,14 @@ void RaylibRenderer::init()
     InitWindow(800, 600, "Zappy");
     SetTargetFPS(60);
 
+    if (_savedWindow.valid) {
+        SetWindowMonitor(_savedWindow.monitor);
+        SetWindowSize(_savedWindow.width, _savedWindow.height);
+        SetWindowPosition(static_cast<int>(_savedWindow.position.x),
+                          static_cast<int>(_savedWindow.position.y));
+        if (_savedWindow.fullscreen) ToggleFullscreen();
+    }
+
     _camera = {.position = {0.0f, 10.0f, 10.0f},
                .target = {0.0f, 0.0f, 0.0f},
                .up = {0.0f, 1.0f, 0.0f},
@@ -86,6 +94,15 @@ bool RaylibRenderer::shouldClose() { return WindowShouldClose(); }
 void RaylibRenderer::shutdown()
 {
     if (_playerModel.meshCount > 0) UnloadModel(_playerModel);
+
+    _savedWindow = {
+        .width      = GetScreenWidth(),
+        .height     = GetScreenHeight(),
+        .position   = GetWindowPosition(),
+        .monitor    = GetCurrentMonitor(),
+        .fullscreen = IsWindowFullscreen(),
+        .valid      = true,
+    };
 
     CloseWindow();
 }
