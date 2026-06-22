@@ -25,6 +25,9 @@ class Scheduler {
     void schedule(std::chrono::milliseconds delay, std::function<void()> cb);
     void tick();
 
+    /// Drop all pending events (e.g. on game end, to freeze the world instantly).
+    void clear();
+
     /**
      * @brief Milliseconds until the next event. Pass directly to poll() as timeout.
      * Returns -1 if the queue is empty (poll blocks until I/O arrives).
