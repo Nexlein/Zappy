@@ -20,8 +20,6 @@ class SelectionFinder {
         int id = -1;     // player/egg ID
         int tileX = -1;  // tile coords (if type == Tile)
         int tileY = -1;
-        float timer = 0.0f;      // Auto-deselect countdown
-        bool permanent = false;  // Whether to bypass timer
     };
 
     /**
@@ -33,13 +31,12 @@ class SelectionFinder {
      * @param playerModelSize Player model scale scalar.
      * @param eggModel Egg model for mesh-accurate raycasting.
      * @param eggModelSize Egg model scale scalar.
-     * @param selectionDuration Timer duration for selection (seconds).
      * @return Selection struct with closest hit entity.
      */
     static Selection findFromRay(const Ray& ray, const GameState& state, float tileSize,
                                  const Model& playerModel, float playerModelSize,
                                  const Model& eggModel, float eggModelSize,
-                                 const TileSlotMap& slotMap, float selectionDuration = 3.0f);
+                                 const TileSlotMap& slotMap);
     /**
      * @brief Returns an empty selection (type None).
      * @return Selection with type None and default values.

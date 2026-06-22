@@ -10,8 +10,7 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
                                                         float tileSize, const Model& playerModel,
                                                         float playerModelSize,
                                                         const Model& eggModel, float eggModelSize,
-                                                        const TileSlotMap& slotMap,
-                                                        float selectionDuration)
+                                                        const TileSlotMap& slotMap)
 {
     float closestDist = FLT_MAX;
     Selection newSelection;
@@ -29,7 +28,6 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
                 closestDist = collision.distance;
                 newSelection.type = EntityType::Player;
                 newSelection.id = id;
-                newSelection.timer = selectionDuration;
             }
         }
     }
@@ -53,7 +51,6 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
                 closestDist = collision.distance;
                 newSelection.type = EntityType::Egg;
                 newSelection.id = id;
-                newSelection.timer = selectionDuration;
             }
         }
     }
@@ -76,7 +73,6 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
             newSelection.type = EntityType::Tile;
             newSelection.tileX = tileX;
             newSelection.tileY = tileY;
-            newSelection.timer = selectionDuration;
         }
     }
 
@@ -85,25 +81,16 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
 
 SelectionFinder::Selection SelectionFinder::getEmptySelection()
 {
-    return {.type = EntityType::None,
-            .id = -1,
-            .tileX = -1,
-            .tileY = -1,
-            .timer = 0.0f,
-            .permanent = false};
+    return {.type = EntityType::None, .id = -1, .tileX = -1, .tileY = -1};
 }
 
 std::ostream& operator<<(std::ostream& os, const SelectionFinder::EntityType& type)
 {
     switch (type) {
-        case SelectionFinder::EntityType::None:
-            return os << "None";
-        case SelectionFinder::EntityType::Player:
-            return os << "Player";
-        case SelectionFinder::EntityType::Egg:
-            return os << "Egg";
-        case SelectionFinder::EntityType::Tile:
-            return os << "Tile";
+        case SelectionFinder::EntityType::None:   return os << "None";
+        case SelectionFinder::EntityType::Player: return os << "Player";
+        case SelectionFinder::EntityType::Egg:    return os << "Egg";
+        case SelectionFinder::EntityType::Tile:   return os << "Tile";
     }
     return os << "Unknown";
 }
@@ -117,6 +104,6 @@ std::ostream& operator<<(std::ostream& os, const SelectionFinder::Selection& sel
     } else if (sel.type == SelectionFinder::EntityType::Tile) {
         os << ", tile=(" << sel.tileX << "," << sel.tileY << ")";
     }
-    os << ", timer=" << sel.timer << ", permanent=" << sel.permanent << "}";
+    os << "}";
     return os;
 }
