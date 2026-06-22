@@ -47,6 +47,7 @@ if(ZAPPY_BUILD_GUI)
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/LevelUpBehavior.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/core/behaviors/BroadcastBehavior.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/renderer/raylib_helpers/RenderingHelper.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../gui/src/renderer/raylib_helpers/TileSlotMap.cpp
     )
 
     set(TEST_SOURCES
@@ -56,6 +57,7 @@ if(ZAPPY_BUILD_GUI)
         gui/test_protocolparser.cpp
         gui/test_gamestate.cpp
         gui/test_args.cpp
+        gui/test_tileslotmap.cpp
     )
 
     add_executable(zappy_gui_tests ${TEST_SOURCES} ${GUI_SOURCES})
