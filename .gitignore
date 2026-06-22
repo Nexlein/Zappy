@@ -46,3 +46,6 @@ Testing/
 
 # text files
 *.txt
+
+# tui
+!tui/CMakeLists.txt
