@@ -227,6 +227,7 @@ class MapsToAlly(AState):
         self._leave_emitted = False
         self._leave_target = None
         self.waiting_incant = False
+        self.incant_ticks_waited = 0
 
     def enter(self, context: DroneContext) -> None:
         self._entry_level = context.level
@@ -234,6 +235,7 @@ class MapsToAlly(AState):
         self.arrived = False
         self.ready_sent = False
         self.waiting_incant = False
+        self.incant_ticks_waited = 0
         self._leave_target = None
         self._leave_emitted = False
         self.tick_since_bcast = 0
@@ -264,6 +266,10 @@ class MapsToAlly(AState):
 
         if not getattr(self, "waiting_incant", False):
             self.ticks_waited += 1
+        else:
+            self.incant_ticks_waited += 1
+            if self.incant_ticks_waited > 350:
+                return AIState.SEARCH_STONE
 
         surv_cfg = get_survival_config()
         if context.inventory.food < surv_cfg.get("SURVIVAL_THRESHOLD", 5):

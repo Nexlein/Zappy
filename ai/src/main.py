@@ -168,6 +168,7 @@ class Orchestrator:
             and command != "Incantation"
         ):
             self._context.elevation_in_progress = False
+            self._context.last_command_successful = False
             return
 
         if command is None:
