@@ -96,12 +96,12 @@ void RaylibRenderer::shutdown()
     if (_playerModel.meshCount > 0) UnloadModel(_playerModel);
 
     _savedWindow = {
-        .width      = GetScreenWidth(),
-        .height     = GetScreenHeight(),
-        .position   = GetWindowPosition(),
-        .monitor    = GetCurrentMonitor(),
+        .width = GetScreenWidth(),
+        .height = GetScreenHeight(),
+        .position = GetWindowPosition(),
+        .monitor = GetCurrentMonitor(),
         .fullscreen = IsWindowFullscreen(),
-        .valid      = true,
+        .valid = true,
     };
 
     CloseWindow();

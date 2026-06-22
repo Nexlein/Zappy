@@ -4,19 +4,16 @@
 
 static constexpr std::pair<float, float> SLOT_OFFSETS[8] = {
     {-0.35f, -0.35f},  // 0: corner
-    { 0.35f, -0.35f},  // 1: corner
-    {-0.35f,  0.35f},  // 2: corner
-    { 0.35f,  0.35f},  // 3: corner
-    { 0.00f, -0.35f},  // 4: edge
-    { 0.00f,  0.35f},  // 5: edge
-    {-0.35f,  0.00f},  // 6: edge
-    { 0.35f,  0.00f},  // 7: edge
+    {0.35f, -0.35f},   // 1: corner
+    {-0.35f, 0.35f},   // 2: corner
+    {0.35f, 0.35f},    // 3: corner
+    {0.00f, -0.35f},   // 4: edge
+    {0.00f, 0.35f},    // 5: edge
+    {-0.35f, 0.00f},   // 6: edge
+    {0.35f, 0.00f},    // 7: edge
 };
 
-std::pair<float, float> TileSlotMap::slotOffset(int slotIndex)
-{
-    return SLOT_OFFSETS[slotIndex];
-}
+std::pair<float, float> TileSlotMap::slotOffset(int slotIndex) { return SLOT_OFFSETS[slotIndex]; }
 
 int TileSlotMap::TileOccupancy::acquire()
 {
@@ -30,34 +27,29 @@ int TileSlotMap::TileOccupancy::acquire()
     return rand() % 8;
 }
 
-void TileSlotMap::TileOccupancy::release(int slotIndex)
-{
-    occupied[slotIndex] = false;
-}
+void TileSlotMap::TileOccupancy::release(int slotIndex) { occupied[slotIndex] = false; }
 
 uint64_t TileSlotMap::tileKey(int x, int y)
 {
-    return (static_cast<uint64_t>(static_cast<uint32_t>(x)) << 32) |
-           static_cast<uint32_t>(y);
+    return (static_cast<uint64_t>(static_cast<uint32_t>(x)) << 32) | static_cast<uint32_t>(y);
 }
 
 uint64_t TileSlotMap::resourceKey(int x, int y, int resourceType)
 {
     // pack x (20 bits), y (20 bits), type (4 bits) into 44 bits — safe for realistic map sizes
-    return (static_cast<uint64_t>(x) << 24) |
-           (static_cast<uint64_t>(y) <<  4) |
+    return (static_cast<uint64_t>(x) << 24) | (static_cast<uint64_t>(y) << 4) |
            static_cast<uint64_t>(resourceType);
 }
 
 std::array<int, 7> TileSlotMap::updateResourceSlots(int tileX, int tileY,
-                                                     const Resources& resources)
+                                                    const Resources& resources)
 {
     std::array<int, 7> result;
     result.fill(-1);
 
     for (int i = 0; i < 7; i++) {
         uint64_t rkey = resourceKey(tileX, tileY, i);
-        bool hasSlot  = _resourceSlots.count(rkey) > 0;
+        bool hasSlot = _resourceSlots.count(rkey) > 0;
         bool hasCount = resources[i] > 0;
 
         if (hasCount && !hasSlot) {
@@ -98,8 +90,8 @@ void TileSlotMap::syncEggs(const std::unordered_map<int, Egg>& eggs)
     for (const auto& [id, egg] : eggs) {
         if (_knownEggs.find(id) == _knownEggs.end()) {
             int slot = _tileOccupancy[tileKey(egg.x, egg.y)].acquire();
-            _eggSlots[id]  = slot;
-            _eggTile[id]   = {egg.x, egg.y};
+            _eggSlots[id] = slot;
+            _eggTile[id] = {egg.x, egg.y};
             _knownEggs.insert(id);
         }
     }

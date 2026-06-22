@@ -43,8 +43,8 @@ void EntityRenderer::drawEgg(Vector3& worldPos, Color teamColor, Model& model, f
 }
 
 void EntityRenderer::drawResources(const Resources& resources,
-                                   const std::array<int, 7>& slotIndices,
-                                   const Vector3& tileCenter, float tileSize, float baseSize)
+                                   const std::array<int, 7>& slotIndices, const Vector3& tileCenter,
+                                   float tileSize, float baseSize)
 {
     static const Color resourceColors[] = {
         BROWN,     // food
@@ -65,11 +65,7 @@ void EntityRenderer::drawResources(const Resources& resources,
         // Size grows logarithmically with count
         float size = baseSize * (1.0f + std::log(count + 1) * 0.3f);
 
-        Vector3 drawPos = {
-            tileCenter.x + dx * tileSize,
-            size / 2.0f,
-            tileCenter.z + dz * tileSize
-        };
+        Vector3 drawPos = {tileCenter.x + dx * tileSize, size / 2.0f, tileCenter.z + dz * tileSize};
 
         DrawSphere(drawPos, size, resourceColors[i]);
     }
