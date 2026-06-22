@@ -12,19 +12,31 @@
 #include "network/ClientManager.hpp"
 #include "protocol/AiParser.hpp"
 
+/**
+ * @brief Sends each client line to the right handler.
+ *
+ * GUI lines are answered right away. AI lines get queued (max 10) and run one
+ * at a time, each taking some time units before the next starts. Also handles
+ * the handshake for new sockets and the food/starvation timer per player.
+ */
 class CommandDispatcher {
     public:
     CommandDispatcher(ClientManager& clients, World& world, GuiNotifier& notifier,
                       const ServerConfig& config, Scheduler& scheduler);
 
+    /// New socket connected: start its handshake.
     void onNewConnection(int connectionId);
+    /// Route one line from a client.
     void dispatch(int connectionId, const std::string& line);
+    /// Socket dropped: clean up its queue and player.
     void onDisconnect(int connectionId);
+    /// Take the list of ids the server should disconnect this cycle.
     std::vector<int> drainPendingDisconnects();
 
     private:
     void _dispatchAi(int connectionId, const std::string& line);
     void _dispatchGui(int connectionId, const std::string& line);
+    /// Run the next queued AI command (or go idle if none left).
     void _executeNext(int connectionId);
 
     void _startStarvationTimer(int connectionId, int playerId);
