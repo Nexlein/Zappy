@@ -7,20 +7,20 @@
     },
     "survival": {
         "SURVIVAL_THRESHOLD": 5,
-        "SAFE_FOOD_THRESHOLD": 10,
+        "SAFE_FOOD_THRESHOLD": 15,
         "FOOD_TARGET": 25,
         "EXPLORE_TURN_EVERY": 5,
         "INVENTORY_REFRESH_INTERVAL": 15
     },
     "evolution": {
         "MAX_LEVEL": 8,
-        "SOLO_INCANTATION_LEVEL": 1,
+        "SOLO_INCANTATION_LEVEL": 0,
         "PLAYERS_REQUIRED": {
-            "1": 1,
-            "2": 2,
-            "3": 2,
-            "4": 4,
-            "5": 4,
+            "1": 6,
+            "2": 6,
+            "3": 6,
+            "4": 6,
+            "5": 6,
             "6": 6,
             "7": 6
         },

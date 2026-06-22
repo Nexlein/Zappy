@@ -8,6 +8,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 import uuid
+import time
 from protocol.BroadcastProtocol import DecodedBroadcast, MessageType
 
 
@@ -56,6 +57,7 @@ class AllyInfo:
     is_rallying: bool = False
     is_coming: bool = False
     direction: int = -1
+    inventory: dict[str, int] = field(default_factory=dict)
 
 
 @dataclass
@@ -69,7 +71,9 @@ class DroneContext:
     map_width: int = 0
     map_height: int = 0
     available_slots: int = 0
-    drone_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    drone_id: str = field(
+        default_factory=lambda: f"{int(time.time() * 1000)}_{uuid.uuid4().hex[:8]}"
+    )
 
     # Dynamic drone state
     level: int = 1
@@ -77,6 +81,9 @@ class DroneContext:
 
     # Global Tracker for the Swarm
     ally_roster: dict[str, AllyInfo] = field(default_factory=dict)
+
+    # Role tracking
+    is_queen: bool = False
 
     # Vision snapshot from the last Look command.
     vision: List[Tile] = field(default_factory=list)
@@ -89,9 +96,6 @@ class DroneContext:
 
     # Reflects whether the LAST command the FSM issued succeeded.
     last_command_successful: Optional[bool] = None
-
-    # Track ticks since last inventory command
-    ticks_since_inventory: int = 0
 
     # True while a ritual freezes this drone
     elevation_in_progress: bool = False
@@ -136,6 +140,14 @@ class DroneContext:
                     info.is_ready = False
                     info.is_rallying = False
                     info.is_coming = False
+                elif bcst.content.msg_type == MessageType.SWARM_INVENTORY:
+                    if bcst.content.tail:
+                        try:
+                            for item in bcst.content.tail.split(","):
+                                k, v = item.split(":")
+                                info.inventory[k] = int(v)
+                        except ValueError:
+                            pass
 
         dead_allies = [
             drone_id
