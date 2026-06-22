@@ -51,6 +51,7 @@ set(GUI_SOURCES
     src/renderer/raylib_helpers/SelectionFinder.cpp
     src/renderer/raylib_helpers/GridRenderer.cpp
     src/renderer/raylib_helpers/EntityRenderer.cpp
+    src/renderer/raylib_helpers/TileSlotMap.cpp
     src/renderer/raylib_helpers/RenderingHelper.cpp
     src/renderer/raylib_helpers/TextRenderer.cpp
     src/renderer/raylib_helpers/TooltipRenderer.cpp

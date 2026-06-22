@@ -7,6 +7,7 @@
 #include "ARenderer.hpp"
 #include "raylib.h"
 #include "raylib_helpers/SelectionFinder.hpp"
+#include "raylib_helpers/TileSlotMap.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
 
 /**
@@ -30,7 +31,7 @@ class RaylibRenderer : public ARenderer {
     static constexpr float CAMERA_MOVE_SPEED = 2.0f;
     static constexpr float PLAYER_MODEL_SIZE = 0.4f;
     static constexpr float EGG_MODEL_SIZE = 0.3f;
-    static constexpr float RESOURCE_SPHERE_BASE_SIZE = 0.1f;
+    static constexpr float RESOURCE_SPHERE_BASE_SIZE = 0.08f;
     static constexpr float TILE_SIZE = 1.0f;
     static constexpr float SELECTION_TIMER = 5.0f;         // seconds
     static constexpr double SELECTION_DOUBLE_CLICK = 0.3;  // seconds
@@ -51,6 +52,16 @@ class RaylibRenderer : public ARenderer {
     std::unordered_map<std::string, Color> _teamColors;
 
     SelectionFinder::Selection _selection;
+    TileSlotMap _tileSlotMap;
+
+    struct WindowSnapshot {
+        int width = 800, height = 600;
+        Vector2 position = {0, 0};
+        int monitor = 0;
+        bool fullscreen = false;
+        bool valid = false;
+    };
+    WindowSnapshot _savedWindow;
 
     void _render3D();
     void _render2D();

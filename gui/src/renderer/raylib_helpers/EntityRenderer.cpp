@@ -3,10 +3,7 @@
 #include <cmath>
 
 #include "ColorPalette.hpp"
-
-std::unordered_map<std::tuple<int, int, int>, EntityRenderer::ResourceCacheEntry,
-                   EntityRenderer::TupleHash>
-    EntityRenderer::_resourcePositions;
+#include "TileSlotMap.hpp"
 
 void EntityRenderer::drawPlayer(Vector3& worldPos, Color teamColor, float rotation, Model& model,
                                 const Color* baseMats, float modelSize)
@@ -45,8 +42,9 @@ void EntityRenderer::drawEgg(Vector3& worldPos, Color teamColor, Model& model, f
     if (baseMats) _restoreModelBaseColors(model, baseMats, 2);
 }
 
-void EntityRenderer::drawResources(const Resources& resources, int tileX, int tileY,
-                                   const Vector3& tileCenter, float tileSize, float baseSize)
+void EntityRenderer::drawResources(const Resources& resources,
+                                   const std::array<int, 7>& slotIndices, const Vector3& tileCenter,
+                                   float tileSize, float baseSize)
 {
     static const Color resourceColors[] = {
         BROWN,     // food
@@ -60,31 +58,14 @@ void EntityRenderer::drawResources(const Resources& resources, int tileX, int ti
 
     for (int i = 0; i < 7; i++) {
         int count = resources[i];
-        if (count <= 0) continue;
+        if (count <= 0 || slotIndices[i] < 0) continue;
 
-        auto key = std::make_tuple(tileX, tileY, i);
-        auto& cache = _resourcePositions[key];
-
-        // Regenerate position only if resource appeared (was 0, now >0)
-        if (cache.lastCount == 0) {
-            float offsetRange = tileSize / 2.0f - baseSize;
-            float offsetX =
-                (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * offsetRange * 2 -
-                offsetRange;
-            float offsetZ =
-                (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * offsetRange * 2 -
-                offsetRange;
-
-            cache.position = {tileCenter.x + offsetX, 0.0f, tileCenter.z + offsetZ};
-        }
-
-        cache.lastCount = count;
+        auto [dx, dz] = TileSlotMap::slotOffset(slotIndices[i]);
 
         // Size grows logarithmically with count
         float size = baseSize * (1.0f + std::log(count + 1) * 0.3f);
 
-        Vector3 drawPos = cache.position;
-        drawPos.y = size / 2.0f;  // Sit on ground
+        Vector3 drawPos = {tileCenter.x + dx * tileSize, size / 2.0f, tileCenter.z + dz * tileSize};
 
         DrawSphere(drawPos, size, resourceColors[i]);
     }
