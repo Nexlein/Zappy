@@ -176,3 +176,17 @@ if(ZAPPY_BUILD_AI)
         )
     endif()
 endif()
+
+if(ZAPPY_BUILD_TUI)
+    # Python TUI tests (supervisor layer — pure logic, no Textual UI)
+    find_package(Python3 COMPONENTS Interpreter)
+    if(Python3_Interpreter_FOUND)
+        add_test(NAME zappy_tui_tests
+            COMMAND ${Python3_EXECUTABLE} -m unittest discover -s ${CMAKE_CURRENT_SOURCE_DIR}/tui -p "test_*.py"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../tui
+        )
+        set_tests_properties(zappy_tui_tests PROPERTIES
+            ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../tui/src"
+        )
+    endif()
+endif()
