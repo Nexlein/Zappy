@@ -75,19 +75,13 @@ void RaylibRenderer::render()
 
 void RaylibRenderer::handleInput()
 {
-    static double lastLeftClickTime = -1.0;
     // KEY_A maps to 'Q' on AZERTY
     if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) _cameraAngle += CAMERA_MOVE_SPEED * GetFrameTime();
     if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
         _cameraAngle -= CAMERA_MOVE_SPEED * GetFrameTime();
 
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         _performRaycast();
-        if (GetTime() - lastLeftClickTime < SELECTION_DOUBLE_CLICK &&
-            _selection.type != SelectionFinder::EntityType::None)
-            _selection.permanent = true;
-        lastLeftClickTime = GetTime();
-    }
 }
 
 bool RaylibRenderer::shouldClose() { return WindowShouldClose(); }
@@ -443,23 +437,14 @@ void RaylibRenderer::_performRaycast()
     Ray ray = GetMouseRay(GetMousePosition(), _camera);
     _selection =
         SelectionFinder::findFromRay(ray, *_state, TILE_SIZE, _playerModel, PLAYER_MODEL_SIZE,
-                                     _eggModel, EGG_MODEL_SIZE, _tileSlotMap, SELECTION_TIMER);
+                                     _eggModel, EGG_MODEL_SIZE, _tileSlotMap);
 
     if (_selection.type == SelectionFinder::EntityType::None) {
         _selection = SelectionFinder::getEmptySelection();
     }
 }
 
-void RaylibRenderer::_updateSelection(float deltaTime)
-{
-    if (_selection.type == SelectionFinder::EntityType::None) return;
-    if (_selection.permanent) return;
-
-    _selection.timer -= deltaTime;
-    if (_selection.timer <= 0.0f) {
-        _selection = SelectionFinder::getEmptySelection();
-    }
-}
+void RaylibRenderer::_updateSelection([[maybe_unused]] float deltaTime) {}
 
 void RaylibRenderer::_addResourceLines(TooltipRenderer::Builder& builder, const Resources& res,
                                        const std::string& indent, Color color)
