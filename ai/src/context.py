@@ -98,3 +98,6 @@ class DroneContext:
 
     # Total ticks the drone has been active
     total_ticks: int = 0
+
+    # How many forks this drone has successfully completed
+    forks_done: int = 0

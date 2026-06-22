@@ -211,6 +211,17 @@ class MapsToAlly(AState):
       from each incoming broadcast message.
     """
 
+    def __init__(self) -> None:
+        self._entry_level = 1
+        self.leader_id: str | None = None
+        self.arrived = False
+        self.tick_since_bcast = 0
+        self.ready_sent = False
+        self.ticks_waited = 0
+        self._leave_emitted = False
+        self._leave_target = None
+        self.waiting_incant = False
+
     def enter(self, context: DroneContext) -> None:
         self._entry_level = context.level
         self.ticks_waited = 0
@@ -337,6 +348,7 @@ class MapsToAlly(AState):
                             context.drone_id,
                         )
                         return f"Broadcast {payload}"
+
                     return action
 
         # -- Already on the rally tile (or just arrived): wait for the leader. --

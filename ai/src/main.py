@@ -97,7 +97,11 @@ class Orchestrator:
                 ):
                     command = self._controller.tick()
                     self._context.broadcasts.clear()
-                    if command:
+                    if command == "Spawn_child":
+                        self._context.forks_done += 1
+                        self._spawn_child()
+                        self._context.last_command_successful = True
+                    elif command:
                         self._net.send_command(command)
                         self._pending_command = command
 
@@ -237,22 +241,26 @@ class Orchestrator:
         if response.isdigit():
             self._context.available_slots = int(response)
 
+    def _spawn_child(self):
+        subprocess.Popen(
+            [
+                sys.executable,
+                sys.argv[0],
+                "-p",
+                str(self._config.port),
+                "-n",
+                self._config.teamName,
+                "-h",
+                self._config.host,
+                "-s",
+                self._config.strategy,
+            ]
+        )
+
     def _handle_fork_response(self, response: str):
         if response == "ok":
-            subprocess.Popen(
-                [
-                    sys.executable,
-                    sys.argv[0],
-                    "-p",
-                    str(self._config.port),
-                    "-n",
-                    self._config.teamName,
-                    "-h",
-                    self._config.host,
-                    "-s",
-                    self._config.strategy,
-                ]
-            )
+            self._context.forks_done += 1
+            self._spawn_child()
 
 
 def main():

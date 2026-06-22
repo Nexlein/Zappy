@@ -29,24 +29,34 @@ class Reproduce(AState):
     """
 
     def __init__(self) -> None:
-        self.forks_done = 0
         self.last_fork_tick = -9999
+        self._connect_sent = False
+        self._spawn_sent = False
+        self._fork_sent = False
 
     def enter(self, context: DroneContext) -> None:
+        self._connect_sent = False
+        self._spawn_sent = False
         self._fork_sent = False
 
     def update(self, context: DroneContext) -> str | None:
         repr_cfg = get_reproduction_config()
-        if self.forks_done >= repr_cfg.get("MAX_FORKS_PER_DRONE", 10):
+        if context.forks_done >= repr_cfg.get("MAX_FORKS_PER_DRONE", 10):
             return "BroadcastHelp"
         if context.inventory.food < repr_cfg.get("FORK_FOOD_THRESHOLD", 10):
             return "ForageFood"
 
+        if self._spawn_sent:
+            self.last_fork_tick = context.total_ticks
+            return "BroadcastHelp"
+
         if self._fork_sent:
             if context.last_command_successful:
-                self.forks_done += 1
                 self.last_fork_tick = context.total_ticks
             return "BroadcastHelp"
+
+        if self._connect_sent:
+            return None
 
         # Wait 600 ticks (the time it takes for an egg to hatch) before allowing another fork.
         # This prevents the drone from spamming its entire max fork budget instantly.
@@ -57,12 +67,22 @@ class Reproduce(AState):
 
     def get_action(self, context: DroneContext) -> str | None:
         repr_cfg = get_reproduction_config()
-        if self.forks_done >= repr_cfg.get("MAX_FORKS_PER_DRONE", 10):
+        if context.forks_done >= repr_cfg.get("MAX_FORKS_PER_DRONE", 10):
             return "Look"
         if context.inventory.food < repr_cfg.get("FORK_FOOD_THRESHOLD", 10):
             return "Look"
-        if context.total_ticks - self.last_fork_tick < 100:
+        if context.total_ticks - self.last_fork_tick < 600:
             return "Look"
+
+        if not self._connect_sent:
+            self._connect_sent = True
+            return "Connect_nbr"
+
+        if context.available_slots > 0:
+            if not self._spawn_sent:
+                self._spawn_sent = True
+                return "Spawn_child"
+            return None
 
         if not self._fork_sent:
             self._fork_sent = True
