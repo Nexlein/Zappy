@@ -44,8 +44,6 @@ ai/logs/
 Testing/
 *.log
 
-# text files
-*.txt
-
 # tui
-!tui/CMakeLists.txt
+/zappy_tui
+tui/.venv/
