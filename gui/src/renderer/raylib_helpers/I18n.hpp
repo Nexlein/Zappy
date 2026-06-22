@@ -25,6 +25,8 @@ class I18n {
         HUD_UPTIME_H,
         HUD_UPTIME_M,
         HUD_UPTIME_S,
+        HUD_PORT,
+        HUD_MACHINE,
 
         // Tooltip — entity labels
         LABEL_TILE,
@@ -87,6 +89,8 @@ class I18n {
             "h ",           // HUD_UPTIME_H
             "m ",           // HUD_UPTIME_M
             "s",            // HUD_UPTIME_S
+            "Port: ",       // HUD_PORT
+            "Machine: ",    // HUD_MACHINE
 
             "Tile",    // LABEL_TILE
             "Player",  // LABEL_PLAYER
@@ -114,14 +118,16 @@ class I18n {
         },
         // FR
         {
-            "IPS: ",             // HUD_FPS
-            "Carte: ",           // HUD_MAP
-            "Unité de temps: ",  // HUD_TIME_UNIT
-            "Temps --:--",       // HUD_UPTIME_UNKNOWN
-            "Temps: ",           // HUD_UPTIME_PREFIX
-            "h ",                // HUD_UPTIME_H
-            "m ",                // HUD_UPTIME_M
-            "s",                 // HUD_UPTIME_S
+            "IPS : ",             // HUD_FPS
+            "Carte : ",           // HUD_MAP
+            "Unité de temps : ",  // HUD_TIME_UNIT
+            "Temps --:--",        // HUD_UPTIME_UNKNOWN
+            "Temps : ",           // HUD_UPTIME_PREFIX
+            "h ",                 // HUD_UPTIME_H
+            "m ",                 // HUD_UPTIME_M
+            "s",                  // HUD_UPTIME_S
+            "Port : ",            // HUD_PORT
+            "Machine : ",         // HUD_MACHINE
 
             "Case",    // LABEL_TILE
             "Joueur",  // LABEL_PLAYER
