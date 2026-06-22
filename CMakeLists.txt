@@ -6,6 +6,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 option(ZAPPY_BUILD_SERVER "Build Server component" ON)
 option(ZAPPY_BUILD_GUI "Build GUI component" ON)
 option(ZAPPY_BUILD_AI "Build AI component" ON)
+option(ZAPPY_BUILD_TUI "Build TUI orchestrator component" OFF)
 
 # each binary can also be built standalone from its own directory
 if(ZAPPY_BUILD_SERVER)
@@ -20,10 +21,13 @@ if(ZAPPY_BUILD_AI)
     add_subdirectory(ai)
 endif()
 
+if(ZAPPY_BUILD_TUI)
+    add_subdirectory(tui)
+endif()
+
 # optional: build tests alongside everything
 option(ZAPPY_BUILD_TESTS "Build tests" OFF)
 if(ZAPPY_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
-

@@ -44,5 +44,7 @@ ai/logs/
 Testing/
 *.log
 
-# text files
-*.txt
+# tui
+/zappy_tui
+tui/.venv/
+tui/*.md
