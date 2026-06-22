@@ -42,6 +42,8 @@ class IWorldObserver {
     virtual void onInitialEggSpawned(int eggId, const std::string& teamName, int x, int y) = 0;
     /// An egg hatched into a connectable slot. -> ebo
     virtual void onEggHatched(int eggId) = 0;
+    /// An egg was destroyed (e.g. crushed by an eject). -> edi
+    virtual void onEggDied(int eggId) = 0;
     /// Incantation began on a tile. @p participantIds = players involved. -> pic
     virtual void onIncantationStart(int x, int y, int level,
                                     const std::vector<int>& participantIds) = 0;

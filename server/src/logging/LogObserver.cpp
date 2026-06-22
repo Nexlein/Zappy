@@ -115,6 +115,11 @@ void LogObserver::onEggHatched(int eggId)
     _logger.info(WORLD, "egg #" + std::to_string(eggId) + " hatched");
 }
 
+void LogObserver::onEggDied(int eggId)
+{
+    _logger.info(WORLD, "egg #" + std::to_string(eggId) + " died");
+}
+
 void LogObserver::onIncantationStart(int x, int y, int level,
                                      const std::vector<int>& participantIds)
 {

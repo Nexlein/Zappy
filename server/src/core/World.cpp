@@ -179,7 +179,10 @@ EjectResult World::ejectPlayers(int ejectorId)
 
     for (int pid : toEject) movePlayer(pid, _players.at(pid).x + dx, _players.at(pid).y + dy);
 
-    for (int eid : tile.eggIds) _eggs.erase(eid);
+    for (int eid : tile.eggIds) {
+        _eggs.erase(eid);
+        for (auto* observer : _observers) observer->onEggDied(eid);
+    }
     tile.eggIds.clear();
 
     for (int pid : toEject) {
