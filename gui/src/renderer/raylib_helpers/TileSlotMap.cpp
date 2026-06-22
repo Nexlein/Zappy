@@ -17,14 +17,16 @@ std::pair<float, float> TileSlotMap::slotOffset(int slotIndex) { return SLOT_OFF
 
 int TileSlotMap::TileOccupancy::acquire()
 {
-    for (int i = 0; i < 8; i++) {
-        if (!occupied[i]) {
-            occupied[i] = true;
-            return i;
-        }
-    }
-    // All slots taken: overlap fallback — pick random, bit already set
-    return rand() % 8;
+    // Build shuffled list of free slots for random assignment
+    int free[8], count = 0;
+    for (int i = 0; i < 8; i++)
+        if (!occupied[i]) free[count++] = i;
+
+    if (count == 0) return rand() % 8;  // all taken: overlap fallback
+
+    int chosen = free[rand() % count];
+    occupied[chosen] = true;
+    return chosen;
 }
 
 void TileSlotMap::TileOccupancy::release(int slotIndex) { occupied[slotIndex] = false; }
