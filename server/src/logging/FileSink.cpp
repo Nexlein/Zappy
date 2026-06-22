@@ -1,10 +1,13 @@
 #include "logging/FileSink.hpp"
 
-FileSink::FileSink(const std::string& path) : _out(path, std::ios::out | std::ios::trunc) {}
-
-void FileSink::write(const std::string& line)
+FileSink::FileSink(const std::string& path, LogLevel minLevel)
+    : _out(path, std::ios::out | std::ios::trunc), _minLevel(minLevel)
 {
-    if (!_out.is_open()) return;
+}
+
+void FileSink::write(LogLevel level, const std::string& line)
+{
+    if (level < _minLevel || !_out.is_open()) return;
     _out << line << "\n";
     _out.flush();
 }

@@ -102,6 +102,11 @@ class World {
 
     std::optional<std::string> checkWin() const;
 
+    /// True once a team has won. Game logic stops reacting to AI commands.
+    bool isGameEnded() const;
+    /// Winning team name, set when isGameEnded() becomes true.
+    const std::optional<std::string>& winner() const;
+
     int teamPlayerCount(const std::string& team) const;
     int width() const;
     int height() const;
@@ -123,5 +128,6 @@ class World {
     int _nextPlayerId = 0;
     int _nextEggId = 0;
     bool _gameEnded = false;
+    std::optional<std::string> _winner;
     std::vector<IWorldObserver*> _observers;
 };

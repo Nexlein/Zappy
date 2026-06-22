@@ -44,7 +44,11 @@ inline int broadcastDirection(int srcX, int srcY, int dstX, int dstY, int mapW, 
             break;
     }
 
-    // map to directions 1-8: 1=front, 2=front-right, ..., 8=front-left
+    // spec numbers tiles trigonometrically (counterclockwise): 1=front, 2=front-left,
+    // 3=left, ..., 8=front-right. Mirror rx to turn the clockwise octants below into CCW.
+    rx = -rx;
+
+    // map to directions 1-8: 1=front, 2=front-left, ..., 8=front-right
     if (ry > 0 && rx == 0) return 1;
     if (ry > 0 && rx > 0) return 2;
     if (ry == 0 && rx > 0) return 3;

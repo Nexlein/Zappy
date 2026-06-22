@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ctime>
+#include <chrono>
 #include <deque>
 #include <unordered_map>
 #include <vector>
@@ -32,6 +32,9 @@ class CommandDispatcher {
     void onDisconnect(int connectionId);
     /// Take the list of ids the server should disconnect this cycle.
     std::vector<int> drainPendingDisconnects();
+
+    /// Wall-clock time since server start (single source for `stu` and the win banner).
+    std::chrono::microseconds gameElapsed() const;
 
     private:
     void _dispatchAi(int connectionId, const std::string& line);
@@ -77,7 +80,7 @@ class CommandDispatcher {
     const ServerConfig& _config;
     HandshakeHandler _handshakeHandler;
     int _freq;
-    time_t _startTime;
+    std::chrono::steady_clock::time_point _startTime;
 
     std::unordered_map<int, std::deque<Ai::Command>> _queues;
     std::unordered_map<int, bool> _hasActive;

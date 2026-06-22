@@ -135,7 +135,7 @@ void CommandDispatcher::_handleLook(int connectionId)
         for (int i = 0; i < tileCount; i++) {
             int d = 0;
             while ((d + 1) * (d + 1) <= i) d++;
-            int xRel = i - 1 * d - d;
+            int xRel = i - d * d - d;
 
             int dx = d * look.fx + xRel * look.rx;
             int dy = d * look.fy + xRel * look.ry;

@@ -19,8 +19,14 @@ CommandDispatcher::CommandDispatcher(ClientManager& clients, World& world, GuiNo
                             this->_startStarvationTimer(connectionId, playerId);
                         }),
       _freq(config.freq),
-      _startTime(time(nullptr))
+      _startTime(std::chrono::steady_clock::now())
 {
+}
+
+std::chrono::microseconds CommandDispatcher::gameElapsed() const
+{
+    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() -
+                                                                 _startTime);
 }
 
 void CommandDispatcher::onNewConnection(int connectionId)
@@ -80,6 +86,10 @@ void CommandDispatcher::_dispatchGui(int connectionId, const std::string& line)
 
 void CommandDispatcher::_dispatchAi(int connectionId, const std::string& line)
 {
+    // Game over: world is frozen, AI commands are ignored (players stay put so the
+    // GUI keeps showing the final state).
+    if (_world.isGameEnded()) return;
+
     auto cmd = AiParser::parse(line);
     if (!cmd) {
         _clients.send(connectionId, "ko\n");

@@ -28,6 +28,8 @@ class Server {
     /// (Re)schedule the periodic world resource respawn.
     void _scheduleRespawn();
     void _logStartup() const;
+    /// Freeze the world and log the winner banner. Runs once when a team wins.
+    void _handleGameOver();
 
     /// Resources respawn every 20 time units (subject spec).
     static constexpr int RESPAWN_INTERVAL_MS = 20000;
@@ -41,4 +43,5 @@ class Server {
     LogObserver _logObserver;
     Scheduler _scheduler;
     CommandDispatcher _dispatcher;
+    bool _gameOverHandled = false;
 };

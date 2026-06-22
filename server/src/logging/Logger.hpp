@@ -5,8 +5,6 @@
 
 #include "logging/ILogSink.hpp"
 
-enum class LogLevel { Debug = 0, Info, Warn, Error };
-
 /**
  * @brief Logging facade: formats `[time] [LEVEL] [component] message`, filters
  * by level, and forwards to a single sink (typically a CompositeSink).
@@ -18,7 +16,7 @@ enum class LogLevel { Debug = 0, Info, Warn, Error };
  */
 class Logger {
     public:
-    explicit Logger(LogLevel threshold = LogLevel::Info);
+    explicit Logger(LogLevel threshold = LogLevel::Debug);
 
     void setSink(std::unique_ptr<ILogSink> sink);
     void setThreshold(LogLevel threshold) { _threshold = threshold; }

@@ -1,4 +1,4 @@
-#include <ctime>
+#include <chrono>
 #include <stdexcept>
 
 #include "CommandDispatcher.hpp"
@@ -63,8 +63,10 @@ void CommandDispatcher::_handleSgt(int connectionId)
 
 void CommandDispatcher::_handleStu(int connectionId)
 {
-    int elapsed = static_cast<int>(std::difftime(time(nullptr), _startTime));
-    _clients.send(connectionId, Serializer::stu(elapsed));
+    // GUI displays whole seconds: truncate the elapsed time to an integer second.
+    int seconds =
+        static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(gameElapsed()).count());
+    _clients.send(connectionId, Serializer::stu(seconds));
 }
 
 void CommandDispatcher::_handleSst(int freq)

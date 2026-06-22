@@ -179,7 +179,10 @@ EjectResult World::ejectPlayers(int ejectorId)
 
     for (int pid : toEject) movePlayer(pid, _players.at(pid).x + dx, _players.at(pid).y + dy);
 
-    for (int eid : tile.eggIds) _eggs.erase(eid);
+    for (int eid : tile.eggIds) {
+        _eggs.erase(eid);
+        for (auto* observer : _observers) observer->onEggDied(eid);
+    }
     tile.eggIds.clear();
 
     for (int pid : toEject) {
@@ -378,6 +381,7 @@ bool World::finalizeIncantation(int x, int y, const std::vector<int>& participan
         auto winner = checkWin();
         if (winner) {
             _gameEnded = true;
+            _winner = winner;
             for (auto* obs : _observers) obs->onGameEnd(*winner);
         }
     }
@@ -409,5 +413,8 @@ std::optional<std::string> World::checkWin() const
 
     return std::nullopt;
 }
+
+bool World::isGameEnded() const { return _gameEnded; }
+const std::optional<std::string>& World::winner() const { return _winner; }
 
 void World::addWorldObserver(IWorldObserver* observer) { _observers.push_back(observer); }

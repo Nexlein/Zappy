@@ -79,23 +79,25 @@ void LogObserver::onPlayerEjected(int playerId)
 
 void LogObserver::onBroadcast(int playerId, const std::string& message)
 {
-    _logger.info(WORLD, "player #" + std::to_string(playerId) + " broadcast: " + message);
+    _logger.debug(WORLD, "player #" + std::to_string(playerId) + " broadcast: " + message);
 }
 
 void LogObserver::onResourceTaken(int playerId, ResourceType resourceType, int tileX, int tileY,
                                   Resources resources)
 {
-    _logger.info(WORLD, "player #" + std::to_string(playerId) + " took " +
-                            Resources::get_name(resourceType) + " at (" + std::to_string(tileX) +
-                            "," + std::to_string(tileY) + ") tile now [" + resStr(resources) + "]");
+    _logger.debug(WORLD, "player #" + std::to_string(playerId) + " took " +
+                             Resources::get_name(resourceType) + " at (" + std::to_string(tileX) +
+                             "," + std::to_string(tileY) + ") tile now [" + resStr(resources) +
+                             "]");
 }
 
 void LogObserver::onResourceDropped(int playerId, ResourceType resourceType, int tileX, int tileY,
                                     Resources resources)
 {
-    _logger.info(WORLD, "player #" + std::to_string(playerId) + " dropped " +
-                            Resources::get_name(resourceType) + " at (" + std::to_string(tileX) +
-                            "," + std::to_string(tileY) + ") tile now [" + resStr(resources) + "]");
+    _logger.debug(WORLD, "player #" + std::to_string(playerId) + " dropped " +
+                             Resources::get_name(resourceType) + " at (" + std::to_string(tileX) +
+                             "," + std::to_string(tileY) + ") tile now [" + resStr(resources) +
+                             "]");
 }
 
 void LogObserver::onEggLaid(int eggId, int playerId, int x, int y)
@@ -113,6 +115,11 @@ void LogObserver::onInitialEggSpawned(int eggId, const std::string& teamName, in
 void LogObserver::onEggHatched(int eggId)
 {
     _logger.info(WORLD, "egg #" + std::to_string(eggId) + " hatched");
+}
+
+void LogObserver::onEggDied(int eggId)
+{
+    _logger.info(WORLD, "egg #" + std::to_string(eggId) + " died");
 }
 
 void LogObserver::onIncantationStart(int x, int y, int level,

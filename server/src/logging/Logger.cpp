@@ -44,7 +44,7 @@ void Logger::_log(LogLevel level, std::string_view component, std::string_view m
 
     std::string line = "[" + _timestamp() + "] [" + _levelName(level) + "] [" +
                        std::string(component) + "] " + std::string(msg);
-    _sink->write(line);
+    _sink->write(level, line);
 }
 
 void Logger::debug(std::string_view component, std::string_view msg)

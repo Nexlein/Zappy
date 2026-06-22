@@ -27,6 +27,11 @@ void HandshakeHandler::onLine(int connectionId, const std::string& line)
         _promoteToGui(connectionId);
         return;
     }
+    // Game over: no new players may join, but GUI viewers still may (above).
+    if (_world.isGameEnded()) {
+        _reject(connectionId);
+        return;
+    }
     auto it = std::find(_config.teamNames.begin(), _config.teamNames.end(), line);
     if (it == _config.teamNames.end()) {
         _reject(connectionId);

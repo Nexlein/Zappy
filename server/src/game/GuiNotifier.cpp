@@ -75,6 +75,8 @@ void GuiNotifier::onInitialEggSpawned(int eggId, const std::string& teamName, in
 
 void GuiNotifier::onEggHatched(int eggId) { broadcast(Serializer::ebo(eggId)); }
 
+void GuiNotifier::onEggDied(int eggId) { broadcast(Serializer::edi(eggId)); }
+
 void GuiNotifier::onIncantationStart(int x, int y, int level,
                                      const std::vector<int>& participantIds)
 {
