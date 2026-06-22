@@ -25,8 +25,8 @@ CommandDispatcher::CommandDispatcher(ClientManager& clients, World& world, GuiNo
 
 std::chrono::microseconds CommandDispatcher::gameElapsed() const
 {
-    return std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now() - _startTime);
+    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() -
+                                                                 _startTime);
 }
 
 void CommandDispatcher::onNewConnection(int connectionId)

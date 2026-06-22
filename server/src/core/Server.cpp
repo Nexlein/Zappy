@@ -76,8 +76,8 @@ void Server::_handleGameOver()
     _logger.info("GAME", "========== GAME OVER ==========");
     _logger.info("GAME", "Winner: " + winner);
     _logger.info("GAME", "Teams: " + teams);
-    _logger.info("GAME", "Duration: " + std::to_string(seconds) + " s " +
-                             std::to_string(micros) + " us");
+    _logger.info("GAME",
+                 "Duration: " + std::to_string(seconds) + " s " + std::to_string(micros) + " us");
     _logger.info("GAME", "Game ticks: " + std::to_string(ticks));
     _logger.info("GAME", "===============================");
 }

@@ -87,7 +87,8 @@ void LogObserver::onResourceTaken(int playerId, ResourceType resourceType, int t
 {
     _logger.debug(WORLD, "player #" + std::to_string(playerId) + " took " +
                              Resources::get_name(resourceType) + " at (" + std::to_string(tileX) +
-                             "," + std::to_string(tileY) + ") tile now [" + resStr(resources) + "]");
+                             "," + std::to_string(tileY) + ") tile now [" + resStr(resources) +
+                             "]");
 }
 
 void LogObserver::onResourceDropped(int playerId, ResourceType resourceType, int tileX, int tileY,
@@ -95,7 +96,8 @@ void LogObserver::onResourceDropped(int playerId, ResourceType resourceType, int
 {
     _logger.debug(WORLD, "player #" + std::to_string(playerId) + " dropped " +
                              Resources::get_name(resourceType) + " at (" + std::to_string(tileX) +
-                             "," + std::to_string(tileY) + ") tile now [" + resStr(resources) + "]");
+                             "," + std::to_string(tileY) + ") tile now [" + resStr(resources) +
+                             "]");
 }
 
 void LogObserver::onEggLaid(int eggId, int playerId, int x, int y)

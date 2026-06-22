@@ -64,8 +64,8 @@ void CommandDispatcher::_handleSgt(int connectionId)
 void CommandDispatcher::_handleStu(int connectionId)
 {
     // GUI displays whole seconds: truncate the elapsed time to an integer second.
-    int seconds = static_cast<int>(
-        std::chrono::duration_cast<std::chrono::seconds>(gameElapsed()).count());
+    int seconds =
+        static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(gameElapsed()).count());
     _clients.send(connectionId, Serializer::stu(seconds));
 }
 
