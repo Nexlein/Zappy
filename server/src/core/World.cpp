@@ -381,6 +381,7 @@ bool World::finalizeIncantation(int x, int y, const std::vector<int>& participan
         auto winner = checkWin();
         if (winner) {
             _gameEnded = true;
+            _winner = winner;
             for (auto* obs : _observers) obs->onGameEnd(*winner);
         }
     }
@@ -412,5 +413,8 @@ std::optional<std::string> World::checkWin() const
 
     return std::nullopt;
 }
+
+bool World::isGameEnded() const { return _gameEnded; }
+const std::optional<std::string>& World::winner() const { return _winner; }
 
 void World::addWorldObserver(IWorldObserver* observer) { _observers.push_back(observer); }
