@@ -1,7 +1,9 @@
 #include "core/Server.hpp"
 
+#include <chrono>
 #include <iostream>
 #include <memory>
+#include <vector>
 
 #include "logging/CompositeSink.hpp"
 #include "logging/ConsoleSink.hpp"
@@ -17,8 +19,10 @@ Server::Server(const ServerConfig& config)
       _dispatcher(_clients, _world, _notifier, _config, _scheduler)
 {
     auto sinks = std::make_unique<CompositeSink>();
-    sinks->add(std::make_unique<ConsoleSink>());
-    sinks->add(std::make_unique<FileSink>("zappy_server.log"));
+    // Both at Info: structural events only. Debug (per-tick NET I/O, broadcasts)
+    // is dropped to keep the log bounded under broadcast-heavy AI traffic.
+    sinks->add(std::make_unique<ConsoleSink>(LogLevel::Info));
+    sinks->add(std::make_unique<FileSink>("zappy_server.log", LogLevel::Info));
     _logger.setSink(std::move(sinks));
 
     _world.addWorldObserver(&_notifier);
@@ -46,6 +50,38 @@ void Server::_logStartup() const
     std::cout << "\n";
 }
 
+void Server::_handleGameOver()
+{
+    _gameOverHandled = true;
+    // Freeze the world: cancelling pending events stops moves, incantations,
+    // respawns and starvation, so the final state stays visible on the GUI.
+    _scheduler.clear();
+
+    // Close every AI socket so the AI programs hit EOF and exit cleanly. We close
+    // at the socket level WITHOUT removing the players from the world, so no pdi is
+    // emitted and the GUI keeps showing the final board. GUI sockets stay open.
+    std::vector<int> aiConns;
+    for (const auto& [pid, p] : _world.getPlayers()) aiConns.push_back(p.connectionId);
+    for (int conn : aiConns) _clients.disconnect(conn);
+
+    long long us = _dispatcher.gameElapsed().count();
+    long long seconds = us / 1000000;
+    long long micros = us % 1000000;
+    long long ticks = us * _config.freq / 1000000;
+
+    std::string teams;
+    for (const auto& name : _config.teamNames) teams += (teams.empty() ? "" : " ") + name;
+    const std::string winner = _world.winner().value_or("?");
+
+    _logger.info("GAME", "========== GAME OVER ==========");
+    _logger.info("GAME", "Winner: " + winner);
+    _logger.info("GAME", "Teams: " + teams);
+    _logger.info("GAME", "Duration: " + std::to_string(seconds) + " s " +
+                             std::to_string(micros) + " us");
+    _logger.info("GAME", "Game ticks: " + std::to_string(ticks));
+    _logger.info("GAME", "===============================");
+}
+
 void Server::run()
 {
     _scheduleRespawn();
@@ -68,6 +104,8 @@ void Server::run()
                 _dispatcher.onDisconnect(id);
                 _clients.disconnect(id);
             }
+
+            if (_world.isGameEnded() && !_gameOverHandled) _handleGameOver();
         } catch (const std::exception& e) {
             std::cerr << "[error] " << e.what() << "\n";
         }
