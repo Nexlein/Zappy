@@ -1,7 +1,11 @@
 import random
 from utils.stones import next_stone_to_drop, next_stone_to_take, get_missing_stones
 from utils.navigation import get_action_for_broadcast
-from utils.config_loader import get_evolution_config, get_swarm_config
+from utils.config_loader import (
+    get_evolution_config,
+    get_swarm_config,
+    get_survival_config,
+)
 from protocol.BroadcastProtocol import BroadcastProtocol, MessageType
 from protocol.look_parser import find_closest_resource_path
 
@@ -61,11 +65,36 @@ class ActionGenerators:
             return "Look"
         missing = get_missing_stones(self.context.level, self.context.inventory)
         current_tile = self.context.vision[0]
+
         if current_tile.player <= 1:
             for stone in missing:
                 if getattr(current_tile, stone, 0) > 0:
                     self._forward_streak = 0
                     return f"Take {stone}"
+
+        # Opportunistic foraging: grab food we're standing on, up to a ceiling
+        # above FOOD_TARGET — free life while we're already routed for stones.
+        surv_cfg = get_survival_config()
+        if current_tile.food > 0 and self.context.inventory.food < surv_cfg.get(
+            "FOOD_CEILING", 45
+        ):
+            self._forward_streak = 0
+            return "Take food"
+
+        # Passive sabotage (lowest priority — our own progression comes first):
+        # a cluster of players with no teammate in a gathering can only be enemies
+        # massing for a ritual, so eject them. Followers say READY/COMING (not
+        # RALLY) and the leader clears is_rallying on INCANT, so we check all swarm
+        # flags. Skip solo levels (spawn clustering is noise).
+        evo_cfg = get_evolution_config()
+        if self.context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
+            others = current_tile.player - 1
+            swarm_active = any(
+                info.is_rallying or info.is_ready or info.is_coming
+                for info in self.context.ally_roster.values()
+            )
+            if others >= evo_cfg.get("SABOTAGE_GATHER_MIN", 4) and not swarm_active:
+                return "Eject"
 
         best_path = find_closest_resource_path(self.context.vision, missing)
 
