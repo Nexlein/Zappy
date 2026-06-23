@@ -30,9 +30,9 @@ class RaylibRenderer : public ARenderer {
     static constexpr std::string_view EGG_MODEL_PATH = "gui/assets/egg.glb";
 
     static constexpr float CAMERA_MOVE_SPEED = 2.0f;
-    static constexpr float PLAYER_MODEL_SIZE = 0.4f;
-    static constexpr float EGG_MODEL_SIZE = 0.3f;
-    static constexpr float RESOURCE_SPHERE_BASE_SIZE = 0.08f;
+    static constexpr float PLAYER_MODEL_SIZE = 0.25f;
+    static constexpr float EGG_MODEL_SIZE = 0.15f;
+    static constexpr float RESOURCE_SPHERE_BASE_SIZE = 0.05f;
     static constexpr float TILE_SIZE = 1.0f;
     static constexpr float SELECTION_LINE_THICKNESS = 8.0f;
     static constexpr float SELECTION_WIREFRAME_THICKNESS = 5.0f;
