@@ -29,7 +29,9 @@ class RaylibRenderer : public ARenderer {
     static constexpr std::string_view PLAYER_MODEL_PATH = "gui/assets/rimuru.glb";
     static constexpr std::string_view EGG_MODEL_PATH = "gui/assets/egg.glb";
 
-    static constexpr float CAMERA_MOVE_SPEED = 2.0f;
+    static constexpr float CAMERA_MOVE_SPEED  = 2.0f;
+    static constexpr float FREECAM_MOVE_SPEED = 5.0f;
+    static constexpr float FREECAM_LOOK_SPEED = 0.002f;
     static constexpr float PLAYER_MODEL_SIZE = 0.25f;
     static constexpr float EGG_MODEL_SIZE = 0.15f;
     static constexpr float RESOURCE_SPHERE_BASE_SIZE = 0.05f;
@@ -41,6 +43,12 @@ class RaylibRenderer : public ARenderer {
     Camera3D _camera;
     float _cameraAngle = 0.0f;
     float _cameraHeight = 5.0f;
+
+    bool  _freecamActive       = false;
+    float _savedOrbitalAngle   = 0.0f;
+    float _savedOrbitalHeight  = 5.0f;
+    float _freecamYaw          = 0.0f;
+    float _freecamPitch        = 0.0f;
 
     Model _playerModel = {};
     Color _playerModelBaseMats[6] = {};
@@ -79,6 +87,11 @@ class RaylibRenderer : public ARenderer {
 
     void _updateCamera(float worldWidth, float worldHeight);
     void _updateSelection(float deltaTime);
+
+    void _enterFreecam();
+    void _exitFreecam();
+    void _handleFreecamInput();
+    void _handleOrbitalInput();
 
     void _performRaycast();
     void _drawBehaviorParticles(const VisualState& visual);
