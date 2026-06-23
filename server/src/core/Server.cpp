@@ -1,6 +1,7 @@
 #include "core/Server.hpp"
 
 #include <chrono>
+#include <cmath>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -67,7 +68,7 @@ void Server::_handleGameOver()
     long long us = _dispatcher.gameElapsed().count();
     long long seconds = us / 1000000;
     long long micros = us % 1000000;
-    long long ticks = us * _config.freq / 1000000;
+    long long ticks = std::llround(_dispatcher.gameTicks());
 
     std::string teams;
     for (const auto& name : _config.teamNames) teams += (teams.empty() ? "" : " ") + name;
