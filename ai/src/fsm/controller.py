@@ -51,7 +51,7 @@ class AIController:
 
         # 1. Update Context (Broadcasts & Inventory Handled by Orchestrator)
         self.context.total_ticks += 1
-        
+
         # Queen Election
         if self.context.total_ticks >= 20:
             is_oldest = True
