@@ -9,6 +9,7 @@ from utils.config_loader import (
 from protocol.BroadcastProtocol import BroadcastProtocol, MessageType
 from protocol.look_parser import find_closest_resource_path
 
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -28,6 +29,7 @@ class ActionGenerators:
         arrived: bool
         ready_sent: bool
         ready_count: int
+
         highest_rally_direction: int | None
         forks_done: int
         reproduce_connect_sent: bool

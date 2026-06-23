@@ -62,6 +62,7 @@ class UtilityAIController(UtilityCalculators, ActionGenerators):
         self.is_leader = False
         self.leader_aborted = False
         self.rally_ticks = 0
+
         self.incant_bcast_sent = False
         self.incant_cmd_sent = False
 
