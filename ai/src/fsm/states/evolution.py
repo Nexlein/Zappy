@@ -73,6 +73,22 @@ class SearchStone(AState):
                     return f"Take {stone}"
 
         surv_cfg = get_survival_config()
+        if current_tile.food > 0 and context.inventory.food < surv_cfg.get(
+            "FOOD_CEILING", 45
+        ):
+            self._forward_streak = 0
+            return "Take food"
+
+        evo_cfg = get_evolution_config()
+        if context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
+            others = current_tile.player - 1
+            swarm_active = any(
+                info.is_rallying or info.is_ready or info.is_coming
+                for info in context.ally_roster.values()
+            )
+            if others >= evo_cfg.get("SABOTAGE_GATHER_MIN", 4) and not swarm_active:
+                return "Eject"
+
         action, self._forward_streak = get_exploration_action(
             context,
             missing_stones,
