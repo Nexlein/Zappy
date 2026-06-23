@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "core/GameClock.hpp"
 #include "core/Scheduler.hpp"
 #include "core/World.hpp"
 #include "game/GuiNotifier.hpp"
@@ -35,6 +36,8 @@ class CommandDispatcher {
 
     /// Wall-clock time since server start (single source for `stu` and the win banner).
     std::chrono::microseconds gameElapsed() const;
+    /// Total game ticks elapsed (freq integrated over time). For the win banner.
+    double gameTicks() const;
 
     private:
     void _dispatchAi(int connectionId, const std::string& line);
@@ -78,9 +81,8 @@ class CommandDispatcher {
     GuiNotifier& _notifier;
     Scheduler& _scheduler;
     const ServerConfig& _config;
+    GameClock _clock;
     HandshakeHandler _handshakeHandler;
-    int _freq;
-    std::chrono::steady_clock::time_point _startTime;
 
     std::unordered_map<int, std::deque<Ai::Command>> _queues;
     std::unordered_map<int, bool> _hasActive;

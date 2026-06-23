@@ -14,19 +14,22 @@ CommandDispatcher::CommandDispatcher(ClientManager& clients, World& world, GuiNo
       _notifier(notifier),
       _scheduler(scheduler),
       _config(config),
-      _handshakeHandler(clients, world, notifier, config,
+      _clock(config.freq),
+      _handshakeHandler(clients, world, notifier, config, _clock,
                         [this](int connectionId, int playerId) {
                             this->_startStarvationTimer(connectionId, playerId);
-                        }),
-      _freq(config.freq),
-      _startTime(std::chrono::steady_clock::now())
+                        })
 {
 }
 
 std::chrono::microseconds CommandDispatcher::gameElapsed() const
 {
-    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() -
-                                                                 _startTime);
+    return _clock.elapsed();
+}
+
+double CommandDispatcher::gameTicks() const
+{
+    return _clock.ticks();
 }
 
 void CommandDispatcher::onNewConnection(int connectionId)
@@ -143,7 +146,7 @@ void CommandDispatcher::_handleConnectNbr(int connectionId)
 
 void CommandDispatcher::_startStarvationTimer(int connectionId, int playerId)
 {
-    _scheduler.schedule(std::chrono::milliseconds(STARVATION_INTERVAL_MS) / _freq,
+    _scheduler.schedule(std::chrono::milliseconds(STARVATION_INTERVAL_MS) / _clock.freq(),
                         [this, connectionId, playerId] {
                             if (!_world.getPlayers().count(playerId)) return;
                             if (!_world.consumeFood(playerId)) {

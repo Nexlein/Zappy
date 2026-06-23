@@ -53,7 +53,7 @@ void CommandDispatcher::_handleForward(int connectionId)
     int playerId = _clients.getConnection(connectionId).playerId();
     int delayMs = 7000;
 
-    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _clock.freq()), [this, connectionId, playerId] {
         if (!_world.getPlayers().count(playerId)) {
             _executeNext(connectionId);
             return;
@@ -87,7 +87,7 @@ void CommandDispatcher::_handleRight(int connectionId)
     int playerId = _clients.getConnection(connectionId).playerId();
     int delayMs = 7000;
 
-    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _clock.freq()), [this, connectionId, playerId] {
         if (!_world.getPlayers().count(playerId)) {
             _executeNext(connectionId);
             return;
@@ -105,7 +105,7 @@ void CommandDispatcher::_handleLeft(int connectionId)
     int playerId = _clients.getConnection(connectionId).playerId();
     int delayMs = 7000;
 
-    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _clock.freq()), [this, connectionId, playerId] {
         if (!_world.getPlayers().count(playerId)) {
             _executeNext(connectionId);
             return;
@@ -122,7 +122,7 @@ void CommandDispatcher::_handleLook(int connectionId)
     int playerId = _clients.getConnection(connectionId).playerId();
     int delayMs = 7000;
 
-    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _clock.freq()), [this, connectionId, playerId] {
         if (!_world.getPlayers().count(playerId)) {
             _executeNext(connectionId);
             return;
@@ -155,7 +155,7 @@ void CommandDispatcher::_handleInventory(int connectionId)
     int playerId = _clients.getConnection(connectionId).playerId();
     int delayMs = 1000;
 
-    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _clock.freq()), [this, connectionId, playerId] {
         if (!_world.getPlayers().count(playerId)) {
             _executeNext(connectionId);
             return;
@@ -180,7 +180,7 @@ void CommandDispatcher::_handleBroadcast(int connectionId, const std::string& ms
     int playerId = _clients.getConnection(connectionId).playerId();
     int delayMs = 7000;
 
-    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId,
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _clock.freq()), [this, connectionId, playerId,
                                                                      msg] {
         if (!_world.getPlayers().count(playerId)) {
             _executeNext(connectionId);
@@ -204,7 +204,7 @@ void CommandDispatcher::_handleFork(int connectionId)
     int playerId = _clients.getConnection(connectionId).playerId();
     int delayMs = 42000;
 
-    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _clock.freq()), [this, connectionId, playerId] {
         if (!_world.getPlayers().count(playerId)) {
             _executeNext(connectionId);
             return;
@@ -220,7 +220,7 @@ void CommandDispatcher::_handleEject(int connectionId)
     int playerId = _clients.getConnection(connectionId).playerId();
     int delayMs = 7000;
 
-    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq), [this, connectionId, playerId] {
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _clock.freq()), [this, connectionId, playerId] {
         if (!_world.getPlayers().count(playerId)) {
             _executeNext(connectionId);
             return;
@@ -251,7 +251,7 @@ void CommandDispatcher::_handleTake(int connectionId, ResourceType resource)
     int playerId = _clients.getConnection(connectionId).playerId();
     int delayMs = 7000;
 
-    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq),
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _clock.freq()),
                         [this, connectionId, playerId, resource] {
                             if (!_world.getPlayers().count(playerId)) {
                                 _executeNext(connectionId);
@@ -270,7 +270,7 @@ void CommandDispatcher::_handleSet(int connectionId, ResourceType resource)
     int playerId = _clients.getConnection(connectionId).playerId();
     int delayMs = 7000;
 
-    _scheduler.schedule(std::chrono::milliseconds(delayMs / _freq),
+    _scheduler.schedule(std::chrono::milliseconds(delayMs / _clock.freq()),
                         [this, connectionId, playerId, resource] {
                             if (!_world.getPlayers().count(playerId)) {
                                 _executeNext(connectionId);
@@ -305,7 +305,7 @@ void CommandDispatcher::_handleIncantation(int connectionId)
         _clients.send(_world.getPlayer(pid).connectionId, "Elevation underway\n");
 
     _scheduler.schedule(
-        std::chrono::milliseconds(delayMs / _freq),
+        std::chrono::milliseconds(delayMs / _clock.freq()),
         [this, connectionId, participants = *participants, x, y] {
             bool success = _world.finalizeIncantation(x, y, participants);
 

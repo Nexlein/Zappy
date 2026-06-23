@@ -58,7 +58,7 @@ void CommandDispatcher::_handlePin(int connectionId, int playerId)
 
 void CommandDispatcher::_handleSgt(int connectionId)
 {
-    _clients.send(connectionId, Serializer::sgt(_freq));
+    _clients.send(connectionId, Serializer::sgt(_clock.freq()));
 }
 
 void CommandDispatcher::_handleStu(int connectionId)
@@ -71,8 +71,7 @@ void CommandDispatcher::_handleStu(int connectionId)
 
 void CommandDispatcher::_handleSst(int freq)
 {
-    float ratio = static_cast<float>(_freq) / freq;
-    _freq = freq;
+    float ratio = _clock.setFreq(freq);
     _scheduler.rescale(ratio);
-    _notifier.broadcast(Serializer::sst(_freq));
+    _notifier.broadcast(Serializer::sst(_clock.freq()));
 }
