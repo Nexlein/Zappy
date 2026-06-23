@@ -7,8 +7,8 @@
 
 import unittest
 from context import DroneContext, Tile, BroadcastMessage
-from utility_ai import UtilityAIController
-from BroadcastProtocol import BroadcastProtocol
+from uai.controller import UtilityAIController
+from protocol.BroadcastProtocol import BroadcastProtocol
 
 
 class TestUtilityAIController(unittest.TestCase):
@@ -34,7 +34,7 @@ class TestUtilityAIController(unittest.TestCase):
         self.assertEqual(u_surv, 1.0)
 
         # When food is above target, survival utility is 0.0
-        self.context.inventory.food = 20
+        self.context.inventory.food = 30
         u_surv = self.controller._get_survival_utility()
         self.assertEqual(u_surv, 0.0)
 
@@ -51,7 +51,8 @@ class TestUtilityAIController(unittest.TestCase):
         self.assertEqual(action, "Forward")
 
     def test_gather_utility_and_action(self):
-        self.context.inventory.food = 15  # Safe food (target level)
+        self.context.inventory.food = 26  # Safe food
+        self.controller.forks_done = 10  # Max forks done, so reproduce utility is 0
         self.context.level = 1
         self.context.inventory.linemate = 0  # Missing linemate
         self.context.vision = [Tile(linemate=1)]
@@ -71,7 +72,7 @@ class TestUtilityAIController(unittest.TestCase):
         self.assertEqual(action, "Incantation")
 
     def test_follow_utility_and_action(self):
-        self.context.inventory.food = 12  # Safe food
+        self.context.inventory.food = 26  # Safe food
         self.context.level = 2
         self.context.team_name = "test_team"
         self.context.inventory.linemate = 0  # Missing linemate

@@ -1,6 +1,5 @@
 #include "TooltipRenderer.hpp"
 
-#include <iostream>
 #include <stdexcept>
 
 TooltipRenderer::Builder TooltipRenderer::create() { return Builder(); }

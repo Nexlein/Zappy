@@ -39,7 +39,7 @@ class TestContext(unittest.TestCase):
         self.assertEqual(tile.thystame, 0)
 
     def test_broadcast_message(self):
-        from BroadcastProtocol import DecodedBroadcast, MessageType
+        from protocol.BroadcastProtocol import DecodedBroadcast, MessageType
 
         content = DecodedBroadcast("team5", MessageType.RALLY, 2)
         msg = BroadcastMessage(direction=4, content=content)

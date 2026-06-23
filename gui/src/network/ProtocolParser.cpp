@@ -1,5 +1,6 @@
 #include "ProtocolParser.hpp"
 
+#include <iostream>
 #include <unordered_map>
 
 std::optional<Event> ProtocolParser::parse(std::string_view input)
@@ -11,18 +12,23 @@ std::optional<Event> ProtocolParser::parse(std::string_view input)
     // Map command -> parser function
     using ParserFunc = std::optional<Event> (*)(const std::vector<std::string_view>&);
     static const std::unordered_map<std::string_view, ParserFunc> parsers = {
-        {"msz", _parseMSZ}, {"bct", _parseBCT}, {"tna", _parseTNA}, {"pnw", _parsePNW},
-        {"ppo", _parsePPO}, {"plv", _parsePLV}, {"pin", _parsePIN}, {"pex", _parsePEX},
-        {"pbc", _parsePBC}, {"pic", _parsePIC}, {"pie", _parsePIE}, {"pfk", _parsePFK},
-        {"pdr", _parsePDR}, {"pgt", _parsePGT}, {"pdi", _parsePDI}, {"enw", _parseENW},
-        {"ebo", _parseEBO}, {"edi", _parseEDI}, {"sgt", _parseSGT}, {"sst", _parseSST},
-        {"seg", _parseSEG}, {"smg", _parseSMG}, {"suc", _parseSUC}, {"sbp", _parseSBP}};
+        {"welcome", _parseWelcome}, {"WELCOME", _parseWelcome}, {"msz", _parseMSZ},
+        {"bct", _parseBCT},         {"tna", _parseTNA},         {"pnw", _parsePNW},
+        {"ppo", _parsePPO},         {"plv", _parsePLV},         {"pin", _parsePIN},
+        {"pex", _parsePEX},         {"pbc", _parsePBC},         {"pic", _parsePIC},
+        {"pie", _parsePIE},         {"pfk", _parsePFK},         {"pdr", _parsePDR},
+        {"pgt", _parsePGT},         {"pdi", _parsePDI},         {"enw", _parseENW},
+        {"ebo", _parseEBO},         {"edi", _parseEDI},         {"sgt", _parseSGT},
+        {"sst", _parseSST},         {"seg", _parseSEG},         {"smg", _parseSMG},
+        {"suc", _parseSUC},         {"sbp", _parseSBP},         {"stu", _parseSTU},
+        {"sse", _parseSSE}};
 
     auto it = parsers.find(tokens[0]);
     if (it != parsers.end()) {
         return it->second(tokens);
     }
 
+    std::cerr << "[ProtocolParser] Unknown command: " << tokens[0] << "\n";
     return std::nullopt;
 }
 
@@ -62,6 +68,13 @@ std::string ProtocolParser::_joinTokens(const std::vector<std::string_view>& tok
         result += tokens[i];
     }
     return result;
+}
+
+std::optional<Event> ProtocolParser::_parseWelcome(
+    [[maybe_unused]] const std::vector<std::string_view>& tokens)
+{
+    // Server send "WELCOME", we do nothing
+    return std::nullopt;
 }
 
 std::optional<Event> ProtocolParser::_parseMSZ(const std::vector<std::string_view>& tokens)
@@ -426,4 +439,36 @@ std::optional<Event> ProtocolParser::_parseSBP(const std::vector<std::string_vie
     if (tokens.size() != 1) return std::nullopt;
 
     return BadParameters{};
+}
+
+std::optional<Event> ProtocolParser::_parseSTU(const std::vector<std::string_view>& tokens)
+{
+    // stu T
+
+    if (tokens.size() != 2) return std::nullopt;
+
+    try {
+        int uptimeSeconds = std::stoi(std::string(tokens[1]));
+        return ServerUptime{uptimeSeconds};
+    } catch (...) {
+        return std::nullopt;
+    }
+}
+
+std::optional<Event> ProtocolParser::_parseSSE(const std::vector<std::string_view>& tokens)
+{
+    // sse #e N X Y
+
+    if (tokens.size() != 5) return std::nullopt;
+
+    try {
+        int eggId = std::stoi(std::string(tokens[1].substr(1)));  // Skip '#'
+        std::string team = std::string(tokens[2]);
+        int x = std::stoi(std::string(tokens[3]));
+        int y = std::stoi(std::string(tokens[4]));
+
+        return ServerSpawnedEgg{eggId, team, x, y};
+    } catch (...) {
+        return std::nullopt;
+    }
 }

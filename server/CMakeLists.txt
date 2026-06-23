@@ -18,12 +18,26 @@ target_compile_options(clap PRIVATE -Wall -Wextra)
 
 set(SERVER_SOURCES
     src/main.cpp
+    src/core/Server.cpp
     src/core/Args.cpp
     src/core/World.cpp
     src/core/Scheduler.cpp
     src/protocol/AiParser.cpp
     src/protocol/GuiParser.cpp
     src/protocol/Serializer.cpp
+    src/network/Listener.cpp
+    src/network/Connection.cpp
+    src/network/ClientManager.cpp
+    src/game/GuiNotifier.cpp
+    src/game/HandshakeHandler.cpp
+    src/game/CommandDispatcher.cpp
+    src/game/GuiHandlers.cpp
+    src/game/AiHandlers.cpp
+    src/logging/ConsoleSink.cpp
+    src/logging/FileSink.cpp
+    src/logging/CompositeSink.cpp
+    src/logging/Logger.cpp
+    src/logging/LogObserver.cpp
 )
 
 add_executable(zappy_server ${SERVER_SOURCES})

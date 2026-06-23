@@ -4,50 +4,54 @@
 #include <cmath>
 
 #include "RenderingHelper.hpp"
+#include "raymath.h"
 
 SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const GameState& state,
-                                                        float tileSize, float playerHeight,
-                                                        float eggHeight, float selectionDuration)
+                                                        float tileSize, const Model& playerModel,
+                                                        float playerModelSize,
+                                                        const Model& eggModel, float eggModelSize,
+                                                        const TileSlotMap& slotMap)
 {
     float closestDist = FLT_MAX;
     Selection newSelection;
 
-    // Check players
+    // Check players using mesh-accurate raycasting
     for (const auto& [id, player] : state.world.players) {
-        Vector3 pos = RenderingHelper::tileToWorld(player.x, player.y, state.world.width,
-                                                   state.world.height, tileSize);
-        pos.y = playerHeight / 2.0f;  // Center of cube
+        Vector3 pos = player.visual.pos;
+        Matrix transform =
+            MatrixMultiply(MatrixScale(playerModelSize, playerModelSize, playerModelSize),
+                           MatrixTranslate(pos.x, pos.y, pos.z));
 
-        BoundingBox bbox = {
-            {pos.x - playerHeight / 2.0f, pos.y - playerHeight / 2.0f, pos.z - playerHeight / 2.0f},
-            {pos.x + playerHeight / 2.0f, pos.y + playerHeight / 2.0f,
-             pos.z + playerHeight / 2.0f}};
-
-        RayCollision collision = GetRayCollisionBox(ray, bbox);
-        if (collision.hit && collision.distance < closestDist) {
-            closestDist = collision.distance;
-            newSelection.type = EntityType::Player;
-            newSelection.id = id;
-            newSelection.timer = selectionDuration;
+        for (int m = 0; m < playerModel.meshCount; m++) {
+            RayCollision collision = GetRayCollisionMesh(ray, playerModel.meshes[m], transform);
+            if (collision.hit && collision.distance < closestDist) {
+                closestDist = collision.distance;
+                newSelection.type = EntityType::Player;
+                newSelection.id = id;
+            }
         }
     }
 
-    // Check eggs
+    // Check eggs using mesh-accurate raycasting
     for (const auto& [id, egg] : state.world.eggs) {
         Vector3 pos = RenderingHelper::tileToWorld(egg.x, egg.y, state.world.width,
                                                    state.world.height, tileSize);
-        pos.y = eggHeight / 2.0f;  // Center of cube
+        int slot = slotMap.eggSlot(id);
+        if (slot >= 0) {
+            auto [dx, dz] = TileSlotMap::slotOffset(slot);
+            pos.x += dx * tileSize;
+            pos.z += dz * tileSize;
+        }
+        Matrix transform = MatrixMultiply(MatrixScale(eggModelSize, eggModelSize, eggModelSize),
+                                          MatrixTranslate(pos.x, pos.y, pos.z));
 
-        BoundingBox bbox = {
-            {pos.x - eggHeight / 2.0f, pos.y - eggHeight / 2.0f, pos.z - eggHeight / 2.0f},
-            {pos.x + eggHeight / 2.0f, pos.y + eggHeight / 2.0f, pos.z + eggHeight / 2.0f}};
-
-        RayCollision collision = GetRayCollisionBox(ray, bbox);
-        if (collision.hit && collision.distance < closestDist) {
-            closestDist = collision.distance;
-            newSelection.type = EntityType::Egg;
-            newSelection.id = id;
-            newSelection.timer = selectionDuration;
+        for (int m = 0; m < eggModel.meshCount; m++) {
+            RayCollision collision = GetRayCollisionMesh(ray, eggModel.meshes[m], transform);
+            if (collision.hit && collision.distance < closestDist) {
+                closestDist = collision.distance;
+                newSelection.type = EntityType::Egg;
+                newSelection.id = id;
+            }
         }
     }
 
@@ -69,7 +73,6 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
             newSelection.type = EntityType::Tile;
             newSelection.tileX = tileX;
             newSelection.tileY = tileY;
-            newSelection.timer = selectionDuration;
         }
     }
 
@@ -78,12 +81,7 @@ SelectionFinder::Selection SelectionFinder::findFromRay(const Ray& ray, const Ga
 
 SelectionFinder::Selection SelectionFinder::getEmptySelection()
 {
-    return {.type = EntityType::None,
-            .id = -1,
-            .tileX = -1,
-            .tileY = -1,
-            .timer = 0.0f,
-            .permanent = false};
+    return {.type = EntityType::None, .id = -1, .tileX = -1, .tileY = -1};
 }
 
 std::ostream& operator<<(std::ostream& os, const SelectionFinder::EntityType& type)
@@ -110,6 +108,6 @@ std::ostream& operator<<(std::ostream& os, const SelectionFinder::Selection& sel
     } else if (sel.type == SelectionFinder::EntityType::Tile) {
         os << ", tile=(" << sel.tileX << "," << sel.tileY << ")";
     }
-    os << ", timer=" << sel.timer << ", permanent=" << sel.permanent << "}";
+    os << "}";
     return os;
 }

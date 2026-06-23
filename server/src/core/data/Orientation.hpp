@@ -9,6 +9,36 @@
  */
 enum class Orientation { N = 1, E = 2, S = 3, W = 4 };
 
+inline Orientation turnRight(Orientation o)
+{
+    switch (o) {
+        case Orientation::N:
+            return Orientation::E;
+        case Orientation::E:
+            return Orientation::S;
+        case Orientation::S:
+            return Orientation::W;
+        case Orientation::W:
+            return Orientation::N;
+    }
+    return o;
+}
+
+inline Orientation turnLeft(Orientation o)
+{
+    switch (o) {
+        case Orientation::N:
+            return Orientation::W;
+        case Orientation::W:
+            return Orientation::S;
+        case Orientation::S:
+            return Orientation::E;
+        case Orientation::E:
+            return Orientation::N;
+    }
+    return o;
+}
+
 inline std::ostream& operator<<(std::ostream& os, Orientation orientation)
 {
     switch (orientation) {

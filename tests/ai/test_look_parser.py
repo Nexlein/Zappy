@@ -7,7 +7,7 @@
 
 import unittest
 from context import Tile
-from look_parser import _parse_look, parse_look_to_tiles
+from protocol.look_parser import _parse_look, parse_look_to_tiles
 
 
 class TestLookParser(unittest.TestCase):

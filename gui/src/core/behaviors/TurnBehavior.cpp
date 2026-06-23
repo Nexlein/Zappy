@@ -5,8 +5,11 @@
 TurnBehavior::TurnBehavior(VisualState& visual, float fromAngle, float toAngle, float duration)
     : _visual(visual), _fromAngle(fromAngle), _duration(duration)
 {
-    // Shortest arc: wrap delta to [-180, 180] so we always rotate the short way around
-    _delta = fmod(toAngle - fromAngle + 540.0f, 360.0f) - 180.0f;
+    // Normalize fromAngle to [0, 360) before computing shortest arc
+    float normalizedFrom = fmod(fromAngle, 360.0f);
+    if (normalizedFrom < 0.0f) normalizedFrom += 360.0f;
+    _fromAngle = normalizedFrom;
+    _delta = fmod(toAngle - normalizedFrom + 540.0f, 360.0f) - 180.0f;
 }
 
 void TurnBehavior::update(float dt)

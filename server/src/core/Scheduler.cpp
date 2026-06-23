@@ -24,6 +24,11 @@ int Scheduler::msUntilNext() const
     return diff.count() < 0 ? 0 : static_cast<int>(diff.count());
 }
 
+void Scheduler::clear()
+{
+    while (!_queue.empty()) _queue.pop();
+}
+
 void Scheduler::rescale(float ratio)
 {
     auto now = std::chrono::steady_clock::now();

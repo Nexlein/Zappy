@@ -7,23 +7,36 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Fetch raylib
 include(FetchContent)
-set(CUSTOMIZE_BUILD ON CACHE BOOL "" FORCE)
-set(SUPPORT_TRACELOG_DEBUG OFF CACHE BOOL "" FORCE)
-set(SUPPORT_TRACELOG_INFO OFF CACHE BOOL "" FORCE)
-fetchcontent_declare(
-    raylib
-    GIT_REPOSITORY https://github.com/raysan5/raylib.git
-    GIT_TAG 5.0
-)
 
-# Fix for new CMake rejecting raylib's old minimum version
-set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
-fetchcontent_makeavailable(raylib)
+# raylib: no apt package — to install locally for faster future builds:
+#   sudo git clone --depth 1 --branch 5.0 https://github.com/raysan5/raylib.git /opt/raylib
+#   cmake -S /opt/raylib -B /opt/raylib/build -DCMAKE_BUILD_TYPE=Release
+#   cmake --build /opt/raylib/build -j$(nproc)
+#   sudo cmake --install /opt/raylib/build
+find_package(raylib QUIET)
+if(NOT raylib_FOUND)
+    message(WARNING "raylib not found on system — fetching via FetchContent (this may take a while on first build)\n"
+                    "   To avoid this next time, install raylib locally:\n"
+                    "   sudo git clone --depth 1 --branch 5.0 https://github.com/raysan5/raylib.git /opt/raylib && "
+                    "cmake -S /opt/raylib -B /opt/raylib/build && cmake --build /opt/raylib/build -j\$(nproc) && sudo cmake --install /opt/raylib/build")
+    set(CUSTOMIZE_BUILD ON CACHE BOOL "" FORCE)
+    set(SUPPORT_TRACELOG_DEBUG OFF CACHE BOOL "" FORCE)
+    set(SUPPORT_TRACELOG_INFO OFF CACHE BOOL "" FORCE)
+    fetchcontent_declare(
+        raylib
+        GIT_REPOSITORY https://github.com/raysan5/raylib.git
+        GIT_TAG 5.0
+    )
+    # Fix for new CMake rejecting raylib's old minimum version
+    set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+    fetchcontent_makeavailable(raylib)
+else()
+    message(STATUS "Found system raylib ${raylib_VERSION}")
+endif()
 
-# Suppress compiler warnings from third-party raylib and glfw libraries
-if(TARGET raylib)
+# Suppress compiler warnings from third-party raylib and glfw libraries (only for fetched targets)
+if(TARGET raylib AND NOT raylib_FOUND)
     target_compile_options(raylib PRIVATE -w)
 endif()
 if(TARGET glfw)
@@ -38,6 +51,8 @@ set(GUI_SOURCES
     src/renderer/raylib_helpers/SelectionFinder.cpp
     src/renderer/raylib_helpers/GridRenderer.cpp
     src/renderer/raylib_helpers/EntityRenderer.cpp
+    src/renderer/raylib_helpers/TileSlotMap.cpp
+    src/renderer/raylib_helpers/I18n.cpp
     src/renderer/raylib_helpers/RenderingHelper.cpp
     src/renderer/raylib_helpers/TextRenderer.cpp
     src/renderer/raylib_helpers/TooltipRenderer.cpp
@@ -45,6 +60,10 @@ set(GUI_SOURCES
     src/network/ProtocolParser.cpp
     src/core/behaviors/MoveBehavior.cpp
     src/core/behaviors/TurnBehavior.cpp
+    src/core/behaviors/DeathBehavior.cpp
+    src/core/behaviors/ForkBehavior.cpp
+    src/core/behaviors/LevelUpBehavior.cpp
+    src/core/behaviors/BroadcastBehavior.cpp
     src/core/EventQueue.cpp
     src/core/GameState.cpp
     src/core/Args.cpp
@@ -58,7 +77,7 @@ target_include_directories(zappy_gui PRIVATE
 )
 
 target_compile_options(zappy_gui PRIVATE
-    -Wall -Wextra -Wpedantic
+    -Wall -Wextra -Wpedantic -Wno-missing-field-initializers
 )
 
 target_link_libraries(zappy_gui PRIVATE raylib)

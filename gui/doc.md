@@ -30,7 +30,20 @@ Static factory that parses protocol lines into Event variants.
 - Token-based parsing (split by space, match command, parse args)
 - Returns `std::optional<Event>` (nullopt on malformed input)
 - Supports multi-word fields (team names, broadcast messages)
-- All 24 protocol commands implemented
+- All 24 standard protocol commands implemented, plus 2 custom extensions (see below)
+
+### Custom Protocol Extensions
+
+Two commands added on top of the standard GUI protocol. Non-disruptive: server handles them only for GUI clients, AI clients are unaffected.
+
+| Command | Direction | Format | Description |
+|---------|-----------|--------|-------------|
+| `stu` | GUI→Server, Server→GUI | `stu` / `stu T` | GUI polls each frame; server replies with uptime `T` in seconds |
+| `sse` | Server→GUI | `sse #e N X Y` | Server-spawned egg at startup; `#e` = egg ID, `N` = team name, `X Y` = tile position |
+
+**`stu`:** Enables the uptime display in the HUD. GUI sends `stu\n` at most once per real-time second (`App::_trySendStu`). If the server fails to respond 3 consecutive times, polling is silenced for the session and the HUD shows `Time --:--`. `GameState::serverUptimeSeconds` stores the last received value; `GameState::receivedStuResponse` is set to `true` on receipt so `_trySendStu` can detect a live response.
+
+**`sse`:** Each team starts with 10 server-spawned slots, represented as pre-placed eggs. The server sends one `sse` per egg at connection time. Parsed into `ServerSpawnedEgg` event, handled identically to `enw` eggs in `GameState`.
 
 ### core/EventQueue
 Thread-safe queue for parsed events.
@@ -75,15 +88,45 @@ private:
 Visual behavior system. Each `IBehavior` subclass owns a piece of per-entity visual state and ticks every frame via `VisualState::update(dt)`.
 
 ```
-IBehavior (pure virtual: update, isDone)
-└── MoveBehavior  — smoothstep lerp of visual.pos between tiles, handles toroidal wrap
+IBehavior (pure virtual: update, isDone, getDuration, minDuration)
+├── MoveBehavior         — smoothstep lerp of visual.pos between tiles, handles toroidal wrap
+├── TurnBehavior         — smoothstep lerp of visual.angle with 0/360 wraparound
+└── ADrawableBehavior    — abstract base for visual effects; owns mutable _particles + _lines, exposes getParticles()/getLines()
+    ├── DeathBehavior        — smoothstep shrink of visual.scale (1.0→0.05) + omnidirectional particle burst (10 ticks / freq)
+    ├── LevelUpBehavior      — staggered upward particle burst, yellow/orange palette (20 ticks / freq)
+    ├── BroadcastBehavior    — expanding ring wave (64-point circle of particles + 30 scatter seeds) centered on broadcaster, fades over 7 ticks / freq
+    └── ForkBehavior         — scale-up animation on egg spawn, particle burst at full size (10 ticks / freq)
 ```
 
 **Design:**
 - Logical state (`x`, `y`, `orientation`) stays server-authoritative in `Player`
-- Visual state (`visual.pos`, `visual.angle`) is driven by behaviors
-- New behaviors: subclass `IBehavior`, push onto `player.visual.behaviors` from relevant `GameState::apply*`
-- Add `.cpp` to `CMakeLists.txt`
+- Visual state (`visual.pos`, `visual.angle`, `visual.scale`) is driven by behaviors
+- Particles and lines are owned per-behavior in `ADrawableBehavior` — isolated, no cross-contamination
+- `applyPlayerPosition` erases only `MoveBehavior`/`TurnBehavior` — other behaviors (e.g. `LevelUpBehavior`, `BroadcastBehavior`) survive movement events
+- New behaviors: subclass `IBehavior` or `ADrawableBehavior`, push onto `player.visual.behaviors` (or `egg.visual.behaviors`) from relevant `GameState::apply*`, add `.cpp` to both `gui/CMakeLists.txt` and `tests/CMakeLists.txt`
+
+**Death flow:**
+- `applyPlayerDeath` moves `Player` from `world.players` → `world.dyingPlayers`, pushes `DeathBehavior` onto the settled entry's visual
+- `DeathBehavior` spawns 14 particles (immediate, no delay), updates shrink + physics each frame
+- Renderer draws dying players (scaled) + behavior particles via `_drawBehaviorParticles`, then calls `world.purgeDyingPlayers()`
+- `world.dyingPlayers` and `purgeDyingPlayers()` are `mutable` — visual-only lifecycle
+
+**LevelUp flow:**
+- `applyPlayerLevel` pushes `LevelUpBehavior` alongside existing behaviors (no clear)
+- Particles staggered with random delay up to 60% of duration; each activates at `_visual.pos` at delay expiry (follows player movement)
+- Behavior removes itself and clears `_particles` when done
+
+**Broadcast flow:**
+- `applyBroadcast` pushes `BroadcastBehavior` onto the broadcasting player's visual
+- Ring expands outward from player position; map half-dimensions passed in for toroidal clamping
+- 30 scatter seeds add jitter to the ring for a natural look
+
+**Fork flow:**
+- `applyPlayerFork` / egg spawn pushes `ForkBehavior` onto the new egg's visual
+- Egg scales from 0 to full size over duration, then fires a particle burst and marks itself done
+
+**Renderer drawable draw:**
+- `_drawBehaviorParticles(visual)` — iterates `visual.behaviors`, casts to `ADrawableBehavior*`, draws active particles via `DrawSphere` and lines via `DrawLine3D`
 
 ### core/Args
 CLI argument parser with validation.
@@ -92,6 +135,8 @@ CLI argument parser with validation.
 - `-p port` (required): server port (1-65535)
 - `-h machine` (optional): server host (default: localhost)
 - `--headless` (optional): use headless renderer
+- `--dev true|false` (optional): enable dev HUD (FPS, time unit, port, machine); default false
+- `--language english|french` (optional): UI language at launch; default english
 - `--help`: show usage
 
 **Exit codes:**
@@ -126,17 +171,21 @@ Text-based state dump for testing/debugging. Prints game state updates to stdout
 - All world coordinates computed via `RenderingHelper::tileToWorld()`
 
 **Selection System**
-- Single click: raycast via `SelectionFinder`, selects closest entity (player, egg, or tile), auto-deselects after 5s timer
-- Double click (≤300ms): permanent selection, bypasses timer
+- Single click: raycast via `SelectionFinder`, selects closest entity (player, egg, or tile); selection is permanent
 - Click empty space: clears selection
 - Selected entity gets a wireframe highlight (players/eggs) or grid outline (tiles)
-- Selection state lives in `SelectionFinder::Selection` (type, id, tileX/Y, timer, permanent flag)
+- Selection state lives in `SelectionFinder::Selection` (type, id, tileX/Y)
+- Egg raycasts apply the same tile slot offset as the visual position so hitbox matches what is drawn
 
 **HUD (top-left)**
-- FPS counter (green ≥55, yellow ≥30, red <30)
 - Map dimensions
-- Current time unit
+- Server uptime (`Xh Ym Zs`, hours/minutes omitted when zero; `Time --:--` if unavailable)
 - Top 5 teams by player count, each in their team color
+- **Dev mode only** (`--dev true` or `F3` toggle): FPS counter (green ≥55, yellow ≥30, red <30), time unit, port, machine
+
+**Window persistence**
+- On `shutdown()`, window state (size, position, monitor, fullscreen) is saved to `_savedWindow`
+- On `init()` after reconnect, `_savedWindow` is restored — window reopens exactly where it closed
 
 **Entity Tooltip (top-right)**
 - Appears when an entity is selected
@@ -145,6 +194,11 @@ Text-based state dump for testing/debugging. Prints game state updates to stdout
 - Player: ID, team name (team color), level, inventory (non-zero resources)
 - Egg: ID, team name (team color)
 - Built with `TooltipRenderer` builder pattern
+
+**Keybinds**
+- `Q`/`A` or Left/Right arrows: rotate camera
+- `L`: cycle UI language (EN↔FR)
+- `F3`: toggle dev HUD on/off at runtime
 
 **Window**
 - Resizable; font sizes scale with screen height (base 600px = 1.0x, clamped 0.5x–2.5x)
@@ -161,7 +215,38 @@ Static helper classes extracted from RaylibRenderer for maintainability:
 | `GridRenderer` | Draw tile grid and tile highlights |
 | `TextRenderer` | Draw text anchored to 3D world positions |
 | `TooltipRenderer` | Builder-pattern 2D tooltip renderer (multi-line, colored segments, anchored) |
-| `SelectionFinder` | Raycast against world entities, returns closest hit |
+| `SelectionFinder` | Raycast against world entities, returns closest hit; takes `TileSlotMap` to apply egg slot offsets |
+| `TileSlotMap` | Per-tile slot occupancy: assigns and tracks stable visual positions for resources and eggs (8 slots/tile) |
+| `I18n` | Compile-time EN/FR string table; O(1) lookup via static constexpr 2D array indexed by `[Language][Key]` |
+
+**TileSlotMap — tile slot system**
+
+Resources and eggs are displayed at one of 8 fixed slots per tile rather than at tile center or random positions. This prevents visual overlap with players (always at tile center) and with each other.
+
+Slot layout (offsets are fractions of `tileSize`):
+
+| Index | Type   | dx    | dz    |
+|-------|--------|-------|-------|
+| 0–3   | corner | ±0.35 | ±0.35 |
+| 4–5   | edge   | 0.00  | ±0.35 |
+| 6–7   | edge   | ±0.35 | 0.00  |
+
+- Resources and eggs share the same per-tile occupancy — they cannot land on the same slot
+- Slot assignment is renderer-only; the data layer (`WorldState`, `GameState`) is unchanged
+- `updateResourceSlots(x, y, res)` — called each frame; assigns a slot on 0→nonzero transition, releases on nonzero→0; returns `std::array<int,7>` of slot indices (-1 = not present)
+- `syncEggs(eggs)` — diffs current egg map against known set; assigns slots to new eggs, releases slots for gone eggs
+- Overflow: if all 8 slots full, new entity picks `rand() % 8` (visual overlap accepted, no crash)
+- Slot selection is random among free slots (`rand() % freeCount`) for natural spread
+
+**I18n — compile-time localization**
+
+All UI strings are stored as a static `constexpr` 2D array indexed by `[Language][Key]`. Zero allocation, O(1) lookup, no file I/O — deliberately chosen over a config file because languages are a compile-time concern and a missing file is an unnecessary failure mode.
+
+- `I18n::get(Key)` — returns `const char*` for current language
+- `I18n::resourceName(int index)` — resource name by index 0–6, matching `Resources[]` ordering
+- `I18n::setLanguage(Language)` / `getLanguage()` — runtime language switch
+- Language set at startup via `--language` arg; toggled live with `L` key (EN↔FR cycle)
+- French typography: space before `:` in all FR label prefixes
 
 **TooltipRenderer builder API:**
 ```cpp
@@ -184,13 +269,7 @@ TooltipRenderer::create()
 - Improved resource visuals (3D models or icons instead of dots)
 - Map aesthetics: skybox, ground texture, decorative elements
 - Incantation visual feedback (glow, particle effect, frozen player indicator)
-- Broadcast visual feedback (directional wave or floating message)
-- Death visual (dissolve, fade, or brief marker on tile)
 - Win screen / end game display when a team reaches 6 players at level 8
-- Fork visual (egg appearing animation on tile when player forks)
-- Level-up visual (burst/flash effect on all players participating in a successful elevation)
-- ~~Smooth movement animation~~ — **done**: `MoveBehavior` smoothstep-lerps position, toroidal wrap slides to edge then teleports
-- Turn animation — `TurnBehavior` to smoothstep-lerp `visual.angle` with 0/360 wraparound
 - Incantation progress bar on the tile (300/f duration, visual countdown until success or failure)
 - Player history trail — faint path showing recent movement of selected player (style TBD based on overall visual direction)
 - Spectate / follow mode — camera locks onto and follows a selected player (3rd person or overhead, TBD)
@@ -209,19 +288,34 @@ int main(int argc, char** argv) {
 Inside `App::run()`:
 ```cpp
 void App::run() {
-    TcpSocket socket;
-    socket.connect(config.machine, config.port);
-    socket.send("GRAPHIC\n");
+    auto socket = make_unique<TcpSocket>();
+    _connectWithRetry(*socket, host, port);  // exponential backoff, 5 attempts
 
-    EventQueue queue;
     IRenderer* renderer = config.headless ? new HeadlessRenderer(...) : new RaylibRenderer(...);
+    renderer->setDevMode(config.dev, config.port, config.machine);
+    renderer->init();
+    _rendererActive = true;
 
     while (!renderer->shouldClose()) {
-        pollAndEnqueue(socket, queue);
-        while (auto event = queue.pop()) state.applyEvent(*event);
-        renderer->render(state);
+        try {
+            socket->send("mct\n");
+            _trySendStu(*socket);  // throttled: once/s, silenced after 3 missed responses
+            pollAndEnqueue(*socket, queue);
+            while (auto event = queue.pop()) state.applyEvent(*event);
+            renderer->setState(state);
+            renderer->handleInput();
+            renderer->render();
+        } catch (const TcpException&) {
+            renderer->shutdown();
+            _rendererActive = false;
+            // reconnect with retry; if fails, break
+            state = {}; queue.clear(); _resetStuState();
+            renderer->init();
+            _rendererActive = true;
+        }
     }
 
+    if (_rendererActive) renderer->shutdown();
     delete renderer;
 }
 ```
@@ -238,14 +332,15 @@ Server → Client: ongoing events...
 
 ## Testing
 
-**Unit tests:** 102 tests across all components
+**Unit tests:** 117 tests across 8 suites
 - TcpSocket (11 tests)
 - EventQueue (7 tests)
 - ProtocolParser (36 tests)
 - GameState (24 tests)
 - Args (21 tests)
 - App (2 tests)
-- Stub (1 test)
+- TileSlotMap (11 tests)
+- I18n (6 tests) — including resource name index ordering, EN/FR parity check
 
 **E2E verification:** Manual testing against reference server (`bin/zappy_server`)
 
@@ -277,7 +372,13 @@ gui/
 │   │   ├── App.hpp/cpp
 │   │   └── behaviors/
 │   │       ├── IBehavior.hpp
-│   │       └── MoveBehavior.hpp/cpp
+│   │       ├── ADrawableBehavior.hpp
+│   │       ├── MoveBehavior.hpp/cpp
+│   │       ├── TurnBehavior.hpp/cpp
+│   │       ├── DeathBehavior.hpp/cpp
+│   │       ├── LevelUpBehavior.hpp/cpp
+│   │       ├── BroadcastBehavior.hpp/cpp
+│   │       └── ForkBehavior.hpp/cpp
 │   ├── network/
 │   │   ├── TcpSocket.hpp/cpp
 │   │   └── ProtocolParser.hpp/cpp
@@ -293,7 +394,9 @@ gui/
 │           ├── GridRenderer.hpp/cpp
 │           ├── TextRenderer.hpp/cpp
 │           ├── TooltipRenderer.hpp/cpp
-│           └── SelectionFinder.hpp/cpp
+│           ├── SelectionFinder.hpp/cpp
+│           ├── TileSlotMap.hpp/cpp
+│           └── I18n.hpp/cpp
 ├── CMakeLists.txt
 └── doc.md
 ```
@@ -323,3 +426,12 @@ RaylibRenderer grew large. Extracting stateless drawing concerns (grid, entities
 
 **Why blend elliptic+spherical orbit?**
 Pure circular orbit makes non-square maps look skewed. Pure elliptic stretches too far on wide maps. 50% blend gives a natural feel across all aspect ratios.
+
+**Why tile slots in the renderer, not the data layer?**
+Slot positions are purely visual — the server never communicates them and they carry no game semantics. `WorldState` represents what the server says happened; slot assignment is a display decision each renderer can make independently. `TileSlotMap` therefore lives in `raylib_helpers/` and is invisible to `HeadlessRenderer`.
+
+**Why I18n as a constexpr array instead of a config file?**
+Languages are a compile-time concern. A config file adds a runtime failure mode (file missing, bad path) for something that never changes without a recompile. The 2D array gives O(1) lookup with zero allocation — straightforward to extend (add a language = add a column, add a string = add a row).
+
+**Why `Oeuf` not `Œuf` in French?**
+Raylib's default font is ASCII-only. The `Œ` ligature renders as `?` at runtime. Accented letters like `É`, `é`, `à` work fine as they fall in the extended Latin range the bundled font covers.

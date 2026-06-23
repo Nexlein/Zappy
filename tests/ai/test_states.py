@@ -7,19 +7,21 @@
 
 import unittest
 from context import DroneContext, Tile
-from states.survival import ForageFood
-from states.evolution import SearchStone
-from states.swarm import BroadcastHelp, MapsToAlly
+from fsm.states.survival import ForageFood
+from fsm.states.evolution import SearchStone
+from fsm.states.swarm import BroadcastHelp, MapsToAlly
 from context import BroadcastMessage
-from states.evolution import IncantationState
-from BroadcastProtocol import DecodedBroadcast, MessageType
+from fsm.states.evolution import IncantationState
+from protocol.BroadcastProtocol import DecodedBroadcast, MessageType
+from utils.stones import get_missing_stones
+from context import AllyInfo
 
 
 def _rally(team: str, level: int, direction: int = 1) -> BroadcastMessage:
     """Build a pre-decoded RALLY message (decoding happens in the orchestrator)."""
     return BroadcastMessage(
         direction=direction,
-        content=DecodedBroadcast(team, MessageType.RALLY, level),
+        content=DecodedBroadcast(team, MessageType.RALLY, level, drone_id="ally_1"),
     )
 
 
@@ -39,7 +41,7 @@ class TestForageFood(unittest.TestCase):
         self.assertIsNone(res)
 
     def test_update_food_high(self):
-        self.context.inventory.food = 15
+        self.context.inventory.food = 25
         res = self.state.update(self.context)
         self.assertEqual(res, "SearchStone")
 
@@ -78,13 +80,14 @@ class TestSearchStone(unittest.TestCase):
     def test_get_missing_stones_level_1_missing(self):
         self.context.level = 1
         self.context.inventory.linemate = 0
-        missing = self.state._get_missing_stones(self.context)
+        missing = get_missing_stones(self.context.level, self.context.inventory)
         self.assertEqual(missing, {"linemate": 1})
 
     def test_get_missing_stones_level_1_complete(self):
         self.context.level = 1
+        self.context.inventory.food = 25
         self.context.inventory.linemate = 1
-        missing = self.state._get_missing_stones(self.context)
+        missing = get_missing_stones(self.context.level, self.context.inventory)
         self.assertEqual(missing, {})
 
     def test_update_low_food_trigger(self):
@@ -94,12 +97,14 @@ class TestSearchStone(unittest.TestCase):
 
     def test_update_all_stones_collected_level_1(self):
         self.context.level = 1
+        self.context.inventory.food = 25
         self.context.inventory.linemate = 1
         res = self.state.update(self.context)
-        self.assertEqual(res, "Incantation")
+        self.assertEqual(res, "BroadcastHelp")
 
     def test_update_all_stones_collected_level_2(self):
         self.context.level = 2
+        self.context.inventory.food = 25
         self.context.inventory.linemate = 1
         self.context.inventory.deraumere = 1
         self.context.inventory.sibur = 1
@@ -136,6 +141,7 @@ class TestSearchStone(unittest.TestCase):
         self.context.level = 2
         self.context.team_name = "team5"
         self.context.broadcasts = [_rally("team5", 2)]
+        self.context.update_roster()
         res = self.state.update(self.context)
         self.assertEqual(res, "MapsToAlly")
 
@@ -145,6 +151,7 @@ class TestSearchStone(unittest.TestCase):
         self.context.level = 2
         self.context.team_name = "team5"
         self.context.broadcasts = [_rally("team5", 3)]
+        self.context.update_roster()
         res = self.state.update(self.context)
         self.assertNotEqual(res, "MapsToAlly")
 
@@ -199,20 +206,26 @@ class TestBroadcastHelp(unittest.TestCase):
         self.state.enter(self.context)
         self.context.inventory.food = 2  # Less than SURVIVAL_THRESHOLD (5)
         res = self.state.update(self.context)
-        self.assertEqual(res, "ForageFood")
+        self.assertIsNone(res)
+        self.assertEqual(self.state._abort_target, "ForageFood")
 
     def test_update_timeout(self):
         self.state.enter(self.context)
-        self.context.inventory.food = 15  # Food secure
-        self.state.ticks_waited = 101  # Greater than RALLY_TIMEOUT (100)
+        self.context.inventory.food = 25  # Food secure
+        self.context.level = 2  # Require 2 players
+        self.state.ticks_waited = 301  # Greater than RALLY_TIMEOUT (300)
         res = self.state.update(self.context)
-        self.assertEqual(res, "SearchStone")
+        self.assertIsNone(res)
+        self.assertEqual(self.state._abort_target, "Reproduce")
 
     def test_update_incantation_ready(self):
         self.state.enter(self.context)
-        self.context.inventory.food = 15  # Food secure
+        self.context.inventory.food = 25  # Food secure
         self.context.vision = [Tile(player=2, linemate=1, deraumere=1, sibur=1)]
         self.context.level = 2
+        self.context.ally_roster["fake"] = AllyInfo(
+            level=2, last_seen_tick=0, is_ready=True, direction=0
+        )
         res = self.state.update(self.context)
         self.assertEqual(res, "Incantation")
 
@@ -235,15 +248,27 @@ class TestMapsToAlly(unittest.TestCase):
 
     def test_update_timeout(self):
         self.state.enter(self.context)
-        self.context.inventory.food = 15  # Food secure
-        self.state.ticks_waited = 101  # Greater than RALLY_TIMEOUT (100)
+        self.context.inventory.food = 25  # Food secure
+        self.state.ticks_waited = 301  # Greater than RALLY_TIMEOUT (300)
         res = self.state.update(self.context)
         self.assertEqual(res, "SearchStone")
 
     def test_get_action_follow_broadcast(self):
-        self.state.enter(self.context)
         self.context.level = 1
-        self.context.team_name = "team5"
-        self.context.broadcasts = [_rally("team5", 1)]
+        self.context.ally_roster["fake"] = AllyInfo(
+            level=1, last_seen_tick=0, is_rallying=True, direction=1
+        )
+        self.state.enter(self.context)
+        self.context.broadcasts = [
+            BroadcastMessage(
+                direction=1,
+                content=DecodedBroadcast(
+                    team_name="team1",
+                    msg_type=MessageType.RALLY,
+                    level=1,
+                    drone_id="fake",
+                ),
+            )
+        ]
         action = self.state.get_action(self.context)
         self.assertEqual(action, "Forward")

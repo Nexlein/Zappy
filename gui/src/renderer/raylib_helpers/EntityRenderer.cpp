@@ -2,73 +2,49 @@
 
 #include <cmath>
 
-#include "core/Orientation.hpp"
+#include "ColorPalette.hpp"
+#include "TileSlotMap.hpp"
 
-std::unordered_map<std::tuple<int, int, int>, EntityRenderer::ResourceCacheEntry,
-                   EntityRenderer::TupleHash>
-    EntityRenderer::_resourcePositions;
-
-void EntityRenderer::drawPlayer(Vector3& worldPos, Color teamColor, float rotation, Model* model,
-                                const Color* baseMats, float cubeSize, float modelSize)
+void EntityRenderer::drawPlayer(Vector3& worldPos, Color teamColor, float rotation, Model& model,
+                                const Color* baseMats, float modelSize)
 {
-    if (model != nullptr) {
-        // mat[0] idk what it controls
-        // mat[1] = internal transparent layer (reflects mat[3], lighter color)
-        // mat[2] = blush accent color
-        // mat[3] = internal body color (darker than mat[1])
-        // mat[4] = slime external small reflection (2 white blobs on top)
-        // mat[5] = seems to be the very outer reflection layer
+    // mat[0] idk what it controls
+    // mat[1] = internal transparent layer (reflects mat[3], lighter color)
+    // mat[2] = blush accent color
+    // mat[3] = internal body color (darker than mat[1])
+    // mat[4] = slime external small reflection (2 white blobs on top)
+    // mat[5] = seems to be the very outer reflection layer
 
-        ColorPalette::SlimePalette palette = ColorPalette::getSlimePalette(teamColor);
-        if (!ColorPalette::colorEquals(palette.outer, ColorPalette::KEEP))
-            model->materials[1].maps[MATERIAL_MAP_DIFFUSE].color = palette.outer;
-        if (!ColorPalette::colorEquals(palette.inner, ColorPalette::KEEP))
-            model->materials[3].maps[MATERIAL_MAP_DIFFUSE].color = palette.inner;
-        if (!ColorPalette::colorEquals(palette.blush, ColorPalette::KEEP))
-            model->materials[2].maps[MATERIAL_MAP_DIFFUSE].color = palette.blush;
+    ColorPalette::SlimePalette palette = ColorPalette::getSlimePalette(teamColor);
+    if (!ColorPalette::colorEquals(palette.outer, ColorPalette::KEEP))
+        model.materials[1].maps[MATERIAL_MAP_DIFFUSE].color = palette.outer;
+    if (!ColorPalette::colorEquals(palette.inner, ColorPalette::KEEP))
+        model.materials[3].maps[MATERIAL_MAP_DIFFUSE].color = palette.inner;
+    if (!ColorPalette::colorEquals(palette.blush, ColorPalette::KEEP))
+        model.materials[2].maps[MATERIAL_MAP_DIFFUSE].color = palette.blush;
 
-        DrawModelEx(*model, worldPos, {0.0f, 1.0f, 0.0f}, rotation,
-                    {modelSize, modelSize, modelSize}, WHITE);
+    DrawModelEx(model, worldPos, {0.0f, 1.0f, 0.0f}, rotation, {modelSize, modelSize, modelSize},
+                WHITE);
 
-        if (baseMats) _restoreModelBaseColors(*model, baseMats);
-    } else {
-        worldPos.y = cubeSize / 2.0f;  // Sit on ground
-        DrawCube(worldPos, cubeSize, cubeSize, cubeSize, teamColor);
-    }
+    if (baseMats) _restoreModelBaseColors(model, baseMats);
 }
 
 void EntityRenderer::drawEgg(Vector3& worldPos, Color teamColor, Model& model, float rotation,
-                             const Color* baseMats, float cubeSize, float modelSize)
+                             const Color* baseMats, float modelSize)
 {
-    if (model.meshCount > 0) {
-        // mat[0] = white base color, the shell
-        // mat[1] = inner part color (visible through shell)
+    // mat[0] = white base color, the shell
+    // mat[1] = inner part color (visible through shell)
 
-        model.materials[1].maps[MATERIAL_MAP_DIFFUSE].color = teamColor;
-        DrawModelEx(model, worldPos, {0.0f, 1.0f, 0.0f}, rotation,
-                    {modelSize, modelSize, modelSize}, WHITE);
+    model.materials[1].maps[MATERIAL_MAP_DIFFUSE].color = teamColor;
+    DrawModelEx(model, worldPos, {0.0f, 1.0f, 0.0f}, rotation, {modelSize, modelSize, modelSize},
+                WHITE);
 
-        if (baseMats) _restoreModelBaseColors(model, baseMats, 2);
-    } else {
-        worldPos.y = cubeSize / 2.0f;  // Sit on ground
-        DrawCube(worldPos, cubeSize, cubeSize, cubeSize, teamColor);
-    }
+    if (baseMats) _restoreModelBaseColors(model, baseMats, 2);
 }
 
-void EntityRenderer::drawPlayerHighlight(const Vector3& worldPos, float size, Color color,
-                                         float lineThickness)
-{
-    _drawCubeWireframeThick(worldPos, size, color, lineThickness * 0.01f);
-}
-
-void EntityRenderer::drawEggHighlight(const Vector3& worldPos, float size, Color color,
-                                      float lineThickness)
-{
-    _drawCubeWireframeThick(worldPos, size, color, lineThickness * 0.01f);
-}
-
-void EntityRenderer::drawResources(const Resources& resources, int tileX, int tileY,
-                                   const Vector3& tileCenter, float tileSize, float baseSize)
+void EntityRenderer::drawResources(const Resources& resources,
+                                   const std::array<int, 7>& slotIndices, const Vector3& tileCenter,
+                                   float tileSize, float baseSize)
 {
     static const Color resourceColors[] = {
         BROWN,     // food
@@ -82,71 +58,17 @@ void EntityRenderer::drawResources(const Resources& resources, int tileX, int ti
 
     for (int i = 0; i < 7; i++) {
         int count = resources[i];
-        if (count <= 0) continue;
+        if (count <= 0 || slotIndices[i] < 0) continue;
 
-        auto key = std::make_tuple(tileX, tileY, i);
-        auto& cache = _resourcePositions[key];
-
-        // Regenerate position only if resource appeared (was 0, now >0)
-        if (cache.lastCount == 0) {
-            float offsetRange = tileSize / 2.0f - baseSize;
-            float offsetX =
-                (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * offsetRange * 2 -
-                offsetRange;
-            float offsetZ =
-                (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * offsetRange * 2 -
-                offsetRange;
-
-            cache.position = {tileCenter.x + offsetX, 0.0f, tileCenter.z + offsetZ};
-        }
-
-        cache.lastCount = count;
+        auto [dx, dz] = TileSlotMap::slotOffset(slotIndices[i]);
 
         // Size grows logarithmically with count
         float size = baseSize * (1.0f + std::log(count + 1) * 0.3f);
 
-        Vector3 drawPos = cache.position;
-        drawPos.y = size / 2.0f;  // Sit on ground
+        Vector3 drawPos = {tileCenter.x + dx * tileSize, size / 2.0f, tileCenter.z + dz * tileSize};
 
         DrawSphere(drawPos, size, resourceColors[i]);
     }
-}
-
-void EntityRenderer::_drawCubeWireframeThick(const Vector3& worldPos, float size, Color color,
-                                             float thickness)
-{
-    float halfSize = size / 2.0f;
-
-    // Draw 12 edges of cube as thin rectangles
-    // Bottom square (y = -halfSize)
-    DrawCube({worldPos.x, worldPos.y - halfSize, worldPos.z - halfSize}, size, thickness, thickness,
-             color);
-    DrawCube({worldPos.x, worldPos.y - halfSize, worldPos.z + halfSize}, size, thickness, thickness,
-             color);
-    DrawCube({worldPos.x - halfSize, worldPos.y - halfSize, worldPos.z}, thickness, thickness, size,
-             color);
-    DrawCube({worldPos.x + halfSize, worldPos.y - halfSize, worldPos.z}, thickness, thickness, size,
-             color);
-
-    // Top square (y = +halfSize)
-    DrawCube({worldPos.x, worldPos.y + halfSize, worldPos.z - halfSize}, size, thickness, thickness,
-             color);
-    DrawCube({worldPos.x, worldPos.y + halfSize, worldPos.z + halfSize}, size, thickness, thickness,
-             color);
-    DrawCube({worldPos.x - halfSize, worldPos.y + halfSize, worldPos.z}, thickness, thickness, size,
-             color);
-    DrawCube({worldPos.x + halfSize, worldPos.y + halfSize, worldPos.z}, thickness, thickness, size,
-             color);
-
-    // Vertical edges
-    DrawCube({worldPos.x - halfSize, worldPos.y, worldPos.z - halfSize}, thickness, size, thickness,
-             color);
-    DrawCube({worldPos.x + halfSize, worldPos.y, worldPos.z - halfSize}, thickness, size, thickness,
-             color);
-    DrawCube({worldPos.x - halfSize, worldPos.y, worldPos.z + halfSize}, thickness, size, thickness,
-             color);
-    DrawCube({worldPos.x + halfSize, worldPos.y, worldPos.z + halfSize}, thickness, size, thickness,
-             color);
 }
 
 void EntityRenderer::_restoreModelBaseColors(Model& model, const Color* baseMats, int count)

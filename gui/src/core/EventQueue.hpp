@@ -27,6 +27,12 @@ class EventQueue {
      */
     std::optional<Event> pop();
 
+    /**
+     * @brief Clears all pending events from the queue.
+     * Thread safe.
+     */
+    void clear();
+
     private:
     std::queue<Event> _queue;
     std::mutex _mutex;

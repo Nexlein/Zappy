@@ -7,7 +7,9 @@
 
 from dataclasses import dataclass, field
 from typing import List, Optional
-from BroadcastProtocol import DecodedBroadcast
+import uuid
+import time
+from protocol.BroadcastProtocol import DecodedBroadcast, MessageType
 
 
 @dataclass
@@ -46,6 +48,19 @@ class BroadcastMessage:
 
 
 @dataclass
+class AllyInfo:
+    """Stores known information about a teammate."""
+
+    level: int
+    last_seen_tick: int
+    is_ready: bool = False
+    is_rallying: bool = False
+    is_coming: bool = False
+    direction: int = -1
+    inventory: dict[str, int] = field(default_factory=dict)
+
+
+@dataclass
 class DroneContext:
     """
     The shared state object modified by the network loop and read by the FSM.
@@ -56,10 +71,19 @@ class DroneContext:
     map_width: int = 0
     map_height: int = 0
     available_slots: int = 0
+    drone_id: str = field(
+        default_factory=lambda: f"{int(time.time() * 1000)}_{uuid.uuid4().hex[:8]}"
+    )
 
     # Dynamic drone state
     level: int = 1
     inventory: Inventory = field(default_factory=Inventory)
+
+    # Global Tracker for the Swarm
+    ally_roster: dict[str, AllyInfo] = field(default_factory=dict)
+
+    # Role tracking
+    is_queen: bool = False
 
     # Vision snapshot from the last Look command.
     vision: List[Tile] = field(default_factory=list)
@@ -73,8 +97,68 @@ class DroneContext:
     # Reflects whether the LAST command the FSM issued succeeded.
     last_command_successful: Optional[bool] = None
 
-    # Track ticks since last inventory command
-    ticks_since_inventory: int = 0
-
     # True while a ritual freezes this drone
     elevation_in_progress: bool = False
+
+    # Total ticks the drone has been active
+    total_ticks: int = 0
+
+    # Ticks since last inventory refresh
+    ticks_since_inventory: int = 0
+
+    # How many forks this drone has successfully completed
+    forks_done: int = 0
+
+    # Calculated number of forks to reach swarm size 6
+    target_forks: int = -1
+
+    def update_roster(self) -> None:
+        for bcst in self.broadcasts:
+            if bcst.content.drone_id and bcst.content.drone_id != self.drone_id:
+                info = self.ally_roster.get(bcst.content.drone_id)
+                if info is None:
+                    info = AllyInfo(
+                        level=bcst.content.level,
+                        last_seen_tick=self.total_ticks,
+                    )
+                    self.ally_roster[bcst.content.drone_id] = info
+                else:
+                    info.level = bcst.content.level
+                    info.last_seen_tick = self.total_ticks
+
+                info.direction = bcst.direction
+
+                if bcst.content.msg_type in (MessageType.RALLY, MessageType.RALLY_FULL):
+                    info.is_rallying = True
+                    info.is_ready = False
+                    info.is_coming = False
+                elif bcst.content.msg_type == MessageType.READY:
+                    info.is_ready = True
+                    info.is_coming = False
+                elif bcst.content.msg_type == MessageType.COMING:
+                    info.is_ready = False
+                    info.is_coming = True
+                elif bcst.content.msg_type in (
+                    MessageType.LEAVING,
+                    MessageType.ABORT,
+                    MessageType.INCANT,
+                ):
+                    info.is_ready = False
+                    info.is_rallying = False
+                    info.is_coming = False
+                elif bcst.content.msg_type == MessageType.SWARM_INVENTORY:
+                    if bcst.content.tail:
+                        try:
+                            for item in bcst.content.tail.split(","):
+                                k, v = item.split(":")
+                                info.inventory[k] = int(v)
+                        except ValueError:
+                            pass
+
+        dead_allies = [
+            drone_id
+            for drone_id, info in self.ally_roster.items()
+            if self.total_ticks - info.last_seen_tick > 2000
+        ]
+        for dead_id in dead_allies:
+            del self.ally_roster[dead_id]

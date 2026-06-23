@@ -8,8 +8,8 @@
 import unittest
 from unittest.mock import MagicMock
 from context import DroneContext
-from fsm import AIController
-from states.AStates import State
+from fsm.controller import AIController
+from fsm.states.AState import AState
 
 
 class TestAIController(unittest.TestCase):
@@ -30,11 +30,11 @@ class TestAIController(unittest.TestCase):
 
     def test_transition_to(self):
         # Create a mock state to transition to
-        mock_state = MagicMock(spec=State)
+        mock_state = MagicMock(spec=AState)
         self.controller.states["MockState"] = mock_state
 
         # Mock the current state's exit method
-        current_state_mock = MagicMock(spec=State)
+        current_state_mock = MagicMock(spec=AState)
         self.controller.current_state = current_state_mock
 
         # Transition to MockState
@@ -49,13 +49,13 @@ class TestAIController(unittest.TestCase):
 
     def test_tick_handles_transition(self):
         # Setup current state to return "NextState" on update
-        current_state_mock = MagicMock(spec=State)
+        current_state_mock = MagicMock(spec=AState)
         current_state_mock.update.return_value = "NextState"
         self.controller.current_state = current_state_mock
         self.controller.current_state_name = "ForageFood"
 
         # Setup next state
-        next_state_mock = MagicMock(spec=State)
+        next_state_mock = MagicMock(spec=AState)
         next_state_mock.get_action.return_value = "MockAction"
         self.controller.states["NextState"] = next_state_mock
 

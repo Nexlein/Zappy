@@ -2,13 +2,12 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "ARenderer.hpp"
 #include "raylib.h"
-#include "raylib_helpers/ColorPalette.hpp"
-#include "raylib_helpers/EntityRenderer.hpp"
-#include "raylib_helpers/GridRenderer.hpp"
 #include "raylib_helpers/SelectionFinder.hpp"
+#include "raylib_helpers/TileSlotMap.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
 
 /**
@@ -24,17 +23,17 @@ class RaylibRenderer : public ARenderer {
     void handleInput() override;
     bool shouldClose() override;
     void shutdown() override;
+    void setDevMode(bool dev, int port, const std::string& machine) override;
 
     private:
+    static constexpr std::string_view PLAYER_MODEL_PATH = "gui/assets/rimuru.glb";
+    static constexpr std::string_view EGG_MODEL_PATH = "gui/assets/egg.glb";
+
     static constexpr float CAMERA_MOVE_SPEED = 2.0f;
-    static constexpr float PLAYER_CUBE_SIZE = 0.8f;
-    static constexpr float PLAYER_MODEL_SIZE = 0.4f;
-    static constexpr float EGG_CUBE_SIZE = 0.4f;
-    static constexpr float EGG_MODEL_SIZE = 0.3f;
-    static constexpr float RESOURCE_SPHERE_BASE_SIZE = 0.1f;
+    static constexpr float PLAYER_MODEL_SIZE = 0.25f;
+    static constexpr float EGG_MODEL_SIZE = 0.15f;
+    static constexpr float RESOURCE_SPHERE_BASE_SIZE = 0.05f;
     static constexpr float TILE_SIZE = 1.0f;
-    static constexpr float SELECTION_TIMER = 5.0f;         // seconds
-    static constexpr double SELECTION_DOUBLE_CLICK = 0.3;  // seconds
     static constexpr float SELECTION_LINE_THICKNESS = 8.0f;
     static constexpr float SELECTION_WIREFRAME_THICKNESS = 5.0f;
     static constexpr Color SELECTION_COLOR = {128, 0, 128, 255};  // purple
@@ -52,6 +51,20 @@ class RaylibRenderer : public ARenderer {
     std::unordered_map<std::string, Color> _teamColors;
 
     SelectionFinder::Selection _selection;
+    TileSlotMap _tileSlotMap;
+
+    struct WindowSnapshot {
+        int width = 800, height = 600;
+        Vector2 position = {0, 0};
+        int monitor = 0;
+        bool fullscreen = false;
+        bool valid = false;
+    };
+    WindowSnapshot _savedWindow;
+
+    bool _devMode = false;
+    int _devPort = -1;
+    std::string _devMachine;
 
     void _render3D();
     void _render2D();
@@ -68,7 +81,12 @@ class RaylibRenderer : public ARenderer {
     void _updateSelection(float deltaTime);
 
     void _performRaycast();
+    void _drawBehaviorParticles(const VisualState& visual);
 
     void _addResourceLines(TooltipRenderer::Builder& builder, const Resources& res,
                            const std::string& indent, Color color);
+
+    std::vector<std::vector<const Player*>> _groupPlayersByVisualProximity() const;
+
+    void _drawSelectionArrow(Vector3 basePos, float modelTopY) const;
 };

@@ -17,6 +17,7 @@ std::optional<Gui::Request> GuiParser::parse(std::string_view line)
     if (line == "mct") return Gui::Mct{};
     if (line == "tna") return Gui::Tna{};
     if (line == "sgt") return Gui::Sgt{};
+    if (line == "stu") return Gui::Stu{};
 
     if (line.starts_with("bct ")) {
         auto rest = line.substr(4);

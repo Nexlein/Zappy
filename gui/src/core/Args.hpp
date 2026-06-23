@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "renderer/raylib_helpers/I18n.hpp"
+
 /**
  * @brief Represents the configuration for the application, including the port, machine, and
  * headless mode.
@@ -10,6 +12,8 @@ struct AppConfig {
     int port;
     std::string machine;
     bool headless;
+    bool dev = false;
+    I18n::Language language = I18n::Language::EN;
 };
 
 /**

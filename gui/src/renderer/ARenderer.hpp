@@ -9,6 +9,7 @@
 class ARenderer : public IRenderer {
     public:
     void setState(const GameState& state) override final { _state = &state; }
+    void setDevMode(bool, int, const std::string&) override {}
 
     protected:
     // Concrete renderers can assume that _state is always valid and points to the latest game state
