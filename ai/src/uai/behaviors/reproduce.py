@@ -2,6 +2,7 @@ from uai.behaviors.ABehavior import ABehavior
 from context import DroneContext
 from uai.state import UAIState
 
+
 class ReproduceBehavior(ABehavior):
     def get_action(self, context: DroneContext, state: UAIState) -> str | None:
         if state.reproduce_spawn_sent:
