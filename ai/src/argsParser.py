@@ -27,7 +27,7 @@ def parseArgs() -> Config:
         print("-p port\t\tport number")
         print("-n name\t\tname of the team")
         print("-h machine\tname of the machine; localhost by default")
-        print("-s strategy\tAI strategy: fsm, utility or uai; fsm by default")
+        print("-s strategy\tAI strategy: fsm, utility, uai or queen; fsm by default")
         sys.exit(0)
 
     defaults = get_client_config()
@@ -59,8 +59,8 @@ def parseArgs() -> Config:
         "--strategy",
         type=str,
         default=defaults.get("strategy", "fsm"),
-        choices=["fsm", "utility", "uai"],
-        help="AI strategy: fsm, utility or uai (default: fsm)",
+        choices=["fsm", "utility", "uai", "queen"],
+        help="AI strategy: fsm, utility, uai or queen (default: fsm)",
     )
 
     args = parser.parse_args()

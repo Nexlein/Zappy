@@ -19,7 +19,7 @@ import subprocess
 import sys
 import signal
 import time
-from utils.config_loader import get_network_config
+from utils.config_loader import get_network_config, load_strategy_config
 
 
 class DroneDied(Exception):
@@ -267,6 +267,7 @@ class Orchestrator:
 
 def main():
     config = parseArgs()
+    load_strategy_config(config.strategy)
 
     config_dict = {
         "port": config.port,

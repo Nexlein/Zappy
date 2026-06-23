@@ -5,14 +5,14 @@
 ## The Evolution Layer (Medium Priority)
 ##
 
+from utils.stones import get_megaritual_missing_stones, get_global_inventory
 from utils.config_loader import get_survival_config, get_evolution_config
-from utils.stones import get_missing_stones
 from protocol.BroadcastProtocol import BroadcastProtocol, MessageType
 from context import DroneContext
 from utils.exploration import get_exploration_action
 
-from fsm.states.AState import AState
-from fsm.states.StateNames import AIState
+from queen.states.AState import AState
+from queen.states.StateNames import AIState
 
 
 class SearchStone(AState):
@@ -35,8 +35,18 @@ class SearchStone(AState):
         if context.level >= evo_cfg.get("MAX_LEVEL", 8):
             return AIState.FORAGE_FOOD
 
-        if context.inventory.food < surv_cfg.get("SAFE_FOOD_THRESHOLD", 10):
+        if context.inventory.food < surv_cfg.get("SAFE_FOOD_THRESHOLD", 15):
             return AIState.FORAGE_FOOD
+
+        # Rush behavior: The Queen must spawn enough children to reach exactly 6 players
+        if context.is_queen:
+            if context.target_forks == -1:
+                context.target_forks = max(0, 5 - len(context.ally_roster))
+            if context.forks_done < context.target_forks:
+                return AIState.REPRODUCE
+
+        # Parse SWARM_INVENTORY broadcasts to build a global inventory
+        global_inventory = get_global_inventory(context)
 
         # React to a teammate's RALLY call (solo levels can incant alone).
         if context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
@@ -46,10 +56,18 @@ class SearchStone(AState):
             ):
                 return AIState.MAPS_TO_ALLY
 
-        missing = get_missing_stones(context.level, context.inventory)
+        missing = get_megaritual_missing_stones(context.level, global_inventory)
+
         if not missing:
-            # Force the leader to be full food
-            if context.inventory.food < surv_cfg.get("FOOD_TARGET", 25):
+            # Check if entire swarm is well-fed before rallying
+            # They need ~3 food per remaining ritual to survive
+            required_food_per_drone = (
+                evo_cfg.get("MAX_LEVEL", 8) - context.level
+            ) * 3 + 5
+
+            if global_inventory.get("food", 0) < required_food_per_drone * (
+                len(context.ally_roster) + 1
+            ):
                 return AIState.FORAGE_FOOD
             return AIState.BROADCAST_HELP
 
@@ -62,7 +80,10 @@ class SearchStone(AState):
         if not context.vision:
             return "Look"
 
-        missing_stones = get_missing_stones(context.level, context.inventory)
+        global_inventory = get_global_inventory(context)
+
+        missing_stones = get_megaritual_missing_stones(context.level, global_inventory)
+
         current_tile = context.vision[0]
 
         # Pick up any needed stone on the current tile, unless there are other players here (could be a ritual).

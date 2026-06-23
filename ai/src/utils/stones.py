@@ -22,6 +22,52 @@ def get_missing_stones(level: int, inventory: Inventory) -> dict[str, int]:
     return missing
 
 
+def get_megaritual_missing_stones(
+    level: int, global_inventory: dict[str, int]
+) -> dict[str, int]:
+    """
+    Calculates the exact stones required to reach MAX_LEVEL from the current level,
+    checking against the combined global inventory of the entire swarm.
+    """
+    config = get_evolution_config()
+    reqs = config.get("ELEVATION_REQUIREMENTS", {})
+    total_reqs = {}
+    for lvl in range(level, config.get("MAX_LEVEL", 8)):
+        lvl_reqs = reqs.get(str(lvl), {})
+        for stone, amount in lvl_reqs.items():
+            total_reqs[stone] = total_reqs.get(stone, 0) + amount
+
+    missing = {}
+    for stone, required_amount in total_reqs.items():
+        current_amount = global_inventory.get(stone, 0)
+        if current_amount < required_amount:
+            missing[stone] = required_amount - current_amount
+    return missing
+
+
+def get_global_inventory(context) -> dict[str, int]:
+    """
+    Computes the total inventory of the entire swarm by combining the drone's
+    own inventory with the cached inventory states in ally_roster.
+    """
+    global_inventory = {
+        "food": context.inventory.food,
+        "linemate": context.inventory.linemate,
+        "deraumere": context.inventory.deraumere,
+        "sibur": context.inventory.sibur,
+        "mendiane": context.inventory.mendiane,
+        "phiras": context.inventory.phiras,
+        "thystame": context.inventory.thystame,
+    }
+
+    for ally_info in context.ally_roster.values():
+        for k, v in ally_info.inventory.items():
+            if k in global_inventory:
+                global_inventory[k] += v
+
+    return global_inventory
+
+
 def is_incantation_ready(level: int, tile: Tile) -> bool:
     """True if `tile` holds enough players and EXACTLY the required stones."""
     config = get_evolution_config()
