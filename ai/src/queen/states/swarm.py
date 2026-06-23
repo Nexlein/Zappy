@@ -5,8 +5,8 @@
 ## The Swarm Layer (Contextual Priority)
 ##
 
-from fsm.states.AState import AState
-from fsm.states.StateNames import AIState
+from queen.states.AState import AState
+from queen.states.StateNames import AIState
 from context import DroneContext
 from utils.stones import is_incantation_ready, next_stone_to_drop, next_stone_to_take
 from utils.navigation import (
@@ -343,6 +343,17 @@ class MapsToAlly(AState):
 
         # -- Already on the rally tile (or just arrived): wait for the leader. --
         if self.arrived:
+            if not context.vision:
+                return "Look"
+
+            evo_cfg = get_evolution_config()
+            reqs = evo_cfg.get("ELEVATION_REQUIREMENTS", {}).get(str(context.level), {})
+            for stone, required in reqs.items():
+                if getattr(context.vision[0], stone) < required:
+                    if getattr(context.inventory, stone) > 0:
+                        context.vision.clear()
+                        return f"Set {stone}"
+
             if not self.ready_sent:
                 self.ready_sent = True
                 payload = BroadcastProtocol.encode(
@@ -352,10 +363,10 @@ class MapsToAlly(AState):
                     context.drone_id,
                 )
                 return f"Broadcast {payload}"
-            return "Look"  # Wait for INCANT
+            return None  # Wait for INCANT
 
         # No RALLY heard this tick and not arrived — stay put and wait for the next broadcast.
-        return "Look"
+        return None
 
     def exit(self, context: DroneContext) -> None:
         pass

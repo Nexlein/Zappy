@@ -5,8 +5,8 @@
 ## The Reproduction Layer (population growth)
 ##
 
-from fsm.states.AState import AState
-from fsm.states.StateNames import AIState
+from queen.states.AState import AState
+from queen.states.StateNames import AIState
 from context import DroneContext
 from utils.config_loader import get_reproduction_config
 
@@ -30,7 +30,6 @@ class Reproduce(AState):
     """
 
     def __init__(self) -> None:
-        self.last_fork_tick = -9999
         self._connect_sent = False
         self._spawn_sent = False
         self._fork_sent = False
@@ -41,38 +40,42 @@ class Reproduce(AState):
         self._fork_sent = False
 
     def update(self, context: DroneContext) -> str | None:
+        if not context.is_queen:
+            return AIState.SEARCH_STONE
+
+        if context.target_forks == -1:
+            context.target_forks = max(0, 5 - len(context.ally_roster))
+
+        if context.forks_done >= context.target_forks:
+            return AIState.SEARCH_STONE
+
         repr_cfg = get_reproduction_config()
-        if context.forks_done >= repr_cfg.get("MAX_FORKS_PER_DRONE", 10):
-            return AIState.BROADCAST_HELP
         if context.inventory.food < repr_cfg.get("FORK_FOOD_THRESHOLD", 10):
             return AIState.FORAGE_FOOD
 
         if self._spawn_sent:
-            self.last_fork_tick = context.total_ticks
-            return AIState.BROADCAST_HELP
+            return AIState.FORAGE_FOOD
 
         if self._fork_sent:
-            if context.last_command_successful:
-                self.last_fork_tick = context.total_ticks
-            return AIState.BROADCAST_HELP
+            return AIState.FORAGE_FOOD
 
         if self._connect_sent:
             return None
 
-        # Wait 600 ticks (the time it takes for an egg to hatch) before allowing another fork.
-        # This prevents the drone from spamming its entire max fork budget instantly.
-        if context.total_ticks - self.last_fork_tick < 600:
-            return AIState.BROADCAST_HELP
-
         return None
 
     def get_action(self, context: DroneContext) -> str | None:
+        if not context.is_queen:
+            return "Look"
+
+        if context.target_forks == -1:
+            context.target_forks = max(0, 5 - len(context.ally_roster))
+
+        if context.forks_done >= context.target_forks:
+            return "Look"
+
         repr_cfg = get_reproduction_config()
-        if context.forks_done >= repr_cfg.get("MAX_FORKS_PER_DRONE", 10):
-            return "Look"
         if context.inventory.food < repr_cfg.get("FORK_FOOD_THRESHOLD", 10):
-            return "Look"
-        if context.total_ticks - self.last_fork_tick < 600:
             return "Look"
 
         if not self._connect_sent:
