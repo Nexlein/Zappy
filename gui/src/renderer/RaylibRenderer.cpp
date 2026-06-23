@@ -117,6 +117,7 @@ void RaylibRenderer::shutdown()
 
 void RaylibRenderer::_render3D()
 {
+    GridRenderer::drawTiles(_state->world.width, _state->world.height, TILE_SIZE);
     GridRenderer::drawGrid(_state->world.width, _state->world.height, TILE_SIZE);
 
     for (auto& [id, player] : _state->world.players) {
