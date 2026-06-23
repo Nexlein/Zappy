@@ -106,6 +106,9 @@ class DroneContext:
     # How many forks this drone has successfully completed
     forks_done: int = 0
 
+    # Calculated number of forks to reach swarm size 6
+    target_forks: int = -1
+
     def update_roster(self) -> None:
         for bcst in self.broadcasts:
             if bcst.content.drone_id and bcst.content.drone_id != self.drone_id:

@@ -38,9 +38,12 @@ class SearchStone(AState):
         if context.inventory.food < surv_cfg.get("SAFE_FOOD_THRESHOLD", 15):
             return AIState.FORAGE_FOOD
 
-        # Rush behavior: The Queen must spawn exactly 5 children before doing ANY rituals
-        if context.is_queen and len(context.ally_roster) < 5:
-            return AIState.REPRODUCE
+        # Rush behavior: The Queen must spawn enough children to reach exactly 6 players
+        if context.is_queen:
+            if context.target_forks == -1:
+                context.target_forks = max(0, 5 - len(context.ally_roster))
+            if context.forks_done < context.target_forks:
+                return AIState.REPRODUCE
 
         # Parse SWARM_INVENTORY broadcasts to build a global inventory
         global_inventory = get_global_inventory(context)

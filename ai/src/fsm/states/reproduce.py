@@ -43,7 +43,10 @@ class Reproduce(AState):
         if not context.is_queen:
             return AIState.SEARCH_STONE
 
-        if len(context.ally_roster) >= 5:
+        if context.target_forks == -1:
+            context.target_forks = max(0, 5 - len(context.ally_roster))
+
+        if context.forks_done >= context.target_forks:
             return AIState.SEARCH_STONE
 
         repr_cfg = get_reproduction_config()
@@ -65,7 +68,10 @@ class Reproduce(AState):
         if not context.is_queen:
             return "Look"
 
-        if len(context.ally_roster) >= 5:
+        if context.target_forks == -1:
+            context.target_forks = max(0, 5 - len(context.ally_roster))
+
+        if context.forks_done >= context.target_forks:
             return "Look"
 
         repr_cfg = get_reproduction_config()
