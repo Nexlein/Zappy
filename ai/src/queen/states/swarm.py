@@ -266,6 +266,9 @@ class MapsToAlly(AState):
                 else:
                     return AIState.SEARCH_STONE
 
+        if self.waiting_incant:
+            return None
+
         if not self.leader_id:
             return self._leave(AIState.SEARCH_STONE)
 
