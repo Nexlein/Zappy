@@ -37,3 +37,34 @@ TEST(GameClockTest, TicksSurviveFreqChange)
     // Total ~11. A naive elapsed*finalFreq would give ~200ms * 10 = ~2.
     EXPECT_NEAR(clock.ticks(), 11.0, 4.0);
 }
+
+TEST(GameClockTest, JoinOfUnknownTeamIsNullopt)
+{
+    GameClock clock(10);
+    EXPECT_FALSE(clock.joinOf("Ghost").has_value());
+}
+
+TEST(GameClockTest, RecordJoinStampsTeam)
+{
+    GameClock clock(100);
+    sleepMs(100);
+    clock.recordJoin("TeamA");
+
+    auto join = clock.joinOf("TeamA");
+    ASSERT_TRUE(join.has_value());
+    EXPECT_NEAR(join->ticks, 10.0, 4.0);
+    EXPECT_GE(join->elapsed.count(), 0);
+}
+
+// Write-once: a later join for the same team must not overwrite the first.
+TEST(GameClockTest, RecordJoinIsWriteOnce)
+{
+    GameClock clock(100);
+    clock.recordJoin("TeamA");
+    double first = clock.joinOf("TeamA")->ticks;
+
+    sleepMs(100);
+    clock.recordJoin("TeamA");  // ignored
+
+    EXPECT_DOUBLE_EQ(clock.joinOf("TeamA")->ticks, first);
+}
