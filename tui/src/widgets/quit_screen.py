@@ -22,8 +22,7 @@ class QuitScreen(ModalScreen[bool]):
     def compose(self) -> ComposeResult:
         with Vertical(id="quit-box"):
             yield Label(
-                f"{self._count} process(es) still running.\n"
-                "Quit and kill them all?"
+                f"{self._count} process(es) still running.\nQuit and kill them all?"
             )
             with Horizontal(id="quit-buttons"):
                 yield Button("Quit", variant="error", id="quit")

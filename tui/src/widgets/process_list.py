@@ -41,7 +41,9 @@ class ProcessList(OptionList):
             return self._rows[index]
         return None
 
-    def _add(self, prompt: Text, process: ManagedProcess | None, disabled: bool) -> None:
+    def _add(
+        self, prompt: Text, process: ManagedProcess | None, disabled: bool
+    ) -> None:
         self.add_option(Option(prompt, disabled=disabled))
         self._rows.append(process)
 
