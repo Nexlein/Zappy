@@ -1,5 +1,7 @@
 #include "SpeedSlider.hpp"
 
+#include <raylib.h>
+
 #include <cmath>
 #include <string>
 

@@ -3,8 +3,6 @@
 #include <optional>
 #include <vector>
 
-#include "raylib.h"
-
 /**
  * @brief Self-contained speed slider widget.
  *
