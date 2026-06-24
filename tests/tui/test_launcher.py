@@ -65,6 +65,13 @@ class TestLauncher(unittest.TestCase):
             for proc in (launch.server, *launch.ais, launch.gui):
                 self.assertIn(str(launch.port), proc.command)
 
+    def test_team_strategy_passed_to_ai(self):
+        profile = _profile(False, (Team("red", 1, "uai"),))
+        with Supervisor() as sup:
+            launch = launch_profile(sup, profile, STUBS)
+            self.assertIn("-s", launch.ais[0].command)
+            self.assertIn("uai", launch.ais[0].command)
+
     def test_zero_ai_team_spawns_no_ai(self):
         profile = _profile(False, (Team("red", 0),))
         with Supervisor() as sup:

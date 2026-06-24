@@ -80,6 +80,26 @@ class TestManagedProcess(unittest.TestCase):
         p.stop(timeout=0.5)
         self.assertFalse(p.is_alive())
 
+    def test_captures_output(self):
+        p = ManagedProcess("echoer", ["sh", "-c", "echo one; echo two"])
+        p.start()
+        for _ in range(50):  # let the reader thread drain
+            if p.log_snapshot()[0] >= 2:
+                break
+            time.sleep(0.02)
+        seq, lines = p.log_snapshot()
+        p.stop()
+        self.assertEqual(seq, 2)
+        self.assertEqual(lines, ["one", "two"])
+
+    def test_log_snapshot_empty_before_output(self):
+        p = ManagedProcess("x", ["sleep", "5"])
+        p.start()
+        try:
+            self.assertEqual(p.log_snapshot(), (0, []))
+        finally:
+            p.stop()
+
 
 if __name__ == "__main__":
     unittest.main()
