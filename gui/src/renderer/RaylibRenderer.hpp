@@ -29,7 +29,7 @@ class RaylibRenderer : public ARenderer {
     static constexpr std::string_view PLAYER_MODEL_PATH = "gui/assets/rimuru.glb";
     static constexpr std::string_view EGG_MODEL_PATH = "gui/assets/egg.glb";
     static constexpr std::string_view FOOD_MODEL_PATH = "gui/assets/apple.glb";
-    
+
     static constexpr float CAMERA_MOVE_SPEED = 2.0f;
     static constexpr float FREECAM_MOVE_SPEED = 5.0f;
     static constexpr float FREECAM_LOOK_SPEED = 0.002f;

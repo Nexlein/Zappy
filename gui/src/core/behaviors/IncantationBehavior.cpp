@@ -37,14 +37,14 @@ IncantationBehavior::IncantationBehavior(VisualState& visual, Player& player, in
 
     float angle = playerIndex * (2.0f * PI / static_cast<float>(totalPlayers));
     float radius = tileSize * CIRCLE_RADIUS;
-    _slotPos     = {tileCenterX + std::cos(angle) * radius, 0.0f,
-                    tileCenterZ + std::sin(angle) * radius};
+    _slotPos = {tileCenterX + std::cos(angle) * radius, 0.0f,
+                tileCenterZ + std::sin(angle) * radius};
 
-    _startPos   = visual.pos;
+    _startPos = visual.pos;
     _startAngle = visual.angle;
 
-    float dx         = tileCenterX - _slotPos.x;
-    float dz         = tileCenterZ - _slotPos.z;
+    float dx = tileCenterX - _slotPos.x;
+    float dz = tileCenterZ - _slotPos.z;
     _targetFaceAngle = std::atan2(dz, dx) * (180.0f / PI);
 }
 
@@ -58,17 +58,17 @@ void IncantationBehavior::_spawnParticles()
 
     _particles.clear();
     for (int i = 0; i < PARTICLE_COUNT; i++) {
-        float angle  = (static_cast<float>(rand()) / RAND_MAX) * 2.0f * PI;
+        float angle = (static_cast<float>(rand()) / RAND_MAX) * 2.0f * PI;
         float spread = (static_cast<float>(rand()) / RAND_MAX) * 0.15f;
 
         Particle p;
-        p.pos   = {_tileCenter.x + std::cos(angle) * spread, 0.1f,
-                   _tileCenter.z + std::sin(angle) * spread};
-        p.vel   = {(static_cast<float>(rand()) / RAND_MAX - 0.5f) * 0.05f,
-                   0.15f + (static_cast<float>(rand()) / RAND_MAX) * 0.2f,
-                   (static_cast<float>(rand()) / RAND_MAX - 0.5f) * 0.05f};
+        p.pos = {_tileCenter.x + std::cos(angle) * spread, 0.1f,
+                 _tileCenter.z + std::sin(angle) * spread};
+        p.vel = {(static_cast<float>(rand()) / RAND_MAX - 0.5f) * 0.05f,
+                 0.15f + (static_cast<float>(rand()) / RAND_MAX) * 0.2f,
+                 (static_cast<float>(rand()) / RAND_MAX - 0.5f) * 0.05f};
         p.color = COLORS[rand() % 3];
-        p.size  = 0.03f + (static_cast<float>(rand()) / RAND_MAX) * 0.04f;
+        p.size = 0.03f + (static_cast<float>(rand()) / RAND_MAX) * 0.04f;
         p.alpha = 0.8f;
         p.delay = (static_cast<float>(rand()) / RAND_MAX) * 0.4f;
         p.active = false;
@@ -83,7 +83,7 @@ void IncantationBehavior::_updateParticles(float dt)
         if (!p.active) {
             if (_elapsed >= p.delay) {
                 p.active = true;
-                p.alpha  = 0.8f;
+                p.alpha = 0.8f;
             }
             continue;
         }
@@ -94,10 +94,10 @@ void IncantationBehavior::_updateParticles(float dt)
 
         // Recycle particle back to center when faded
         if (p.alpha <= 0.0f) {
-            float angle  = (static_cast<float>(rand()) / RAND_MAX) * 2.0f * PI;
+            float angle = (static_cast<float>(rand()) / RAND_MAX) * 2.0f * PI;
             float spread = (static_cast<float>(rand()) / RAND_MAX) * 0.15f;
-            p.pos   = {_tileCenter.x + std::cos(angle) * spread, 0.1f,
-                       _tileCenter.z + std::sin(angle) * spread};
+            p.pos = {_tileCenter.x + std::cos(angle) * spread, 0.1f,
+                     _tileCenter.z + std::sin(angle) * spread};
             p.vel.x = (static_cast<float>(rand()) / RAND_MAX - 0.5f) * 0.05f;
             p.vel.y = 0.15f + (static_cast<float>(rand()) / RAND_MAX) * 0.2f;
             p.vel.z = (static_cast<float>(rand()) / RAND_MAX - 0.5f) * 0.05f;
@@ -112,13 +112,13 @@ void IncantationBehavior::update(float dt)
 
     if (_phase == Phase::SPREAD) {
         float t = smoothstep(_elapsed / SPREAD_DURATION);
-        _visual.pos   = lerpv(_startPos, _slotPos, t);
+        _visual.pos = lerpv(_startPos, _slotPos, t);
         _visual.angle = lerpAngle(_startAngle, _targetFaceAngle, t);
 
         if (_elapsed >= SPREAD_DURATION) {
-            _visual.pos   = _slotPos;
+            _visual.pos = _slotPos;
             _visual.angle = _targetFaceAngle;
-            _phase        = Phase::HOLD;
+            _phase = Phase::HOLD;
         }
         return;
     }
@@ -126,10 +126,10 @@ void IncantationBehavior::update(float dt)
     if (_phase == Phase::HOLD) {
         // Capture saved angle once (after TurnBehavior has finished)
         if (!_angleSaved) {
-            _savedAngle  = _startAngle;
-            _angleSaved  = true;
+            _savedAngle = _startAngle;
+            _angleSaved = true;
         }
-        _visual.pos   = _slotPos;
+        _visual.pos = _slotPos;
         _visual.angle = _targetFaceAngle;
 
         if (_isParticleOwner) {
@@ -147,7 +147,7 @@ void IncantationBehavior::update(float dt)
     // Phase::END
     _elapsedEnd += dt;
     float t = smoothstep(_elapsedEnd / END_DURATION);
-    _visual.pos   = lerpv(_slotPos, _tileCenter, t);
+    _visual.pos = lerpv(_slotPos, _tileCenter, t);
     _visual.angle = lerpAngle(_targetFaceAngle, _savedAngle, t);
 
     if (_isParticleOwner) _particles.clear();

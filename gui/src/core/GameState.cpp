@@ -165,22 +165,21 @@ void GameState::_applyPlayerBroadcast(const PlayerBroadcast& e)
 
 void GameState::_applyIncantationStart(const IncantationStart& e)
 {
-    float offsetX = (world.width  * tileSize) / 2.0f;
+    float offsetX = (world.width * tileSize) / 2.0f;
     float offsetZ = (world.height * tileSize) / 2.0f;
-    float cx      = e.x * tileSize - offsetX + tileSize / 2.0f;
-    float cz      = e.y * tileSize - offsetZ + tileSize / 2.0f;
+    float cx = e.x * tileSize - offsetX + tileSize / 2.0f;
+    float cz = e.y * tileSize - offsetZ + tileSize / 2.0f;
 
     int total = static_cast<int>(e.playerIds.size());
     for (int i = 0; i < total; i++) {
         auto it = world.players.find(e.playerIds[i]);
         if (it == world.players.end()) continue;
         Player& p = it->second;
-        p.incanting          = true;
-        p.incantationEnded   = false;
+        p.incanting = true;
+        p.incantationEnded = false;
         p.incantationSuccess = false;
         _pushBehavior(p.visual,
-                      std::make_unique<IncantationBehavior>(p.visual, p, i, total, cx, cz,
-                                                            tileSize,
+                      std::make_unique<IncantationBehavior>(p.visual, p, i, total, cx, cz, tileSize,
                                                             static_cast<float>(timeUnit)));
     }
 }
@@ -189,8 +188,8 @@ void GameState::_applyIncantationEnd(const IncantationEnd& e)
 {
     for (auto& [id, player] : world.players) {
         if (player.x == e.x && player.y == e.y && player.incanting) {
-            player.incanting          = false;
-            player.incantationEnded   = true;
+            player.incanting = false;
+            player.incantationEnded = true;
             player.incantationSuccess = e.success;
         }
     }

@@ -566,8 +566,8 @@ std::vector<std::vector<const Player*>> RaylibRenderer::_groupPlayersByVisualPro
             float dx = pi.x - pj.x;
             float dz = pi.z - pj.z;
             bool nearbyVisual = dx * dx + dz * dz < threshSq;
-            bool sameIncant   = all[i]->incanting && all[j]->incanting &&
-                                all[i]->x == all[j]->x && all[i]->y == all[j]->y;
+            bool sameIncant = all[i]->incanting && all[j]->incanting && all[i]->x == all[j]->x &&
+                              all[i]->y == all[j]->y;
             if (nearbyVisual || sameIncant) {
                 group.push_back(all[j]);
                 assigned[j] = true;
@@ -588,11 +588,10 @@ Vector3 RaylibRenderer::_groupLabelAnchor(const std::vector<const Player*>& grou
                 group[k]->incanting && group[k]->x == ref->x && group[k]->y == ref->y;
         if (allIncantingOnSameTile)
             return RenderingHelper::tileToWorld(ref->x, ref->y, _state->world.width,
-                                               _state->world.height, TILE_SIZE);
+                                                _state->world.height, TILE_SIZE);
     }
     return group[0]->visual.pos;
 }
-
 
 void RaylibRenderer::_drawSelectionArrow(Vector3 basePos, float modelTopY) const
 {

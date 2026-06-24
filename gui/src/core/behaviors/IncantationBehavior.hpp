@@ -15,19 +15,18 @@
 class IncantationBehavior : public ADrawableBehavior {
     public:
     IncantationBehavior(VisualState& visual, Player& player, int playerIndex, int totalPlayers,
-                        float tileCenterX, float tileCenterZ, float tileSize,
-                        float serverTickRate);
+                        float tileCenterX, float tileCenterZ, float tileSize, float serverTickRate);
 
-    void  update(float dt) override;
-    bool  isDone() const override;
+    void update(float dt) override;
+    bool isDone() const override;
     float getDuration() const override { return _duration; }
     float minDuration() const override { return 0.0f; }
 
     private:
-    static constexpr float SPREAD_DURATION  = 0.5f;
-    static constexpr float END_DURATION     = 0.35f;
-    static constexpr float CIRCLE_RADIUS    = 0.32f;  // fraction of tileSize
-    static constexpr int   PARTICLE_COUNT   = 12;
+    static constexpr float SPREAD_DURATION = 0.5f;
+    static constexpr float END_DURATION = 0.35f;
+    static constexpr float CIRCLE_RADIUS = 0.32f;  // fraction of tileSize
+    static constexpr int PARTICLE_COUNT = 12;
 
     enum class Phase { SPREAD, HOLD, END };
 
@@ -35,8 +34,8 @@ class IncantationBehavior : public ADrawableBehavior {
     void _updateParticles(float dt);
 
     VisualState& _visual;
-    Player&      _player;
-    bool         _isParticleOwner;  // only playerIndex == 0 spawns center particles
+    Player& _player;
+    bool _isParticleOwner;  // only playerIndex == 0 spawns center particles
 
     Phase _phase = Phase::SPREAD;
     float _elapsed = 0.0f;
@@ -45,10 +44,10 @@ class IncantationBehavior : public ADrawableBehavior {
 
     Vector3 _startPos;
     Vector3 _slotPos;
-    float   _startAngle;
-    float   _targetFaceAngle;
-    float   _savedAngle = 0.0f;
-    bool    _angleSaved = false;
+    float _startAngle;
+    float _targetFaceAngle;
+    float _savedAngle = 0.0f;
+    bool _angleSaved = false;
     Vector3 _tileCenter;
 
     bool _particlesSpawned = false;
