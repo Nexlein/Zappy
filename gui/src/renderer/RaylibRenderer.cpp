@@ -256,7 +256,7 @@ void RaylibRenderer::_render2D()
         std::sort(group.begin(), group.end(),
                   [](const Player* a, const Player* b) { return a->level > b->level; });
 
-        Vector3 worldPos = group[0]->visual.pos;
+        Vector3 worldPos = _groupLabelAnchor(group);
         worldPos.y = PLAYER_MODEL_SIZE * 2.0f;
         Vector2 screenPos = GetWorldToScreen(worldPos, _camera);
 
@@ -565,7 +565,10 @@ std::vector<std::vector<const Player*>> RaylibRenderer::_groupPlayersByVisualPro
             const Vector3& pj = all[j]->visual.pos;
             float dx = pi.x - pj.x;
             float dz = pi.z - pj.z;
-            if (dx * dx + dz * dz < threshSq) {
+            bool nearbyVisual = dx * dx + dz * dz < threshSq;
+            bool sameIncant   = all[i]->incanting && all[j]->incanting &&
+                                all[i]->x == all[j]->x && all[i]->y == all[j]->y;
+            if (nearbyVisual || sameIncant) {
                 group.push_back(all[j]);
                 assigned[j] = true;
             }
@@ -574,6 +577,22 @@ std::vector<std::vector<const Player*>> RaylibRenderer::_groupPlayersByVisualPro
     }
     return groups;
 }
+
+Vector3 RaylibRenderer::_groupLabelAnchor(const std::vector<const Player*>& group) const
+{
+    if (group.size() > 1) {
+        const Player* ref = group[0];
+        bool allIncantingOnSameTile = ref->incanting;
+        for (size_t k = 1; allIncantingOnSameTile && k < group.size(); k++)
+            allIncantingOnSameTile =
+                group[k]->incanting && group[k]->x == ref->x && group[k]->y == ref->y;
+        if (allIncantingOnSameTile)
+            return RenderingHelper::tileToWorld(ref->x, ref->y, _state->world.width,
+                                               _state->world.height, TILE_SIZE);
+    }
+    return group[0]->visual.pos;
+}
+
 
 void RaylibRenderer::_drawSelectionArrow(Vector3 basePos, float modelTopY) const
 {

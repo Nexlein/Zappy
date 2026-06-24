@@ -29,13 +29,13 @@ class RaylibRenderer : public ARenderer {
     static constexpr std::string_view PLAYER_MODEL_PATH = "gui/assets/rimuru.glb";
     static constexpr std::string_view EGG_MODEL_PATH = "gui/assets/egg.glb";
     static constexpr std::string_view FOOD_MODEL_PATH = "gui/assets/apple.glb";
-    static constexpr float FOOD_MODEL_SIZE = 1.0f;
-
+    
     static constexpr float CAMERA_MOVE_SPEED = 2.0f;
     static constexpr float FREECAM_MOVE_SPEED = 5.0f;
     static constexpr float FREECAM_LOOK_SPEED = 0.002f;
     static constexpr float PLAYER_MODEL_SIZE = 0.25f;
     static constexpr float EGG_MODEL_SIZE = 0.15f;
+    static constexpr float FOOD_MODEL_SIZE = 1.0f;
     static constexpr float RESOURCE_SPHERE_BASE_SIZE = 0.05f;
     static constexpr float TILE_SIZE = 1.0f;
     static constexpr float SELECTION_LINE_THICKNESS = 5.0f;
@@ -104,6 +104,7 @@ class RaylibRenderer : public ARenderer {
                            const std::string& indent, Color color);
 
     std::vector<std::vector<const Player*>> _groupPlayersByVisualProximity() const;
+    Vector3 _groupLabelAnchor(const std::vector<const Player*>& group) const;
 
     void _drawSelectionArrow(Vector3 basePos, float modelTopY) const;
 };
