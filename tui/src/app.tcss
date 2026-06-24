@@ -1,0 +1,15 @@
+#sidebar {
+    width: 35%;
+}
+
+ProfileList, ProcessList {
+    height: 1fr;
+    border: round $primary;
+    padding: 0 1;
+}
+
+DetailPanel {
+    width: 1fr;
+    border: round $primary;
+    padding: 0 1;
+}
