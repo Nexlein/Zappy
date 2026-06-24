@@ -35,7 +35,8 @@ def launch_profile(
 
     ais = tuple(
         supervisor.spawn(
-            f"{team.name}-{i}", ai_command(binaries.ai, port, team.name, host)
+            f"{team.name}-{i}",
+            ai_command(binaries.ai, port, team.name, host, team.strategy),
         )
         for team in profile.teams
         for i in range(team.ai)
