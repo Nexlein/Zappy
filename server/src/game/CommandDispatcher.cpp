@@ -14,26 +14,19 @@ CommandDispatcher::CommandDispatcher(ClientManager& clients, World& world, GuiNo
       _notifier(notifier),
       _scheduler(scheduler),
       _config(config),
-      _clock(config.freq),
-      _handshakeHandler(
-          clients, world, notifier, config, _clock,
-          [this](int connectionId, int playerId) { this->_onAiJoined(connectionId, playerId); })
+      _handshakeHandler(clients, world, notifier, config,
+                        [this](int connectionId, int playerId) {
+                            this->_startStarvationTimer(connectionId, playerId);
+                        }),
+      _freq(config.freq),
+      _startTime(std::chrono::steady_clock::now())
 {
 }
 
-std::chrono::microseconds CommandDispatcher::gameElapsed() const { return _clock.elapsed(); }
-
-double CommandDispatcher::gameTicks() const { return _clock.ticks(); }
-
-std::optional<GameClock::Stamp> CommandDispatcher::teamJoin(const std::string& team) const
+std::chrono::microseconds CommandDispatcher::gameElapsed() const
 {
-    return _clock.joinOf(team);
-}
-
-void CommandDispatcher::_onAiJoined(int connectionId, int playerId)
-{
-    if (_world.getPlayers().count(playerId)) _clock.recordJoin(_world.getPlayer(playerId).teamName);
-    _startStarvationTimer(connectionId, playerId);
+    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() -
+                                                                 _startTime);
 }
 
 void CommandDispatcher::onNewConnection(int connectionId)
@@ -86,7 +79,6 @@ void CommandDispatcher::_dispatchGui(int connectionId, const std::string& line)
                    [&](Gui::Sgt) { _handleSgt(connectionId); },
                    [&](Gui::Sst s) { _handleSst(s.freq); },
                    [&](Gui::Stu) { _handleStu(connectionId); },
-                   [&](Gui::Gtt& g) { _handleGtt(connectionId, g.team); },
                    [&](auto&) { _clients.send(connectionId, "suc\n"); },
                },
                *req);
@@ -151,7 +143,7 @@ void CommandDispatcher::_handleConnectNbr(int connectionId)
 
 void CommandDispatcher::_startStarvationTimer(int connectionId, int playerId)
 {
-    _scheduler.schedule(std::chrono::milliseconds(STARVATION_INTERVAL_MS) / _clock.freq(),
+    _scheduler.schedule(std::chrono::milliseconds(STARVATION_INTERVAL_MS) / _freq,
                         [this, connectionId, playerId] {
                             if (!_world.getPlayers().count(playerId)) return;
                             if (!_world.consumeFood(playerId)) {

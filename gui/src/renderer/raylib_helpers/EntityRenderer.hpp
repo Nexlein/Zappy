@@ -37,8 +37,7 @@ class EntityRenderer {
      * @param baseSize Base size of resource spheres.
      */
     static void drawResources(const Resources& resources, const std::array<int, 7>& slotIndices,
-                              const Vector3& tileCenter, float tileSize, Model& foodModel,
-                              float foodModelSize, float baseSize = 0.15f);
+                              const Vector3& tileCenter, float tileSize, float baseSize = 0.15f);
 
     private:
     static void _restoreModelBaseColors(Model& model, const Color* baseMats, int count = 6);

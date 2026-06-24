@@ -443,14 +443,13 @@ std::optional<Event> ProtocolParser::_parseSBP(const std::vector<std::string_vie
 
 std::optional<Event> ProtocolParser::_parseSTU(const std::vector<std::string_view>& tokens)
 {
-    // stu T U
+    // stu T
 
-    if (tokens.size() != 3) return std::nullopt;
+    if (tokens.size() != 2) return std::nullopt;
 
     try {
         int uptimeSeconds = std::stoi(std::string(tokens[1]));
-        int tickCount = std::stoi(std::string(tokens[2]));
-        return ServerUptime{uptimeSeconds, tickCount};
+        return ServerUptime{uptimeSeconds};
     } catch (...) {
         return std::nullopt;
     }

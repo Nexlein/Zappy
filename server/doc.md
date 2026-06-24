@@ -105,29 +105,12 @@ GUI clients authenticate with the literal team name `GRAPHIC`. On connect the se
 
 These commands are not in the original specification. They were added as bonuses.
 
-**`stu` — server uptime (wall seconds + game ticks)**
+**`stu` — server wall-clock uptime**
 
 | Direction | Message | Description |
 |-----------|---------|-------------|
 | C→S | `stu` | GUI requests uptime |
-| S→C | `stu <seconds> <ticks>` | Integer seconds since server start, and total game ticks |
-
-`seconds` is wall-clock and freq-independent. `ticks` is game time: the integral
-of frequency over time (see `core/GameClock`), so it tracks `sst` changes. A mid-game
-speed-up leaves `seconds` unchanged but accelerates `ticks`.
-
-**`gtt <team>` — when a team joined**
-
-| Direction | Message | Description |
-|-----------|---------|-------------|
-| C→S | `gtt <team>` | GUI asks when `<team>`'s first player joined |
-| S→C | `gtt <team> <seconds> <ticks>` | Uptime (seconds) and ticks at that team's first join |
-| S→C | `gtt <team> -1 -1` | The team has never joined |
-
-Lets the GUI build a win screen: pair `gtt <winner>` (from the `seg` winner) with a
-live `stu` to show both "joined at X" and "took Y to win", in seconds and ticks. The
-snapshot is taken on the team's **first** player join and never overwritten by later
-joins, forks, deaths or respawns.
+| S→C | `stu <seconds>` | Integer seconds since server start |
 
 **`sse` — initial egg notification**
 
@@ -234,35 +217,6 @@ public:
 
 **`sst` handling:** when GUI changes `f`, call `Scheduler::rescale(oldF / newF)`. This adjusts all pending fire times. O(n log n) rebuild — acceptable since `sst` is infrequent.
 
-### core/GameClock
-Single owner of frequency and game time. Owned by `CommandDispatcher`.
-
-```cpp
-class GameClock {
-public:
-    struct Stamp { std::chrono::microseconds elapsed; double ticks; };
-    explicit GameClock(int freq);
-    int freq() const;
-    std::chrono::microseconds elapsed() const;   // wall time since boot
-    double ticks() const;                         // game time since boot
-    float setFreq(int newFreq);                   // banks ticks, returns rescale ratio
-    void recordJoin(const std::string& team);     // write-once stamp
-    std::optional<Stamp> joinOf(const std::string& team) const;
-};
-```
-
-**Why ticks aren't counted.** The server is wall-clock driven (no fixed-step loop),
-so there is no per-tick counter to increment. A tick is `1/freq` seconds, so total
-ticks are the **integral of frequency over time**: `ticks() = bankedTicks + secondsSinceLastChange * freq`.
-`setFreq` banks `elapsed * oldFreq` before switching, so the count stays correct across
-any number of `sst` changes. Multiplying total elapsed time by the *final* freq (the old
-bug) is wrong the moment frequency ever changed.
-
-**Per-team join stamps.** `recordJoin` is called once on each team's first AI join
-(via the `CommandDispatcher` promotion hook). It captures `{elapsed, ticks}` and is
-write-once, so win timing can be measured from the team's entry instead of from server
-boot. Feeds `gtt` and the GAME OVER banner.
-
 ### core/World
 Pure game state + logic. No network, no scheduling — those are the server layer's job.
 
@@ -364,7 +318,7 @@ Parses AI client command strings into typed structs (mirror of GUI's `ProtocolPa
 ### protocol/GuiParser
 Parses GUI client request strings.
 
-- GUI-to-server commands: `msz`, `bct X Y`, `mct`, `tna`, `ppo #n`, `plv #n`, `pin #n`, `sgt`, `sst T`, `stu`, `gtt <team>`
+- GUI-to-server commands: `msz`, `bct X Y`, `mct`, `tna`, `ppo #n`, `plv #n`, `pin #n`, `sgt`, `sst T`
 
 ### protocol/Serializer
 Generates wire strings from typed events (inverse of GUI's `ProtocolParser`).

@@ -85,7 +85,6 @@ if(ZAPPY_BUILD_SERVER)
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/core/World.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/core/Args.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/core/Scheduler.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/core/GameClock.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/lib/clap/App.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/protocol/AiParser.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../server/src/protocol/GuiParser.cpp
@@ -105,7 +104,6 @@ if(ZAPPY_BUILD_SERVER)
         server/test_args.cpp
         server/test_resources.cpp
         server/test_scheduler.cpp
-        server/test_game_clock.cpp
         server/test_aiparser.cpp
         server/test_guiparser.cpp
         server/test_serializer.cpp

@@ -4,7 +4,6 @@
 #include <string>
 
 #include "core/Args.hpp"
-#include "core/GameClock.hpp"
 #include "core/World.hpp"
 #include "game/GuiNotifier.hpp"
 #include "network/ClientManager.hpp"
@@ -22,8 +21,7 @@ using PromotedCallback = std::function<void(int connectionId, int playerId)>;
 class HandshakeHandler {
     public:
     HandshakeHandler(ClientManager& clients, World& world, GuiNotifier& notifier,
-                     const ServerConfig& config, const GameClock& clock,
-                     PromotedCallback onPromoted);
+                     const ServerConfig& config, PromotedCallback onPromoted);
 
     /// New socket: send the "WELCOME" greeting.
     void onNewConnection(int connectionId);
@@ -39,6 +37,5 @@ class HandshakeHandler {
     World& _world;
     GuiNotifier& _notifier;
     const ServerConfig& _config;
-    const GameClock& _clock;
     PromotedCallback _onPromoted;
 };

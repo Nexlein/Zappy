@@ -6,7 +6,6 @@
 #include <gtest/gtest.h>
 
 #include "core/Args.hpp"
-#include "core/GameClock.hpp"
 #include "core/World.hpp"
 #include "game/GuiNotifier.hpp"
 #include "game/HandshakeHandler.hpp"
@@ -49,7 +48,6 @@ struct HandshakeFixture : public ::testing::Test {
     ClientManager* cm = nullptr;
     World* world = nullptr;
     GuiNotifier* notifier = nullptr;
-    GameClock* clock = nullptr;
     HandshakeHandler* handler = nullptr;
     ServerConfig config;
 
@@ -63,15 +61,13 @@ struct HandshakeFixture : public ::testing::Test {
         world->spawnInitialEggs(config.clientsNb);
         notifier = new GuiNotifier(*cm);
         world->addWorldObserver(notifier);
-        clock = new GameClock(config.freq);
-        handler = new HandshakeHandler(*cm, *world, *notifier, config, *clock,
+        handler = new HandshakeHandler(*cm, *world, *notifier, config,
                                        [](int, int) {});
     }
 
     void TearDown() override
     {
         delete handler;
-        delete clock;
         delete notifier;
         delete world;
         delete cm;

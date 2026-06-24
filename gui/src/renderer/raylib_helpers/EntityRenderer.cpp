@@ -44,11 +44,10 @@ void EntityRenderer::drawEgg(Vector3& worldPos, Color teamColor, Model& model, f
 
 void EntityRenderer::drawResources(const Resources& resources,
                                    const std::array<int, 7>& slotIndices, const Vector3& tileCenter,
-                                   float tileSize, Model& foodModel, float foodModelSize,
-                                   float baseSize)
+                                   float tileSize, float baseSize)
 {
     static const Color resourceColors[] = {
-        BROWN,     // food (unused — drawn as model)
+        BROWN,     // food
         DARKGRAY,  // linemate
         GREEN,     // deraumere
         BLUE,      // sibur
@@ -68,12 +67,7 @@ void EntityRenderer::drawResources(const Resources& resources,
 
         Vector3 drawPos = {tileCenter.x + dx * tileSize, size / 2.0f, tileCenter.z + dz * tileSize};
 
-        if (i == 0) {
-            float s = foodModelSize * size;
-            DrawModelEx(foodModel, drawPos, {0.0f, 1.0f, 0.0f}, 0.0f, {s, s, s}, WHITE);
-        } else {
-            DrawSphere(drawPos, size, resourceColors[i]);
-        }
+        DrawSphere(drawPos, size, resourceColors[i]);
     }
 }
 

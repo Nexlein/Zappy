@@ -1,20 +1,5 @@
 #include "GridRenderer.hpp"
 
-void GridRenderer::drawTiles(int width, int height, float tileSize)
-{
-    float offsetX = (width * tileSize) / 2.0f;
-    float offsetZ = (height * tileSize) / 2.0f;
-
-    for (int x = 0; x < width; x++) {
-        for (int z = 0; z < height; z++) {
-            float cx = x * tileSize - offsetX + tileSize / 2.0f;
-            float cz = z * tileSize - offsetZ + tileSize / 2.0f;
-            Color c = ((x + z) % 2 == 0) ? TILE_COLOR : TILE_COLOR_ALT;
-            DrawCube({cx, -0.01f, cz}, tileSize, 0.001f, tileSize, c);
-        }
-    }
-}
-
 void GridRenderer::drawGrid(int width, int height, float tileSize, Color color)
 {
     float offsetX = (width * tileSize) / 2.0f;

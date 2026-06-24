@@ -1,7 +1,6 @@
 #include "core/Server.hpp"
 
 #include <chrono>
-#include <cmath>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -65,8 +64,10 @@ void Server::_handleGameOver()
     for (const auto& [pid, p] : _world.getPlayers()) aiConns.push_back(p.connectionId);
     for (int conn : aiConns) _clients.disconnect(conn);
 
-    long long upSeconds = _dispatcher.gameElapsed().count() / 1000000;
-    long long upTicks = std::llround(_dispatcher.gameTicks());
+    long long us = _dispatcher.gameElapsed().count();
+    long long seconds = us / 1000000;
+    long long micros = us % 1000000;
+    long long ticks = us * _config.freq / 1000000;
 
     std::string teams;
     for (const auto& name : _config.teamNames) teams += (teams.empty() ? "" : " ") + name;
@@ -75,19 +76,9 @@ void Server::_handleGameOver()
     _logger.info("GAME", "========== GAME OVER ==========");
     _logger.info("GAME", "Winner: " + winner);
     _logger.info("GAME", "Teams: " + teams);
-    _logger.info("GAME", "Server uptime: " + std::to_string(upSeconds) + " s (" +
-                             std::to_string(upTicks) + " ticks)");
-
-    // Time-to-win measured from when the winning team entered, not from server
-    // boot (which would count idle lobby time before any AI connected).
-    if (auto join = _dispatcher.teamJoin(winner)) {
-        long long joinSeconds = join->elapsed.count() / 1000000;
-        long long joinTicks = std::llround(join->ticks);
-        _logger.info("GAME", winner + " joined at: " + std::to_string(joinSeconds) + " s (" +
-                                 std::to_string(joinTicks) + " ticks)");
-        _logger.info("GAME", winner + " took: " + std::to_string(upSeconds - joinSeconds) + " s (" +
-                                 std::to_string(upTicks - joinTicks) + " ticks) to win");
-    }
+    _logger.info("GAME",
+                 "Duration: " + std::to_string(seconds) + " s " + std::to_string(micros) + " us");
+    _logger.info("GAME", "Game ticks: " + std::to_string(ticks));
     _logger.info("GAME", "===============================");
 }
 

@@ -1,5 +1,3 @@
-from context import DroneContext
-from uai.state import UAIState
 from utils.stones import is_incantation_ready, get_missing_stones
 from utils.config_loader import (
     get_survival_config,
@@ -8,15 +6,26 @@ from utils.config_loader import (
 )
 from protocol.BroadcastProtocol import MessageType
 
+from typing import TYPE_CHECKING
 
-class UtilityCalculator:
+if TYPE_CHECKING:
+    from context import DroneContext
+
+
+class UtilityCalculators:
     """Calculates utilities for various AI behaviors."""
 
-    def __init__(self, context: DroneContext, state: UAIState):
-        self.context = context
-        self.state = state
+    if TYPE_CHECKING:
+        forks_done: int
+        context: "DroneContext"
+        incant_cmd_sent: bool
+        is_leader: bool
+        ready_count: int
+        is_following: bool
+        reproduce_fork_sent: bool
+        reproduce_attempted: bool
 
-    def get_survival_utility(self) -> float:
+    def _get_survival_utility(self) -> float:
         surv_cfg = get_survival_config()
         food = self.context.inventory.food
         threshold = surv_cfg.get("SURVIVAL_THRESHOLD", 5)
@@ -27,12 +36,13 @@ class UtilityCalculator:
             return 0.0
         return 1.0 - ((food - threshold) / (target - threshold))
 
-    def get_incantation_utility(self) -> float:
+    def _get_incantation_utility(self) -> float:
         if not self.context.vision:
             return 0.0
         tile = self.context.vision[0]
 
-        if self.state.incant_cmd_sent:
+        # If we already sent the incantation command, stick to this state until success/fail
+        if self.incant_cmd_sent:
             return 1.0
 
         evo_cfg = get_evolution_config()
@@ -46,14 +56,14 @@ class UtilityCalculator:
                 str(self.context.level), 0
             )
             if (
-                self.state.is_leader
-                and self.state.ready_count + 1 >= players_req
+                self.is_leader
+                and self.ready_count + 1 >= players_req
                 and is_incantation_ready(self.context.level, tile)
             ):
                 return 1.0
         return 0.0
 
-    def get_gather_utility(self, u_survival: float) -> float:
+    def _get_gather_utility(self, u_survival: float) -> float:
         missing = get_missing_stones(self.context.level, self.context.inventory)
         if not missing:
             return 0.0
@@ -67,44 +77,41 @@ class UtilityCalculator:
         stone_ratio = num_missing / total_needed
         return 0.8 * stone_ratio * (1.0 - u_survival)
 
-    def get_reproduce_utility(self, u_survival: float) -> float:
+    def _get_reproduce_utility(self, u_survival: float) -> float:
         repr_cfg = get_reproduction_config()
-        if self.state.forks_done >= repr_cfg.get("MAX_FORKS_PER_DRONE", 10):
+        if self.forks_done >= repr_cfg.get("MAX_FORKS_PER_DRONE", 10):
             return 0.0
         if self.context.inventory.food < repr_cfg.get("FORK_FOOD_THRESHOLD", 10):
             return 0.0
 
-        if self.context.total_ticks - self.state.last_fork_tick < 600:
-            return 0.0
-
-        if (
-            self.state.reproduce_fork_sent
-            or self.state.reproduce_spawn_sent
-            or self.state.reproduce_connect_sent
-        ):
+        if self.reproduce_fork_sent:
             return 1.0
 
-        return 0.0
+        if self.reproduce_attempted:
+            return 0.0
 
-    def get_rally_utility(self, u_survival: float) -> float:
+        return 0.82 * (1.0 - u_survival)
+
+    def _get_rally_utility(self, u_survival: float) -> float:
         if get_missing_stones(self.context.level, self.context.inventory):
             return 0.0
 
-        if self.state.is_following:
+        if self.is_following:
             return 0.0
 
         return 0.9 * (1.0 - u_survival)
 
-    def get_follow_utility(self, u_survival: float) -> float:
+    def _get_follow_utility(self, u_survival: float) -> float:
         evo_cfg = get_evolution_config()
         if self.context.level <= evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
             return 0.0
 
-        if self.state.is_following:
+        if self.is_following:
             return 0.85 * (1.0 - u_survival)
 
         missing = get_missing_stones(self.context.level, self.context.inventory)
         if not missing:
+            # We have all stones, but if someone with a higher ID called, we follow them!
             for bcst in self.context.broadcasts:
                 decoded = bcst.content
                 if (
@@ -127,14 +134,3 @@ class UtilityCalculator:
             ):
                 return 0.85 * (1.0 - u_survival)
         return 0.0
-
-    def calculate_all(self) -> dict[str, float]:
-        u_survival = self.get_survival_utility()
-        return {
-            "survival": u_survival,
-            "incantation": self.get_incantation_utility(),
-            "rally": self.get_rally_utility(u_survival),
-            "follow": self.get_follow_utility(u_survival),
-            "gather": self.get_gather_utility(u_survival),
-            "reproduce": self.get_reproduce_utility(u_survival),
-        }

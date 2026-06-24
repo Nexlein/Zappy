@@ -83,17 +83,6 @@ TEST(GuiParser, SstValid)
     EXPECT_EQ(std::get<Gui::Sst>(*result).freq, 42);
 }
 
-TEST(GuiParser, GttValid)
-{
-    auto result = GuiParser::parse("gtt TeamA");
-    ASSERT_TRUE(result.has_value());
-    ASSERT_TRUE(std::holds_alternative<Gui::Gtt>(*result));
-    EXPECT_EQ(std::get<Gui::Gtt>(*result).team, "TeamA");
-}
-
-TEST(GuiParser, GttMissingTeam) { EXPECT_FALSE(GuiParser::parse("gtt ").has_value()); }
-TEST(GuiParser, GttExtraArg) { EXPECT_FALSE(GuiParser::parse("gtt TeamA B").has_value()); }
-
 TEST(GuiParser, PpoMissingHash) { EXPECT_FALSE(GuiParser::parse("ppo 7").has_value()); }
 TEST(GuiParser, BctMissingY) { EXPECT_FALSE(GuiParser::parse("bct 3").has_value()); }
 TEST(GuiParser, BctBadArgs) { EXPECT_FALSE(GuiParser::parse("bct abc def").has_value()); }

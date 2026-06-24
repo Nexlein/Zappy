@@ -28,17 +28,13 @@ class RaylibRenderer : public ARenderer {
     private:
     static constexpr std::string_view PLAYER_MODEL_PATH = "gui/assets/rimuru.glb";
     static constexpr std::string_view EGG_MODEL_PATH = "gui/assets/egg.glb";
-    static constexpr std::string_view FOOD_MODEL_PATH = "gui/assets/apple.glb";
-    static constexpr float FOOD_MODEL_SIZE = 1.0f;
 
     static constexpr float CAMERA_MOVE_SPEED = 2.0f;
-    static constexpr float FREECAM_MOVE_SPEED = 5.0f;
-    static constexpr float FREECAM_LOOK_SPEED = 0.002f;
     static constexpr float PLAYER_MODEL_SIZE = 0.25f;
     static constexpr float EGG_MODEL_SIZE = 0.15f;
     static constexpr float RESOURCE_SPHERE_BASE_SIZE = 0.05f;
     static constexpr float TILE_SIZE = 1.0f;
-    static constexpr float SELECTION_LINE_THICKNESS = 5.0f;
+    static constexpr float SELECTION_LINE_THICKNESS = 8.0f;
     static constexpr float SELECTION_WIREFRAME_THICKNESS = 5.0f;
     static constexpr Color SELECTION_COLOR = {128, 0, 128, 255};  // purple
 
@@ -46,19 +42,11 @@ class RaylibRenderer : public ARenderer {
     float _cameraAngle = 0.0f;
     float _cameraHeight = 5.0f;
 
-    bool _freecamActive = false;
-    float _savedOrbitalAngle = 0.0f;
-    float _savedOrbitalHeight = 5.0f;
-    float _freecamYaw = 0.0f;
-    float _freecamPitch = 0.0f;
-
     Model _playerModel = {};
     Color _playerModelBaseMats[6] = {};
 
     Model _eggModel = {};
     Color _eggModelBaseMats[2] = {};
-
-    Model _foodModel = {};
 
     std::unordered_map<std::string, Color> _teamColors;
 
@@ -91,11 +79,6 @@ class RaylibRenderer : public ARenderer {
 
     void _updateCamera(float worldWidth, float worldHeight);
     void _updateSelection(float deltaTime);
-
-    void _enterFreecam();
-    void _exitFreecam();
-    void _handleFreecamInput();
-    void _handleOrbitalInput();
 
     void _performRaycast();
     void _drawBehaviorParticles(const VisualState& visual);
