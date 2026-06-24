@@ -62,6 +62,7 @@ set(GUI_SOURCES
     src/core/behaviors/TurnBehavior.cpp
     src/core/behaviors/DeathBehavior.cpp
     src/core/behaviors/ForkBehavior.cpp
+    src/core/behaviors/IncantationBehavior.cpp
     src/core/behaviors/LevelUpBehavior.cpp
     src/core/behaviors/BroadcastBehavior.cpp
     src/core/EventQueue.cpp

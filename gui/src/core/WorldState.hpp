@@ -21,6 +21,8 @@ struct Player {
     std::string team;
     Resources inventory = {};
     bool incanting = false;
+    bool incantationEnded = false;
+    bool incantationSuccess = false;
     VisualState visual = {};
 };
 
