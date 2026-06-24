@@ -12,7 +12,10 @@ class DetailPanel(Static):
         self.border_title = "Details"
 
     def show_profile(self, profile: Profile) -> None:
-        teams = "\n".join(f"  - {t.name}: {t.ai} ai" for t in profile.teams)
+        teams = "\n".join(
+            f"  - {t.name}: {t.ai} ai ({t.strategy or 'default'})"
+            for t in profile.teams
+        )
         self.update(
             f"profile: {profile.name}\n"
             f"map:     {profile.width}x{profile.height}\n"
