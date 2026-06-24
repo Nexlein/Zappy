@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "logging/CompositeSink.hpp"
@@ -23,7 +24,7 @@ Server::Server(const ServerConfig& config)
     // Both at Info: structural events only. Debug (per-tick NET I/O, broadcasts)
     // is dropped to keep the log bounded under broadcast-heavy AI traffic.
     sinks->add(std::make_unique<ConsoleSink>(LogLevel::Info));
-    sinks->add(std::make_unique<FileSink>("zappy_server.log", LogLevel::Info));
+    sinks->add(FileSink::forRun("server_p" + std::to_string(_config.port), LogLevel::Info));
     _logger.setSink(std::move(sinks));
 
     _world.addWorldObserver(&_notifier);
