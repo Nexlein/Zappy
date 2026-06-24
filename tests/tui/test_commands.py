@@ -61,6 +61,12 @@ class TestCommands(unittest.TestCase):
             ["./zappy_ai", "-p", "8000", "-n", "red", "-h", "10.0.0.1"],
         )
 
+    def test_ai_command_with_strategy(self):
+        self.assertEqual(
+            ai_command("./zappy_ai", 8000, "red", strategy="uai"),
+            ["./zappy_ai", "-p", "8000", "-n", "red", "-s", "uai"],
+        )
+
     def test_gui_command_local(self):
         self.assertEqual(
             gui_command("./zappy_gui", 8000),

@@ -413,6 +413,11 @@ public:
 };
 ```
 
+### logging
+`Logger` formats lines and fans them to sinks via `CompositeSink` (Composite). Each `ILogSink` filters by its own minimum level (Strategy): `ConsoleSink` (stdout, Info) for live output and `FileSink` for a persisted copy. `Server` composes both in its constructor.
+
+The file sink is built with `FileSink::forRun(tag)`, which writes to `server/logs/<tag>_<timestamp>.log` (tag e.g. `server_p4242`) and creates `server/logs/` best-effort. The timestamp + port keep concurrent and successive runs from clobbering each other; the path is relative to cwd, so it lands under `server/logs/` only when launched from the repo root (as the binary normally is).
+
 ## Main Loop
 
 ```cpp

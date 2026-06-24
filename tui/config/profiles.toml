@@ -1,27 +1,30 @@
 # Zappy game profiles. Each [profiles.<name>] is one launchable game setup.
 
 [profiles.duel]
-width = 20
-height = 20
-clients = 6
+width = 10
+height = 10
+clients = 3
 freq = 100
 auto_gui = true
 
 [[profiles.duel.teams]]
-name = "red"
+name = "uai"
 ai = 2
+strategy = "uai"
 
 [[profiles.duel.teams]]
-name = "blue"
-ai = 3
+name = "queen"
+ai = 1
+strategy = "queen"
 
 [profiles.solo]
-width = 10
-height = 10
+width = 7
+height = 7
 clients = 4
 freq = 50
-# auto_gui defaults to false
+auto_gui = true
 
 [[profiles.solo.teams]]
 name = "loners"
 ai = 1
+strategy = "queen"

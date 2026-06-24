@@ -35,11 +35,19 @@ def server_command(binary: str, port: int, profile: Profile) -> list[str]:
     return args
 
 
-def ai_command(binary: str, port: int, team: str, host: str | None = None) -> list[str]:
-    """``-p -n <team> [-h <host>]``."""
+def ai_command(
+    binary: str,
+    port: int,
+    team: str,
+    host: str | None = None,
+    strategy: str | None = None,
+) -> list[str]:
+    """``-p -n <team> [-h <host>] [-s <strategy>]``."""
     args = [binary, "-p", str(port), "-n", team]
     if host is not None:
         args += ["-h", host]
+    if strategy is not None:
+        args += ["-s", strategy]
     return args
 
 
