@@ -151,10 +151,11 @@ struct UnknownCommand {};
 // sbp
 struct BadParameters {};
 
-// stu x (this is a custom event, not part of the official protocol, representing the server uptime
-// in seconds)
+// stu x x (this is a custom event, not part of the official protocol, representing the server
+// uptime in seconds, and the number of ticks since the server started)
 struct ServerUptime {
     int uptimeSeconds;
+    int tickCount;
 };
 
 // sse #e N X Y (this is a custom event, not part of the official protocol, representing an egg

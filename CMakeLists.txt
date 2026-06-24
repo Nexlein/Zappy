@@ -6,7 +6,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 option(ZAPPY_BUILD_SERVER "Build Server component" ON)
 option(ZAPPY_BUILD_GUI "Build GUI component" ON)
 option(ZAPPY_BUILD_AI "Build AI component" ON)
-option(ZAPPY_BUILD_TUI "Build TUI orchestrator component" OFF)
+option(ZAPPY_BUILD_TUI "Build TUI orchestrator component" ON)
 
 # each binary can also be built standalone from its own directory
 if(ZAPPY_BUILD_SERVER)

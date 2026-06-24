@@ -7,6 +7,17 @@
  */
 class GridRenderer {
     public:
+    static constexpr Color TILE_COLOR = {230, 230, 230, 255};
+    static constexpr Color TILE_COLOR_ALT = {210, 210, 210, 255};
+
+    /**
+     * @brief Draws filled tile quads for the entire grid in a checkerboard pattern.
+     * @param width Number of tiles in X direction.
+     * @param height Number of tiles in Z direction.
+     * @param tileSize Size of each tile in world units.
+     */
+    static void drawTiles(int width, int height, float tileSize);
+
     /**
      * @brief Draws a custom grid centered at (0, 0, 0).
      * @param width Number of tiles in X direction.
