@@ -22,6 +22,7 @@ set(SERVER_SOURCES
     src/core/Args.cpp
     src/core/World.cpp
     src/core/Scheduler.cpp
+    src/core/GameClock.cpp
     src/protocol/AiParser.cpp
     src/protocol/GuiParser.cpp
     src/protocol/Serializer.cpp

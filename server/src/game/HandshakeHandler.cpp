@@ -7,11 +7,13 @@
 #include "protocol/Serializer.hpp"
 
 HandshakeHandler::HandshakeHandler(ClientManager& clients, World& world, GuiNotifier& notifier,
-                                   const ServerConfig& config, PromotedCallback onPromoted)
+                                   const ServerConfig& config, const GameClock& clock,
+                                   PromotedCallback onPromoted)
     : _clients(clients),
       _world(world),
       _notifier(notifier),
       _config(config),
+      _clock(clock),
       _onPromoted(onPromoted)
 {
 }
@@ -55,7 +57,7 @@ void HandshakeHandler::_promoteToGui(int connectionId)
         for (int x = 0; x < _config.width; x++)
             _notifier.send(connectionId, Serializer::bct(x, y, _world.at(x, y).resources));
     for (auto& name : _config.teamNames) _notifier.send(connectionId, Serializer::tna(name));
-    _notifier.send(connectionId, Serializer::sgt(_config.freq));
+    _notifier.send(connectionId, Serializer::sgt(_clock.freq()));
     for (auto& [id, p] : _world.getPlayers())
         _notifier.send(connectionId,
                        Serializer::pnw(p.id, p.x, p.y, p.orientation, p.level, p.teamName));

@@ -1,11 +1,12 @@
 #pragma once
 
 #include <optional>
+#include <string>
 #include <string_view>
 #include <variant>
 
 /**
- * @brief Typed structs for the 9 GUI client request commands.
+ * @brief Typed structs for the GUI client request commands.
  *
  * Player-targeting requests (ppo, plv, pin) carry the player id after
  * stripping the '#' prefix from the wire format.
@@ -34,8 +35,11 @@ namespace Gui {
         int freq;
     };
     struct Stu {};
+    struct Gtt {
+        std::string team;
+    };
 
-    using Request = std::variant<Msz, Bct, Mct, Tna, Ppo, Plv, Pin, Sgt, Sst, Stu>;
+    using Request = std::variant<Msz, Bct, Mct, Tna, Ppo, Plv, Pin, Sgt, Sst, Stu, Gtt>;
 }  // namespace Gui
 
 /**

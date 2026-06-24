@@ -17,7 +17,7 @@ OUR_BIN=./zappy_server
 REF_BIN=./bin/zappy_server
 AI_BIN=./zappy_ai
 
-OUR_PORT=6767
+OUR_PORT=6768
 REF_PORT=4242
 
 # --------------------------
@@ -51,8 +51,8 @@ start_server() {
     sleep 1
     # for team in "${TEAMS[@]}"; do                                         -> uncomment to test multiple teams
         for _ in $(seq 1 "$AIS_PER_TEAM"); do
-            # "$AI_BIN" -p "$port" -n "$team" -s fsm >/dev/null 2>&1 &      -> uncomment to test multiple teams
-            "$AI_BIN" -p "$port" -n "TeamA" -s fsm >/dev/null 2>&1 &      # -> comment to test multiple teams
+            # "$AI_BIN" -p "$port" -n "$team" -s queen >/dev/null 2>&1 &      -> uncomment to test multiple teams
+            "$AI_BIN" -p "$port" -n "TeamA" -s queen >/dev/null 2>&1 &      # -> comment to test multiple teams
         done
     # done                                                                  -> uncomment to test multiple teams
     echo "$srv"
