@@ -6,6 +6,7 @@ from supervisor.launcher import launch_profile
 from supervisor.profiles import Profile
 from supervisor.supervisor import Supervisor
 from widgets.detail_panel import DetailPanel
+from widgets.log_panel import LogPanel
 from widgets.process_list import ProcessList
 from widgets.profile_list import ProfileList
 
@@ -26,7 +27,9 @@ class ZappyTUI(App):
             with Vertical(id="sidebar"):
                 yield ProfileList(self._profiles)
                 yield ProcessList()
-            yield DetailPanel()
+            with Vertical(id="main"):
+                yield DetailPanel()
+                yield LogPanel()
         yield Footer()
 
     def on_mount(self) -> None:
@@ -41,12 +44,16 @@ class ZappyTUI(App):
         self, event: OptionList.OptionHighlighted
     ) -> None:
         panel = self.query_one(DetailPanel)
+        logs = self.query_one(LogPanel)
         if isinstance(event.option_list, ProfileList) and event.option.id is not None:
             panel.show_profile(self._profiles[event.option.id])
+            logs.clear_follow()
         elif isinstance(event.option_list, ProcessList):
             processes = self._supervisor.processes
             if 0 <= event.option_index < len(processes):
-                panel.show_process(processes[event.option_index])
+                process = processes[event.option_index]
+                panel.show_process(process)
+                logs.follow(process)
 
     def _launch(self, name: str) -> None:
         try:
@@ -59,6 +66,7 @@ class ZappyTUI(App):
     def _tick(self) -> None:
         self._supervisor.reap()
         self._refresh_processes()
+        self.query_one(LogPanel).poll()
 
     def _refresh_processes(self) -> None:
         self.query_one(ProcessList).show(self._supervisor.processes)

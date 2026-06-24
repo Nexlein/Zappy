@@ -8,8 +8,19 @@ ProfileList, ProcessList {
     padding: 0 1;
 }
 
-DetailPanel {
+#main {
     width: 1fr;
+}
+
+DetailPanel {
+    height: auto;
+    min-height: 9;
+    border: round $primary;
+    padding: 0 1;
+}
+
+LogPanel {
+    height: 1fr;
     border: round $primary;
     padding: 0 1;
 }
