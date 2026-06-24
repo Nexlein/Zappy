@@ -117,7 +117,7 @@ void App::_resetStuState()
 
 bool App::_connectWithRetry(TcpSocket& socket, const std::string& host, int port)
 {
-    int delay = 1;
+    int delay = 2;
     for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
             socket.connect(host, port);
