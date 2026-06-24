@@ -28,13 +28,33 @@ class Supervisor:
         """Every tracked child, in spawn order."""
         return [entry.process for entry in self._entries]
 
+    def reap(self) -> list[ManagedProcess]:
+        """Free the resources of children that have exited on their own:
+        close their pipe and release their port. Entries are kept (marked
+        dead) so the UI can still show them. Returns the newly reaped ones."""
+        reaped = []
+        for entry in self._entries:
+            if entry.released or entry.process.is_alive():
+                continue
+            entry.process.stop()  # already dead: just closes the pipe
+            self._release(entry)
+            reaped.append(entry.process)
+        return reaped
+
     def shutdown(self) -> None:
         """Stop every child and release its port. Idempotent."""
         for entry in self._entries:
             entry.process.stop()
-            if entry.port is not None:
-                self.ports.release(entry.port)
+            self._release(entry)
         self._entries.clear()
+
+    def _release(self, entry: _Entry) -> None:
+        """Release an entry's port once. Idempotent across reap and shutdown."""
+        if entry.released:
+            return
+        if entry.port is not None:
+            self.ports.release(entry.port)
+        entry.released = True
 
     def __enter__(self) -> Supervisor:
         return self
@@ -44,8 +64,9 @@ class Supervisor:
 
 
 class _Entry:
-    __slots__ = ("process", "port")
+    __slots__ = ("process", "port", "released")
 
     def __init__(self, process: ManagedProcess, port: int | None) -> None:
         self.process = process
         self.port = port
+        self.released = False
