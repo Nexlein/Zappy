@@ -39,6 +39,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 ai/logs/
+server/logs/
 
 # Test outputs
 Testing/
