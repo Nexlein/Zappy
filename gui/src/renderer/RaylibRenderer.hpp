@@ -27,7 +27,9 @@ class RaylibRenderer : public ARenderer {
 
     private:
     static constexpr std::string_view PLAYER_MODEL_PATH = "gui/assets/rimuru.glb";
-    static constexpr std::string_view EGG_MODEL_PATH = "gui/assets/egg.glb";
+    static constexpr std::string_view EGG_MODEL_PATH    = "gui/assets/egg.glb";
+    static constexpr std::string_view FOOD_MODEL_PATH   = "gui/assets/apple.glb";
+    static constexpr float            FOOD_MODEL_SIZE   = 1.0f;
 
     static constexpr float CAMERA_MOVE_SPEED  = 2.0f;
     static constexpr float FREECAM_MOVE_SPEED = 5.0f;
@@ -55,6 +57,8 @@ class RaylibRenderer : public ARenderer {
 
     Model _eggModel = {};
     Color _eggModelBaseMats[2] = {};
+
+    Model _foodModel = {};
 
     std::unordered_map<std::string, Color> _teamColors;
 

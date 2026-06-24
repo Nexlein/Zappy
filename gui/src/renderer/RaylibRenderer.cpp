@@ -55,6 +55,12 @@ void RaylibRenderer::init()
     _eggModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = {235, 235, 235, 255};
     for (int i = 0; i < _eggModel.materialCount && i < 2; i++)
         _eggModelBaseMats[i] = _eggModel.materials[i].maps[MATERIAL_MAP_DIFFUSE].color;
+
+    SetTraceLogLevel(LOG_ERROR);
+    _foodModel = LoadModel(FOOD_MODEL_PATH.data());
+    SetTraceLogLevel(LOG_WARNING);
+    if (_foodModel.meshCount == 0)
+        throw std::runtime_error("Failed to load food model: " + std::string(FOOD_MODEL_PATH));
 }
 
 void RaylibRenderer::render()
@@ -156,6 +162,8 @@ void RaylibRenderer::setDevMode(bool dev, int port, const std::string& machine)
 void RaylibRenderer::shutdown()
 {
     if (_playerModel.meshCount > 0) UnloadModel(_playerModel);
+    if (_eggModel.meshCount > 0) UnloadModel(_eggModel);
+    if (_foodModel.meshCount > 0) UnloadModel(_foodModel);
 
     _savedWindow = {
         .width = GetScreenWidth(),
@@ -215,7 +223,7 @@ void RaylibRenderer::_render3D()
                 res, slotIndices,
                 RenderingHelper::tileToWorld(x, y, _state->world.width, _state->world.height,
                                              TILE_SIZE),
-                TILE_SIZE, RESOURCE_SPHERE_BASE_SIZE);
+                TILE_SIZE, _foodModel, FOOD_MODEL_SIZE, RESOURCE_SPHERE_BASE_SIZE);
         }
     }
 
