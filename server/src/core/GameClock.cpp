@@ -32,3 +32,16 @@ float GameClock::setFreq(int newFreq)
     _freq = newFreq;
     return ratio;
 }
+
+void GameClock::recordJoin(const std::string& team)
+{
+    if (_joins.count(team)) return;
+    _joins.emplace(team, Stamp{elapsed(), ticks()});
+}
+
+std::optional<GameClock::Stamp> GameClock::joinOf(const std::string& team) const
+{
+    auto it = _joins.find(team);
+    if (it == _joins.end()) return std::nullopt;
+    return it->second;
+}
