@@ -7,10 +7,7 @@ class I18nTest : public ::testing::Test {
     void SetUp() override { I18n::setLanguage(I18n::Language::EN); }
 };
 
-TEST_F(I18nTest, DefaultLanguageIsEN)
-{
-    EXPECT_EQ(I18n::getLanguage(), I18n::Language::EN);
-}
+TEST_F(I18nTest, DefaultLanguageIsEN) { EXPECT_EQ(I18n::getLanguage(), I18n::Language::EN); }
 
 TEST_F(I18nTest, ENStringsNotEmpty)
 {

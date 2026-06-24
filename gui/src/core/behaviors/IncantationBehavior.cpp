@@ -60,19 +60,19 @@ void IncantationBehavior::_spawnParticles()
 
     _particles.clear();
     for (int i = 0; i < PARTICLE_COUNT; i++) {
-        float angle = (static_cast<float>(rand()) / RAND_MAX) * 2.0f * PI;
-        float spread = (static_cast<float>(rand()) / RAND_MAX) * 0.15f;
+        float angle = (static_cast<float>(static_cast<double>(rand()) / RAND_MAX)) * 2.0f * PI;
+        float spread = (static_cast<float>(static_cast<double>(rand()) / RAND_MAX)) * 0.15f;
 
         Particle p;
         p.pos = {_tileCenter.x + std::cos(angle) * spread, 0.1f,
                  _tileCenter.z + std::sin(angle) * spread};
-        p.vel = {(static_cast<float>(rand()) / RAND_MAX - 0.5f) * 0.05f,
-                 0.15f + (static_cast<float>(rand()) / RAND_MAX) * 0.2f,
-                 (static_cast<float>(rand()) / RAND_MAX - 0.5f) * 0.05f};
+        p.vel = {(static_cast<float>(static_cast<double>(rand()) / RAND_MAX) - 0.5f) * 0.05f,
+                 0.15f + (static_cast<float>(static_cast<double>(rand()) / RAND_MAX)) * 0.2f,
+                 (static_cast<float>(static_cast<double>(rand()) / RAND_MAX) - 0.5f) * 0.05f};
         p.color = COLORS[rand() % 3];
-        p.size = 0.03f + (static_cast<float>(rand()) / RAND_MAX) * 0.04f;
+        p.size = 0.03f + (static_cast<float>(static_cast<double>(rand()) / RAND_MAX)) * 0.04f;
         p.alpha = 0.8f;
-        p.delay = (static_cast<float>(rand()) / RAND_MAX) * 0.4f;
+        p.delay = (static_cast<float>(static_cast<double>(rand()) / RAND_MAX)) * 0.4f;
         p.active = false;
         _particles.push_back(p);
     }
@@ -96,13 +96,13 @@ void IncantationBehavior::_updateParticles(float dt)
 
         // Recycle particle back to center when faded
         if (p.alpha <= 0.0f) {
-            float angle = (static_cast<float>(rand()) / RAND_MAX) * 2.0f * PI;
-            float spread = (static_cast<float>(rand()) / RAND_MAX) * 0.15f;
+            float angle = (static_cast<float>(static_cast<double>(rand()) / RAND_MAX)) * 2.0f * PI;
+            float spread = (static_cast<float>(static_cast<double>(rand()) / RAND_MAX)) * 0.15f;
             p.pos = {_tileCenter.x + std::cos(angle) * spread, 0.1f,
                      _tileCenter.z + std::sin(angle) * spread};
-            p.vel.x = (static_cast<float>(rand()) / RAND_MAX - 0.5f) * 0.05f;
-            p.vel.y = 0.15f + (static_cast<float>(rand()) / RAND_MAX) * 0.2f;
-            p.vel.z = (static_cast<float>(rand()) / RAND_MAX - 0.5f) * 0.05f;
+            p.vel.x = (static_cast<float>(static_cast<double>(rand()) / RAND_MAX) - 0.5f) * 0.05f;
+            p.vel.y = 0.15f + (static_cast<float>(static_cast<double>(rand()) / RAND_MAX)) * 0.2f;
+            p.vel.z = (static_cast<float>(static_cast<double>(rand()) / RAND_MAX) - 0.5f) * 0.05f;
             p.alpha = 0.8f;
         }
     }

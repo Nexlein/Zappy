@@ -88,7 +88,10 @@ TEST(Serializer, Sgt) { EXPECT_EQ(Serializer::sgt(100), "sgt 100\n"); }
 TEST(Serializer, Sst) { EXPECT_EQ(Serializer::sst(200), "sst 200\n"); }
 TEST(Serializer, Stu) { EXPECT_EQ(Serializer::stu(720, 7200), "stu 720 7200\n"); }
 TEST(Serializer, Gtt) { EXPECT_EQ(Serializer::gtt("TeamA", 600, 6000), "gtt TeamA 600 6000\n"); }
-TEST(Serializer, GttNeverJoined) { EXPECT_EQ(Serializer::gtt("Ghost", -1, -1), "gtt Ghost -1 -1\n"); }
+TEST(Serializer, GttNeverJoined)
+{
+    EXPECT_EQ(Serializer::gtt("Ghost", -1, -1), "gtt Ghost -1 -1\n");
+}
 
 TEST(Serializer, Seg) { EXPECT_EQ(Serializer::seg("TeamA"), "seg TeamA\n"); }
 TEST(Serializer, Smg) { EXPECT_EQ(Serializer::smg("hi"), "smg hi\n"); }

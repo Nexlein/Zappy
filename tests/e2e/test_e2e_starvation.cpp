@@ -14,6 +14,7 @@
  */
 
 #include <arpa/inet.h>
+#include <gtest/gtest.h>
 #include <netinet/in.h>
 #include <signal.h>
 #include <sys/socket.h>
@@ -23,8 +24,6 @@
 #include <chrono>
 #include <string>
 #include <thread>
-
-#include <gtest/gtest.h>
 
 static constexpr int E2E_PORT = 14404;
 static constexpr int CONNECT_RETRIES = 20;
@@ -43,16 +42,21 @@ static pid_t spawnServer()
     pid_t pid = fork();
     if (pid != 0) return pid;
 
-    char* argv[] = {
-        const_cast<char*>("./zappy_server"),
-        const_cast<char*>("-p"), const_cast<char*>("14404"),
-        const_cast<char*>("-x"), const_cast<char*>("10"),
-        const_cast<char*>("-y"), const_cast<char*>("10"),
-        const_cast<char*>("-n"), const_cast<char*>("TeamA"), const_cast<char*>("TeamB"),
-        const_cast<char*>("-c"), const_cast<char*>("5"),
-        const_cast<char*>("-f"), const_cast<char*>("10000"),
-        nullptr
-    };
+    char* argv[] = {const_cast<char*>("./zappy_server"),
+                    const_cast<char*>("-p"),
+                    const_cast<char*>("14404"),
+                    const_cast<char*>("-x"),
+                    const_cast<char*>("10"),
+                    const_cast<char*>("-y"),
+                    const_cast<char*>("10"),
+                    const_cast<char*>("-n"),
+                    const_cast<char*>("TeamA"),
+                    const_cast<char*>("TeamB"),
+                    const_cast<char*>("-c"),
+                    const_cast<char*>("5"),
+                    const_cast<char*>("-f"),
+                    const_cast<char*>("10000"),
+                    nullptr};
     execv("./zappy_server", argv);
     _exit(1);
 }
@@ -105,7 +109,7 @@ static int connectAsGui()
 {
     int fd = connectWithRetry();
     if (fd < 0) return -1;
-    readLine(fd);                                        // WELCOME
+    readLine(fd);  // WELCOME
     sendLine(fd, "GRAPHIC");
     for (int i = 0; i < GUI_BURST; ++i) readLine(fd);  // drain initial burst
     return fd;
@@ -115,10 +119,10 @@ static int connectAsAi(int& playerIdOut)
 {
     int fd = connectWithRetry();
     if (fd < 0) return -1;
-    readLine(fd);          // WELCOME
+    readLine(fd);  // WELCOME
     sendLine(fd, "TeamA");
-    readLine(fd);          // slots
-    readLine(fd);          // map size
+    readLine(fd);  // slots
+    readLine(fd);  // map size
     playerIdOut = -1;
     return fd;
 }
@@ -140,8 +144,11 @@ static std::string waitForLine(int fd, const std::string& prefix, int maxLines =
 class E2EStarvation : public ::testing::Test {
     protected:
     pid_t serverPid = -1;
-    void SetUp()    override { serverPid = spawnServer(); }
-    void TearDown() override { if (serverPid > 0) stopServer(serverPid); }
+    void SetUp() override { serverPid = spawnServer(); }
+    void TearDown() override
+    {
+        if (serverPid > 0) stopServer(serverPid);
+    }
 };
 
 // ---------------------------------------------------------------------------
@@ -164,15 +171,15 @@ TEST_F(E2EStarvation, StarvedPlayerReceivesDeadAndGuiReceivesPdi)
     ASSERT_FALSE(pnwLine.empty()) << "GUI did not receive pnw after AI joined";
     std::string idStr;
     std::istringstream ss(pnwLine.substr(4));
-    ss >> idStr;                              // "#N"
-    playerId = std::stoi(idStr.substr(1));    // strip '#'
+    ss >> idStr;                            // "#N"
+    playerId = std::stoi(idStr.substr(1));  // strip '#'
 
     // Wait for all 10 food units to be consumed at freq=10000.
     std::this_thread::sleep_for(std::chrono::milliseconds(STARVATION_WAIT_MS));
 
     // Nudge the server's poll() loop so the scheduler fires the starvation callback.
     sendLine(guiFd, "sgt");
-    readLine(guiFd);   // consume sgt response
+    readLine(guiFd);  // consume sgt response
 
     // GUI must have received "pdi #ID" announcing the player's death.
     std::string pdiLine = waitForLine(guiFd, "pdi ");

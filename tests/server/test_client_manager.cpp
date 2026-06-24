@@ -1,9 +1,8 @@
 #include <arpa/inet.h>
+#include <gtest/gtest.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
-
-#include <gtest/gtest.h>
 
 #include "interfaces/INetworkObserver.hpp"
 #include "network/ClientManager.hpp"
@@ -160,7 +159,9 @@ TEST(ClientManager, SendDataReachesClient)
     cm.poll(200);
 
     // Read on the client side to confirm bytes arrived
-    struct timeval tv { 1, 0 };
+    struct timeval tv {
+        1, 0
+    };
     setsockopt(clientFd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
     char buf[64] = {};
     ssize_t n = ::recv(clientFd, buf, sizeof(buf) - 1, 0);
@@ -274,7 +275,10 @@ struct SpyObserver : public INetworkObserver {
 
     void onClientConnected(int id) override { connected.push_back(id); }
     void onClientDisconnected(int id) override { disconnected.push_back(id); }
-    void onLineReceived(int id, const std::string& line) override { linesReceived.emplace_back(id, line); }
+    void onLineReceived(int id, const std::string& line) override
+    {
+        linesReceived.emplace_back(id, line);
+    }
     void onLineSent(int id, const std::string& line) override { linesSent.emplace_back(id, line); }
 };
 

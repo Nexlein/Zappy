@@ -14,7 +14,4 @@ TEST(Listener, PortAlreadyInUse)
     EXPECT_THROW(Listener(14243), ListenerException);
 }
 
-TEST(Listener, InvalidPort)
-{
-    EXPECT_THROW(Listener(99999), ListenerException);
-}
+TEST(Listener, InvalidPort) { EXPECT_THROW(Listener(99999), ListenerException); }

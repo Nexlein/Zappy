@@ -5,10 +5,7 @@
 #include "../../server/src/core/GameClock.hpp"
 
 namespace {
-void sleepMs(int ms)
-{
-    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-}
+    void sleepMs(int ms) { std::this_thread::sleep_for(std::chrono::milliseconds(ms)); }
 }  // namespace
 
 TEST(GameClockTest, TicksAccumulateAtFreq)

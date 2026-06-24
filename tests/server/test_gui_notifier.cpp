@@ -1,9 +1,8 @@
 #include <arpa/inet.h>
+#include <gtest/gtest.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
-
-#include <gtest/gtest.h>
 
 #include "game/GuiNotifier.hpp"
 #include "network/ClientManager.hpp"

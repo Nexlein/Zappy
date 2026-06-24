@@ -14,6 +14,7 @@
  */
 
 #include <arpa/inet.h>
+#include <gtest/gtest.h>
 #include <netinet/in.h>
 #include <signal.h>
 #include <sys/socket.h>
@@ -22,8 +23,6 @@
 
 #include <string>
 
-#include <gtest/gtest.h>
-
 static constexpr int E2E_PORT = 14402;
 static constexpr int CONNECT_RETRIES = 20;
 static constexpr int CONNECT_RETRY_US = 50'000;
@@ -31,7 +30,7 @@ static constexpr int CONNECT_RETRY_US = 50'000;
 // Map and team config must match what we pass to the server binary.
 static constexpr int MAP_W = 10;
 static constexpr int MAP_H = 10;
-static constexpr int TEAM_COUNT = 2;     // TeamA + TeamB
+static constexpr int TEAM_COUNT = 2;  // TeamA + TeamB
 // Initial burst size: 1 msz + (w*h) bct + TEAM_COUNT tna + 1 sgt + (clientsNb*TEAM_COUNT) sse
 // clientsNb=5, so 5*2=10 eggs → 10 sse lines.  Total = 1+100+2+1+10 = 114 lines.
 static constexpr int GUI_BURST_LINES = 1 + (MAP_W * MAP_H) + TEAM_COUNT + 1 + (5 * TEAM_COUNT);
@@ -45,16 +44,21 @@ static pid_t spawnServer()
     pid_t pid = fork();
     if (pid != 0) return pid;
 
-    char* argv[] = {
-        const_cast<char*>("./zappy_server"),
-        const_cast<char*>("-p"), const_cast<char*>("14402"),
-        const_cast<char*>("-x"), const_cast<char*>("10"),
-        const_cast<char*>("-y"), const_cast<char*>("10"),
-        const_cast<char*>("-n"), const_cast<char*>("TeamA"), const_cast<char*>("TeamB"),
-        const_cast<char*>("-c"), const_cast<char*>("5"),
-        const_cast<char*>("-f"), const_cast<char*>("10000"),
-        nullptr
-    };
+    char* argv[] = {const_cast<char*>("./zappy_server"),
+                    const_cast<char*>("-p"),
+                    const_cast<char*>("14402"),
+                    const_cast<char*>("-x"),
+                    const_cast<char*>("10"),
+                    const_cast<char*>("-y"),
+                    const_cast<char*>("10"),
+                    const_cast<char*>("-n"),
+                    const_cast<char*>("TeamA"),
+                    const_cast<char*>("TeamB"),
+                    const_cast<char*>("-c"),
+                    const_cast<char*>("5"),
+                    const_cast<char*>("-f"),
+                    const_cast<char*>("10000"),
+                    nullptr};
     execv("./zappy_server", argv);
     _exit(1);
 }
@@ -106,7 +110,7 @@ static int connectAsGui()
 {
     int fd = connectWithRetry();
     if (fd < 0) return -1;
-    readLine(fd);              // consume "WELCOME"
+    readLine(fd);  // consume "WELCOME"
     sendLine(fd, "GRAPHIC");
     for (int i = 0; i < GUI_BURST_LINES; ++i) readLine(fd);  // drain initial burst
     return fd;
@@ -117,10 +121,10 @@ static int connectAsAi()
 {
     int fd = connectWithRetry();
     if (fd < 0) return -1;
-    readLine(fd);              // consume "WELCOME"
+    readLine(fd);  // consume "WELCOME"
     sendLine(fd, "TeamA");
-    readLine(fd);              // consume slots
-    readLine(fd);              // consume map size
+    readLine(fd);  // consume slots
+    readLine(fd);  // consume map size
     return fd;
 }
 
@@ -133,7 +137,10 @@ class E2EGui : public ::testing::Test {
     pid_t serverPid = -1;
 
     void SetUp() override { serverPid = spawnServer(); }
-    void TearDown() override { if (serverPid > 0) stopServer(serverPid); }
+    void TearDown() override
+    {
+        if (serverPid > 0) stopServer(serverPid);
+    }
 };
 
 // ---------------------------------------------------------------------------
@@ -146,7 +153,7 @@ TEST_F(E2EGui, FirstResponseIsMsz)
     int fd = connectWithRetry();
     ASSERT_GE(fd, 0);
 
-    readLine(fd);              // consume "WELCOME"
+    readLine(fd);  // consume "WELCOME"
     sendLine(fd, "GRAPHIC");
 
     std::string line = readLine(fd);
