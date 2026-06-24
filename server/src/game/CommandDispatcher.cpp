@@ -15,22 +15,15 @@ CommandDispatcher::CommandDispatcher(ClientManager& clients, World& world, GuiNo
       _scheduler(scheduler),
       _config(config),
       _clock(config.freq),
-      _handshakeHandler(clients, world, notifier, config, _clock,
-                        [this](int connectionId, int playerId) {
-                            this->_onAiJoined(connectionId, playerId);
-                        })
+      _handshakeHandler(
+          clients, world, notifier, config, _clock,
+          [this](int connectionId, int playerId) { this->_onAiJoined(connectionId, playerId); })
 {
 }
 
-std::chrono::microseconds CommandDispatcher::gameElapsed() const
-{
-    return _clock.elapsed();
-}
+std::chrono::microseconds CommandDispatcher::gameElapsed() const { return _clock.elapsed(); }
 
-double CommandDispatcher::gameTicks() const
-{
-    return _clock.ticks();
-}
+double CommandDispatcher::gameTicks() const { return _clock.ticks(); }
 
 std::optional<GameClock::Stamp> CommandDispatcher::teamJoin(const std::string& team) const
 {
@@ -39,8 +32,7 @@ std::optional<GameClock::Stamp> CommandDispatcher::teamJoin(const std::string& t
 
 void CommandDispatcher::_onAiJoined(int connectionId, int playerId)
 {
-    if (_world.getPlayers().count(playerId))
-        _clock.recordJoin(_world.getPlayer(playerId).teamName);
+    if (_world.getPlayers().count(playerId)) _clock.recordJoin(_world.getPlayer(playerId).teamName);
     _startStarvationTimer(connectionId, playerId);
 }
 

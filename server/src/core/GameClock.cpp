@@ -1,9 +1,7 @@
 #include "GameClock.hpp"
 
 GameClock::GameClock(int freq)
-    : _freq(freq),
-      _startTime(std::chrono::steady_clock::now()),
-      _lastFreqChange(_startTime)
+    : _freq(freq), _startTime(std::chrono::steady_clock::now()), _lastFreqChange(_startTime)
 {
 }
 
@@ -19,10 +17,7 @@ double GameClock::_ticksSince(std::chrono::steady_clock::time_point from) const
     return seconds * _freq;
 }
 
-double GameClock::ticks() const
-{
-    return _accumTicks + _ticksSince(_lastFreqChange);
-}
+double GameClock::ticks() const { return _accumTicks + _ticksSince(_lastFreqChange); }
 
 float GameClock::setFreq(int newFreq)
 {
