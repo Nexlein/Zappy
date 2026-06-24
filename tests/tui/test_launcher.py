@@ -23,8 +23,13 @@ STUBS = Binaries(server="true", ai="true", gui="true")
 
 def _profile(auto_gui, teams):
     return Profile(
-        name="t", width=20, height=10, clients=6, freq=100,
-        auto_gui=auto_gui, teams=teams,
+        name="t",
+        width=20,
+        height=10,
+        clients=6,
+        freq=100,
+        auto_gui=auto_gui,
+        teams=teams,
     )
 
 

@@ -19,12 +19,18 @@ def server_command(binary: str, port: int, profile: Profile) -> list[str]:
     """``-p -x -y -n <team names...> -c <clients> -f <freq>``."""
     args = [
         binary,
-        "-p", str(port),
-        "-x", str(profile.width),
-        "-y", str(profile.height),
-        "-n", *[team.name for team in profile.teams],
-        "-c", str(profile.clients),
-        "-f", str(profile.freq),
+        "-p",
+        str(port),
+        "-x",
+        str(profile.width),
+        "-y",
+        str(profile.height),
+        "-n",
+        *[team.name for team in profile.teams],
+        "-c",
+        str(profile.clients),
+        "-f",
+        str(profile.freq),
     ]
     return args
 

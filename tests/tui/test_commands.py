@@ -31,8 +31,22 @@ class TestCommands(unittest.TestCase):
     def test_server_command(self):
         self.assertEqual(
             server_command("./zappy_server", 8000, _profile()),
-            ["./zappy_server", "-p", "8000", "-x", "20", "-y", "10",
-             "-n", "red", "blue", "-c", "6", "-f", "100"],
+            [
+                "./zappy_server",
+                "-p",
+                "8000",
+                "-x",
+                "20",
+                "-y",
+                "10",
+                "-n",
+                "red",
+                "blue",
+                "-c",
+                "6",
+                "-f",
+                "100",
+            ],
         )
 
     def test_ai_command_local(self):
