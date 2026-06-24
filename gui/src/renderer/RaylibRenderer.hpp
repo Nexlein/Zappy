@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -7,6 +8,7 @@
 #include "ARenderer.hpp"
 #include "raylib.h"
 #include "raylib_helpers/SelectionFinder.hpp"
+#include "raylib_helpers/SpeedSlider.hpp"
 #include "raylib_helpers/TileSlotMap.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
 
@@ -24,6 +26,7 @@ class RaylibRenderer : public ARenderer {
     bool shouldClose() override;
     void shutdown() override;
     void setDevMode(bool dev, int port, const std::string& machine) override;
+    std::optional<int> getPendingSpeedChange() override;
 
     private:
     static constexpr std::string_view PLAYER_MODEL_PATH = "gui/assets/rimuru.glb";
@@ -64,6 +67,8 @@ class RaylibRenderer : public ARenderer {
 
     SelectionFinder::Selection _selection;
     TileSlotMap _tileSlotMap;
+    SpeedSlider _speedSlider;
+    std::optional<int> _pendingSpeed;
 
     struct WindowSnapshot {
         int width = 800, height = 600;
@@ -107,4 +112,5 @@ class RaylibRenderer : public ARenderer {
     Vector3 _groupLabelAnchor(const std::vector<const Player*>& group) const;
 
     void _drawSelectionArrow(Vector3 basePos, float modelTopY) const;
+    void _drawSpeedSlider();
 };

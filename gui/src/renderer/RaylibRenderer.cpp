@@ -141,7 +141,18 @@ void RaylibRenderer::handleInput()
     else
         _handleOrbitalInput();
 
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !_freecamActive) _performRaycast();
+    {
+        _pendingSpeed = _speedSlider.handleInput();
+
+        int sh = GetScreenHeight();
+        Rectangle panelRect = {10.0f, static_cast<float>(sh - SpeedSlider::PANEL_HEIGHT - 10),
+                               static_cast<float>(SpeedSlider::PANEL_WIDTH),
+                               static_cast<float>(SpeedSlider::PANEL_HEIGHT)};
+        Vector2 mouse = GetMousePosition();
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !_freecamActive &&
+            !CheckCollisionPointRec(mouse, panelRect))
+            _performRaycast();
+    }
 
     if (IsKeyPressed(KEY_L)) {
         auto lang = I18n::getLanguage();
@@ -278,6 +289,7 @@ void RaylibRenderer::_render2D()
     }
 
     _drawSelectedToolip();
+    _drawSpeedSlider();
 }
 
 void RaylibRenderer::_drawSelectionHighlight()
@@ -458,6 +470,19 @@ void RaylibRenderer::_drawHUD()
         .setFontSize(_getScaledFontSize(18))
         .setAnchor(TooltipRenderer::Anchor::TopLeft)
         .draw({10.0f, 10.0f});
+}
+
+std::optional<int> RaylibRenderer::getPendingSpeedChange()
+{
+    auto val = _pendingSpeed;
+    _pendingSpeed.reset();
+    return val;
+}
+
+void RaylibRenderer::_drawSpeedSlider()
+{
+    _speedSlider.syncFromServer(_state->timeUnit);
+    _speedSlider.draw(_getScaledFontSize(18));
 }
 
 void RaylibRenderer::_initTeamColors()

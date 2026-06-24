@@ -30,7 +30,7 @@ void TcpSocket::connect(const std::string& host, int port)
     }
 
     // Resolve hostname
-    struct addrinfo hints {};
+    struct addrinfo hints = {};
     struct addrinfo* result = nullptr;
 
     hints.ai_family = AF_INET;
