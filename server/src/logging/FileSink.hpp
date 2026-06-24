@@ -14,8 +14,8 @@ class FileSink : public ILogSink {
 
     /// Sink writing to @c logs/<tag>_<timestamp>.log (dir created best-effort),
     /// so concurrent and successive runs never clobber. @p tag e.g. "server_p4242".
-    static std::unique_ptr<FileSink> forRun(
-        const std::string& tag, LogLevel minLevel = LogLevel::Debug);
+    static std::unique_ptr<FileSink> forRun(const std::string& tag,
+                                            LogLevel minLevel = LogLevel::Debug);
 
     void write(LogLevel level, const std::string& line) override;
 

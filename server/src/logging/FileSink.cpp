@@ -12,8 +12,7 @@ FileSink::FileSink(const std::string& path, LogLevel minLevel)
 
 std::unique_ptr<FileSink> FileSink::forRun(const std::string& tag, LogLevel minLevel)
 {
-    std::time_t now =
-        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     std::tm tm{};
     localtime_r(&now, &tm);
     char stamp[32];
