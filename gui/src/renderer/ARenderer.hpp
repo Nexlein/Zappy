@@ -1,18 +1,19 @@
 #pragma once
 
+#include <optional>
+
 #include "IRenderer.hpp"
 
 /**
- * @brief Abstract base class for renderers that provides common functionality,
- * such as storing the current game state.
+ * @brief Abstract base class for renderers. Provides common default implementations
+ * so concrete renderers only override what they need.
  */
 class ARenderer : public IRenderer {
     public:
     void setState(const GameState& state) override final { _state = &state; }
     void setDevMode(bool, int, const std::string&) override {}
+    std::optional<int> getPendingSpeedChange() override { return std::nullopt; }
 
     protected:
-    // Concrete renderers can assume that _state is always valid and points to the latest game state
-    // set by setState()
     const GameState* _state = nullptr;
 };
