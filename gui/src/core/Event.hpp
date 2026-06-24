@@ -151,8 +151,8 @@ struct UnknownCommand {};
 // sbp
 struct BadParameters {};
 
-// stu x x (this is a custom event, not part of the official protocol, representing the server uptime
-// in seconds, and the number of ticks since the server started)
+// stu x x (this is a custom event, not part of the official protocol, representing the server
+// uptime in seconds, and the number of ticks since the server started)
 struct ServerUptime {
     int uptimeSeconds;
     int tickCount;
