@@ -2,6 +2,8 @@
 
 #include <chrono>
 #include <deque>
+#include <optional>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -38,6 +40,8 @@ class CommandDispatcher {
     std::chrono::microseconds gameElapsed() const;
     /// Total game ticks elapsed (freq integrated over time). For the win banner.
     double gameTicks() const;
+    /// When @p team's first player joined, or nullopt if it never did.
+    std::optional<GameClock::Stamp> teamJoin(const std::string& team) const;
 
     private:
     void _dispatchAi(int connectionId, const std::string& line);
@@ -45,6 +49,8 @@ class CommandDispatcher {
     /// Run the next queued AI command (or go idle if none left).
     void _executeNext(int connectionId);
 
+    /// Fired on AI promotion: stamp team join, then start its food timer.
+    void _onAiJoined(int connectionId, int playerId);
     void _startStarvationTimer(int connectionId, int playerId);
 
     /// one food is consumed every 126 time units (1 unit = 1/freq seconds)
@@ -61,6 +67,7 @@ class CommandDispatcher {
     void _handleSgt(int connectionId);
     void _handleSst(int freq);
     void _handleStu(int connectionId);
+    void _handleGtt(int connectionId, const std::string& team);
 
     // AI command handlers
     void _handleForward(int connectionId);
