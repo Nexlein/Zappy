@@ -7,7 +7,7 @@
  */
 class GridRenderer {
     public:
-    static constexpr Color TILE_COLOR     = {230, 230, 230, 255};
+    static constexpr Color TILE_COLOR = {230, 230, 230, 255};
     static constexpr Color TILE_COLOR_ALT = {210, 210, 210, 255};
 
     /**

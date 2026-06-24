@@ -27,11 +27,11 @@ class RaylibRenderer : public ARenderer {
 
     private:
     static constexpr std::string_view PLAYER_MODEL_PATH = "gui/assets/rimuru.glb";
-    static constexpr std::string_view EGG_MODEL_PATH    = "gui/assets/egg.glb";
-    static constexpr std::string_view FOOD_MODEL_PATH   = "gui/assets/apple.glb";
-    static constexpr float            FOOD_MODEL_SIZE   = 1.0f;
+    static constexpr std::string_view EGG_MODEL_PATH = "gui/assets/egg.glb";
+    static constexpr std::string_view FOOD_MODEL_PATH = "gui/assets/apple.glb";
+    static constexpr float FOOD_MODEL_SIZE = 1.0f;
 
-    static constexpr float CAMERA_MOVE_SPEED  = 2.0f;
+    static constexpr float CAMERA_MOVE_SPEED = 2.0f;
     static constexpr float FREECAM_MOVE_SPEED = 5.0f;
     static constexpr float FREECAM_LOOK_SPEED = 0.002f;
     static constexpr float PLAYER_MODEL_SIZE = 0.25f;
@@ -46,11 +46,11 @@ class RaylibRenderer : public ARenderer {
     float _cameraAngle = 0.0f;
     float _cameraHeight = 5.0f;
 
-    bool  _freecamActive       = false;
-    float _savedOrbitalAngle   = 0.0f;
-    float _savedOrbitalHeight  = 5.0f;
-    float _freecamYaw          = 0.0f;
-    float _freecamPitch        = 0.0f;
+    bool _freecamActive = false;
+    float _savedOrbitalAngle = 0.0f;
+    float _savedOrbitalHeight = 5.0f;
+    float _freecamYaw = 0.0f;
+    float _freecamPitch = 0.0f;
 
     Model _playerModel = {};
     Color _playerModelBaseMats[6] = {};

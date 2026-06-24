@@ -4,8 +4,6 @@
 #include <cfloat>
 #include <cmath>
 
-#include "raymath.h"
-
 #include "core/behaviors/ADrawableBehavior.hpp"
 #include "raylib_helpers/ColorPalette.hpp"
 #include "raylib_helpers/EntityRenderer.hpp"
@@ -13,6 +11,7 @@
 #include "raylib_helpers/I18n.hpp"
 #include "raylib_helpers/RenderingHelper.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
+#include "raymath.h"
 
 void RaylibRenderer::init()
 {
@@ -91,19 +90,19 @@ void RaylibRenderer::_handleOrbitalInput()
 
 void RaylibRenderer::_enterFreecam()
 {
-    _savedOrbitalAngle  = _cameraAngle;
+    _savedOrbitalAngle = _cameraAngle;
     _savedOrbitalHeight = _cameraHeight;
-    Vector3 dir         = Vector3Subtract(_camera.target, _camera.position);
-    _freecamYaw         = atan2f(dir.z, dir.x);
-    _freecamPitch       = atan2f(dir.y, sqrtf(dir.x * dir.x + dir.z * dir.z));
-    _freecamActive      = true;
+    Vector3 dir = Vector3Subtract(_camera.target, _camera.position);
+    _freecamYaw = atan2f(dir.z, dir.x);
+    _freecamPitch = atan2f(dir.y, sqrtf(dir.x * dir.x + dir.z * dir.z));
+    _freecamActive = true;
     DisableCursor();
 }
 
 void RaylibRenderer::_exitFreecam()
 {
-    _cameraAngle   = _savedOrbitalAngle;
-    _cameraHeight  = _savedOrbitalHeight;
+    _cameraAngle = _savedOrbitalAngle;
+    _cameraHeight = _savedOrbitalHeight;
     _freecamActive = false;
     EnableCursor();
 }
@@ -111,21 +110,23 @@ void RaylibRenderer::_exitFreecam()
 void RaylibRenderer::_handleFreecamInput()
 {
     Vector2 delta = GetMouseDelta();
-    _freecamYaw   += delta.x * FREECAM_LOOK_SPEED;
+    _freecamYaw += delta.x * FREECAM_LOOK_SPEED;
     _freecamPitch -= delta.y * FREECAM_LOOK_SPEED;
-    _freecamPitch  = Clamp(_freecamPitch, -PI / 2.0f + 0.01f, PI / 2.0f - 0.01f);
+    _freecamPitch = Clamp(_freecamPitch, -PI / 2.0f + 0.01f, PI / 2.0f - 0.01f);
 
     Vector3 forward = {cosf(_freecamYaw) * cosf(_freecamPitch), sinf(_freecamPitch),
                        sinf(_freecamYaw) * cosf(_freecamPitch)};
-    Vector3 right   = Vector3Normalize(Vector3CrossProduct(forward, {0.0f, 1.0f, 0.0f}));
-    float   sp      = FREECAM_MOVE_SPEED * GetFrameTime();
+    Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, {0.0f, 1.0f, 0.0f}));
+    float sp = FREECAM_MOVE_SPEED * GetFrameTime();
 
     // ZQSD on AZERTY = KEY_W/KEY_A/KEY_S/KEY_D in raylib
-    if (IsKeyDown(KEY_W)) _camera.position = Vector3Add(_camera.position, Vector3Scale(forward, sp));
-    if (IsKeyDown(KEY_S)) _camera.position = Vector3Add(_camera.position, Vector3Scale(forward, -sp));
+    if (IsKeyDown(KEY_W))
+        _camera.position = Vector3Add(_camera.position, Vector3Scale(forward, sp));
+    if (IsKeyDown(KEY_S))
+        _camera.position = Vector3Add(_camera.position, Vector3Scale(forward, -sp));
     if (IsKeyDown(KEY_D)) _camera.position = Vector3Add(_camera.position, Vector3Scale(right, sp));
     if (IsKeyDown(KEY_A)) _camera.position = Vector3Add(_camera.position, Vector3Scale(right, -sp));
-    if (IsKeyDown(KEY_SPACE))      _camera.position.y += sp;
+    if (IsKeyDown(KEY_SPACE)) _camera.position.y += sp;
     if (IsKeyDown(KEY_LEFT_SHIFT)) _camera.position.y -= sp;
 }
 
@@ -489,8 +490,8 @@ int RaylibRenderer::_getScaledFontSize(int baseFontSize) const
 void RaylibRenderer::_updateCamera(float worldWidth, float worldHeight)
 {
     if (_freecamActive) {
-        Vector3 dir    = {cosf(_freecamYaw) * cosf(_freecamPitch), sinf(_freecamPitch),
-                          sinf(_freecamYaw) * cosf(_freecamPitch)};
+        Vector3 dir = {cosf(_freecamYaw) * cosf(_freecamPitch), sinf(_freecamPitch),
+                       sinf(_freecamYaw) * cosf(_freecamPitch)};
         _camera.target = Vector3Add(_camera.position, dir);
         return;
     }
