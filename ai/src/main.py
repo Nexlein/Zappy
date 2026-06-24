@@ -267,6 +267,7 @@ class Orchestrator:
 
 
 def main():
+    """Entrypoint: parse args, configure logger, and run orchestrator loop."""
     config = parseArgs()
     load_strategy_config(config.strategy)
 

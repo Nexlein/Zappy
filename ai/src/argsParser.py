@@ -13,6 +13,8 @@ from utils.config_loader import get_client_config
 
 @dataclass
 class Config:
+    """CLI and config file parameters for the AI client."""
+
     port: int
     teamName: str
     host: str
@@ -21,6 +23,7 @@ class Config:
 
 
 def parseArgs() -> Config:
+    """Parse command line arguments and merge with defaults."""
     if "--help" in sys.argv:
         print("USAGE: ./zappy_ai -p PORT -n NAME [-h HOST] [-s STRATEGY]")
         print("")
