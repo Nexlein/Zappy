@@ -45,7 +45,12 @@ class AILogger:
         self.highest_level = 1
         self.run_id = ""
 
-    def configure(self, team_name: str, config_dict: dict | None = None):
+    def configure(
+        self,
+        team_name: str,
+        config_dict: dict | None = None,
+        verbose: str | None = None,
+    ):
         run_id_env = os.environ.get("ZAPPY_RUN_ID")
         if not run_id_env:
             run_id_env = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -81,6 +86,22 @@ class AILogger:
         fh_net.setLevel(logging.DEBUG)
         fh_net.setFormatter(JsonFormatter())
         self.net_logger.addHandler(fh_net)
+
+        if verbose in ["ai", "both"]:
+            sh_ai = logging.StreamHandler()
+            sh_ai.setLevel(logging.DEBUG)
+            sh_ai.setFormatter(
+                logging.Formatter("%(asctime)s - [AI] - %(message)s", "%H:%M:%S")
+            )
+            self.logger.addHandler(sh_ai)
+
+        if verbose in ["network", "both"]:
+            sh_net = logging.StreamHandler()
+            sh_net.setLevel(logging.DEBUG)
+            sh_net.setFormatter(
+                logging.Formatter("%(asctime)s - [NET] - %(message)s", "%H:%M:%S")
+            )
+            self.net_logger.addHandler(sh_net)
 
     def get_log_dir(self) -> str | None:
         return getattr(self, "log_dir", None)
