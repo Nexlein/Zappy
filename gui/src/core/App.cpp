@@ -55,6 +55,8 @@ void App::run()
 
                 renderer->setState(state);
                 renderer->handleInput();
+                if (auto newSpeed = renderer->getPendingSpeedChange())
+                    socket->send("sst " + std::to_string(*newSpeed) + "\n");
                 renderer->render();
             }
         } catch (const TcpException& e) {
