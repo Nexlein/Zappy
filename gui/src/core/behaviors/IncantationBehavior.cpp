@@ -48,7 +48,6 @@ IncantationBehavior::IncantationBehavior(VisualState& visual, Player& player, in
     // Model faces West at 0°, CW rotation. toAngle: W=0,S=90,E=180,N=270.
     // atan2(-dz,-dx) maps slot direction (away from center) to model angle correctly.
     _targetFaceAngle = std::atan2(dz, dx) * (180.0f / PI);
-
 }
 
 void IncantationBehavior::_spawnParticles()
