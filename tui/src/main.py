@@ -19,7 +19,7 @@ def main():
     # the app owns the supervisor; the guard + context manager guarantee every
     # spawned child is killed on quit, Ctrl-C, or SIGTERM.
     with raise_on_signals(signal.SIGTERM), Supervisor() as sup:
-        ZappyTUI(profiles, sup).run()
+        ZappyTUI(profiles, sup, PROFILES).run()
 
 
 if __name__ == "__main__":
