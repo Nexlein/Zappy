@@ -17,6 +17,7 @@ class LogPanel(RichLog):
 
     def follow(self, process: ManagedProcess) -> None:
         self._process = process
+        self.border_title = f"Logs — {process.name}"
         self.clear()
         self._seq, lines = process.log_snapshot()
         if not lines:
@@ -28,6 +29,7 @@ class LogPanel(RichLog):
     def clear_follow(self) -> None:
         self._process = None
         self._seq = 0
+        self.border_title = "Logs"
         self.clear()
 
     def poll(self) -> None:
