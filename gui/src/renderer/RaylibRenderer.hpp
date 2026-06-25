@@ -72,7 +72,6 @@ class RaylibRenderer : public ARenderer {
     Light _sun = {};
     int _shaderViewPosLoc = -1;
 
-
     std::unordered_map<std::string, Color> _teamColors;
 
     SelectionFinder::Selection _selection;

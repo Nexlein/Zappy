@@ -97,7 +97,8 @@ void SpeedSlider::draw(int scaledFontSize) const
     DrawRectangleRounded(rect, ROUNDNESS, SEGMENTS, BG_COLOR);
     DrawRectangleRoundedLines(rect, ROUNDNESS, SEGMENTS, BORDER_THICKNESS, BORDER_COLOR);
 
-    std::string label = std::string(I18n::get(I18n::Key::SPEED_LABEL)) + std::to_string(STEPS[_index]);
+    std::string label =
+        std::string(I18n::get(I18n::Key::SPEED_LABEL)) + std::to_string(STEPS[_index]);
     DrawText(label.c_str(), static_cast<int>(panelX + 10), static_cast<int>(panelY + 8),
              scaledFontSize, ACCENT_COLOR);
 

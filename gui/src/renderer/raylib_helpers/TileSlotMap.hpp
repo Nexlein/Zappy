@@ -59,10 +59,10 @@ class TileSlotMap {
     };
 
     std::unordered_map<uint64_t, TileOccupancy> _tileOccupancy;
-    std::unordered_map<uint64_t, int> _resourceSlots;       // resourceKey → slot
-    std::unordered_map<uint64_t, float> _resourceRotations; // resourceKey → rotation
-    std::unordered_map<int, int> _eggSlots;                 // eggId → slot
-    std::unordered_map<int, std::pair<int, int>> _eggTile;  // eggId → {x, y}
+    std::unordered_map<uint64_t, int> _resourceSlots;        // resourceKey → slot
+    std::unordered_map<uint64_t, float> _resourceRotations;  // resourceKey → rotation
+    std::unordered_map<int, int> _eggSlots;                  // eggId → slot
+    std::unordered_map<int, std::pair<int, int>> _eggTile;   // eggId → {x, y}
     std::unordered_set<int> _knownEggs;
 
     static uint64_t tileKey(int x, int y);

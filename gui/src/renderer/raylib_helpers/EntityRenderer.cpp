@@ -46,8 +46,7 @@ void EntityRenderer::drawResources(const Resources& resources,
                                    const std::array<int, 7>& slotIndices,
                                    const std::array<float, 7>& rotations, const Vector3& tileCenter,
                                    float tileSize, Model& foodModel, float foodModelSize,
-                                   Model& crystalModel, float crystalModelSize,
-                                   float baseSize)
+                                   Model& crystalModel, float crystalModelSize, float baseSize)
 {
     static const Color resourceColors[] = {
         BROWN,     // food (unused — drawn as model)

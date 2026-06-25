@@ -66,9 +66,11 @@ void RaylibRenderer::init()
     _crystalModel = LoadModel(CRYSTAL_MODEL_PATH.data());
     SetTraceLogLevel(LOG_WARNING);
     if (_crystalModel.meshCount == 0)
-        throw std::runtime_error("Failed to load crystal model: " + std::string(CRYSTAL_MODEL_PATH));
+        throw std::runtime_error("Failed to load crystal model: " +
+                                 std::string(CRYSTAL_MODEL_PATH));
 
-    _lightingShader = LoadShader("gui/assets/shaders/lighting.vs", "gui/assets/shaders/lighting.fs");
+    _lightingShader =
+        LoadShader("gui/assets/shaders/lighting.vs", "gui/assets/shaders/lighting.fs");
     _shaderViewPosLoc = GetShaderLocation(_lightingShader, "viewPos");
 
     for (int i = 0; i < _foodModel.materialCount; i++)
@@ -76,11 +78,13 @@ void RaylibRenderer::init()
     for (int i = 0; i < _crystalModel.materialCount; i++)
         _crystalModel.materials[i].shader = _lightingShader;
 
-    _sun = CreateLight(LIGHT_DIRECTIONAL, {0.0f, 1000.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, WHITE, _lightingShader);
+    _sun = CreateLight(LIGHT_DIRECTIONAL, {0.0f, 1000.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, WHITE,
+                       _lightingShader);
 
     // Boost ambient so unlit faces aren't black
     float ambient[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-    SetShaderValue(_lightingShader, GetShaderLocation(_lightingShader, "ambient"), ambient, SHADER_UNIFORM_VEC4);
+    SetShaderValue(_lightingShader, GetShaderLocation(_lightingShader, "ambient"), ambient,
+                   SHADER_UNIFORM_VEC4);
 }
 
 void RaylibRenderer::render()
@@ -220,7 +224,6 @@ void RaylibRenderer::_render3D()
 {
     GridRenderer::drawTiles(_state->world.width, _state->world.height, TILE_SIZE);
 
-
     for (auto& [id, player] : _state->world.players) {
         player.visual.update(GetFrameTime());
         Vector3 worldPos = player.visual.pos;
@@ -260,14 +263,13 @@ void RaylibRenderer::_render3D()
             const Resources& res = _state->world.at(x, y);
             auto slotIndices = _tileSlotMap.updateResourceSlots(x, y, res);
             std::array<float, 7> rotations;
-            for (int i = 0; i < 7; i++)
-                rotations[i] = _tileSlotMap.resourceRotation(x, y, i);
+            for (int i = 0; i < 7; i++) rotations[i] = _tileSlotMap.resourceRotation(x, y, i);
             EntityRenderer::drawResources(
                 res, slotIndices, rotations,
                 RenderingHelper::tileToWorld(x, y, _state->world.width, _state->world.height,
                                              TILE_SIZE),
-                TILE_SIZE, _foodModel, FOOD_MODEL_SIZE, _crystalModel,
-                CRYSTAL_MODEL_SIZE, RESOURCE_SPHERE_BASE_SIZE);
+                TILE_SIZE, _foodModel, FOOD_MODEL_SIZE, _crystalModel, CRYSTAL_MODEL_SIZE,
+                RESOURCE_SPHERE_BASE_SIZE);
         }
     }
 
