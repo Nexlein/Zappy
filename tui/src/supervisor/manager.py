@@ -3,7 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .commands import Binaries
-from .launcher import Launch, attach_ai, attach_gui, launch_profile
+from .launcher import (
+    Launch,
+    attach_ai,
+    attach_gui,
+    launch_profile,
+    launch_server_only,
+)
 from .process import ManagedProcess
 from .profiles import Profile
 from .supervisor import Supervisor
@@ -46,6 +52,16 @@ class ZappyManager:
 
     def launch(self, name: str, profile: Profile) -> Game:
         launch = launch_profile(self._supervisor, profile, self._binaries, self._host)
+        game = Game(name, profile, launch)
+        self._games.append(game)
+        return game
+
+    def launch_server(self, name: str, profile: Profile) -> Game:
+        """Boot the profile's server (and GUI) but no AIs, so no team has joined
+        yet. Attach AIs later to control join timing."""
+        launch = launch_server_only(
+            self._supervisor, profile, self._binaries, self._host
+        )
         game = Game(name, profile, launch)
         self._games.append(game)
         return game
