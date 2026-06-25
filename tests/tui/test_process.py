@@ -25,6 +25,22 @@ class TestManagedProcess(unittest.TestCase):
         self.assertFalse(p.is_alive())
         self.assertIsNone(p.pid)
         self.assertIsNone(p.returncode)
+        self.assertIsNone(p.uptime)
+
+    def test_uptime_runs_then_freezes(self):
+        p = ManagedProcess("sleep", ["sleep", "30"])
+        p.start()
+        try:
+            first = p.uptime
+            self.assertIsNotNone(first)
+            time.sleep(0.05)
+            self.assertGreater(p.uptime, first)
+        finally:
+            p.stop()
+        # dead child: uptime stops advancing
+        frozen = p.uptime
+        time.sleep(0.05)
+        self.assertEqual(p.uptime, frozen)
 
     def test_start_sets_pid_and_alive(self):
         p = ManagedProcess("sleep", ["sleep", "5"])

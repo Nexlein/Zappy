@@ -15,6 +15,11 @@ class Binaries:
     gui: str = "./zappy_gui"
 
 
+# Verbosity passed to every AI by default (`zappy_ai -v ai|network|both`). "ai"
+# keeps the strategy logs without the network chatter.
+AI_VERBOSE = "ai"
+
+
 def server_command(binary: str, port: int, profile: Profile) -> list[str]:
     """``-p -x -y -n <team names...> -c <clients> -f <freq>``."""
     args = [
@@ -41,13 +46,18 @@ def ai_command(
     team: str,
     host: str | None = None,
     strategy: str | None = None,
+    verbose: str | None = AI_VERBOSE,
 ) -> list[str]:
-    """``-p -n <team> [-h <host>] [-s <strategy>]``."""
+    """``-p -n <team> [-h <host>] [-s <strategy>] [-v <verbose>]``.
+
+    ``verbose`` is one of ``ai``/``network``/``both`` (None disables logging)."""
     args = [binary, "-p", str(port), "-n", team]
     if host is not None:
         args += ["-h", host]
     if strategy is not None:
         args += ["-s", strategy]
+    if verbose is not None:
+        args += ["-v", verbose]
     return args
 
 

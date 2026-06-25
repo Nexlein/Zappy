@@ -1,5 +1,6 @@
 import subprocess
 import threading
+import time
 from collections import deque
 
 _LOG_LINES = 2000  # ring-buffer size per process
@@ -24,11 +25,14 @@ class ManagedProcess:
         self._log_seq = 0  # total lines ever read, including dropped ones
         self._log_lock = threading.Lock()
         self._reader: threading.Thread | None = None
+        self._started_at: float | None = None
+        self._ended_at: float | None = None
 
     def start(self) -> None:
         """Spawn the child. Raises ProcessError if already started."""
         if self._proc is not None:
             raise ProcessError(f"{self.name}: already started")
+        self._started_at = time.monotonic()
         self._proc = subprocess.Popen(
             self.command,
             stdout=subprocess.PIPE,
@@ -59,6 +63,18 @@ class ManagedProcess:
     def is_alive(self) -> bool:
         """True if the child has been started and has not yet exited."""
         return self._proc is not None and self._proc.poll() is None
+
+    @property
+    def uptime(self) -> float | None:
+        """Seconds since ``start()``; None if never started. Freezes at the
+        first observed exit so a dead child shows how long it actually ran."""
+        if self._started_at is None:
+            return None
+        if self.is_alive():
+            return time.monotonic() - self._started_at
+        if self._ended_at is None:
+            self._ended_at = time.monotonic()
+        return self._ended_at - self._started_at
 
     @property
     def pid(self) -> int | None:

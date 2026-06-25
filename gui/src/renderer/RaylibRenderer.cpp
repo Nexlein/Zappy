@@ -102,10 +102,18 @@ void RaylibRenderer::render()
 
     BeginMode3D(_camera);
     _render3D();
+
     EndMode3D();
 
+    if (_state) {
+        _hudWidget.setWorld(&_state->world);
+        _hudWidget.setTimeUnit(_state->timeUnit);
+        _hudWidget.setServerUptime(_state->serverUptimeSeconds);
+        _hudWidget.setTeamColorFunc([this](const std::string& t) { return _getTeamColor(t); });
+        _hudWidget.draw(_getScaledFontSize(18));
+    }
+
     _render2D();
-    _drawHUD();
     EndDrawing();
 }
 
@@ -171,7 +179,18 @@ void RaylibRenderer::handleInput()
         _handleOrbitalInput();
 
     {
-        _pendingSpeed = _speedSlider.handleInput();
+        _playerPanel.setWorld(_state ? &_state->world : nullptr);
+        if (_playerPanel.handleInput()) {
+            if (auto pSel = _playerPanel.getPendingSelection()) {
+                _selection = *pSel;
+            }
+        }
+
+        if (_speedSlider.handleInput()) {
+            if (auto speed = _speedSlider.getPendingSpeedChange()) {
+                _pendingSpeed = speed;
+            }
+        }
 
         int sh = GetScreenHeight();
         Rectangle panelRect = {10.0f, static_cast<float>(sh - SpeedSlider::PANEL_HEIGHT - 10),
@@ -179,8 +198,9 @@ void RaylibRenderer::handleInput()
                                static_cast<float>(SpeedSlider::PANEL_HEIGHT)};
         Vector2 mouse = GetMousePosition();
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !_freecamActive &&
-            !CheckCollisionPointRec(mouse, panelRect))
-            _performRaycast();
+            !CheckCollisionPointRec(mouse, panelRect)) {
+            if (!_playerPanel.isOpen()) _performRaycast();
+        }
     }
 
     if (IsKeyPressed(KEY_L)) {
@@ -188,7 +208,10 @@ void RaylibRenderer::handleInput()
         I18n::setLanguage(lang == I18n::Language::EN ? I18n::Language::FR : I18n::Language::EN);
     }
 
-    if (IsKeyPressed(KEY_F3)) _devMode = !_devMode;
+    if (IsKeyPressed(KEY_F3)) {
+        _devMode = !_devMode;
+        _hudWidget.setDevMode(_devMode, _devPort, _devMachine);
+    }
 }
 
 bool RaylibRenderer::shouldClose() { return WindowShouldClose(); }
@@ -198,6 +221,7 @@ void RaylibRenderer::setDevMode(bool dev, int port, const std::string& machine)
     _devMode = dev;
     _devPort = port;
     _devMachine = machine;
+    _hudWidget.setDevMode(dev, port, machine);
 }
 
 void RaylibRenderer::shutdown()
@@ -323,7 +347,17 @@ void RaylibRenderer::_render2D()
     }
 
     _drawSelectedToolip();
-    _drawSpeedSlider();
+    if (_state) {
+        _speedSlider.syncFromServer(_state->timeUnit);
+    }
+    _speedSlider.draw(_getScaledFontSize(18));
+
+    if (_state) {
+        _playerPanel.setWorld(&_state->world);
+        _playerPanel.setTeamColorFunc(
+            [this](const std::string& teamName) { return _getTeamColor(teamName); });
+        _playerPanel.draw(_getScaledFontSize(14));
+    }
 }
 
 void RaylibRenderer::_drawSelectionHighlight()
@@ -438,85 +472,11 @@ void RaylibRenderer::_drawSelectedToolip()
     builder.draw({GetScreenWidth() - 10.0f, 10.0f});
 }
 
-void RaylibRenderer::_drawHUD()
-{
-    Color bgColor = {20, 25, 35, 220};
-    Color borderColor = {60, 70, 90, 200};
-    Color accentColor = {210, 220, 240, 255};
-
-    std::string mapText = std::string(I18n::get(I18n::Key::HUD_MAP)) +
-                          std::to_string(_state->world.width) + "x" +
-                          std::to_string(_state->world.height);
-
-    std::string uptimeText;
-    if (_state->serverUptimeSeconds == 0) {
-        uptimeText = I18n::get(I18n::Key::HUD_UPTIME_UNKNOWN);
-    } else {
-        int uptimeHours = _state->serverUptimeSeconds / 3600;
-        int uptimeMinutes = (_state->serverUptimeSeconds % 3600) / 60;
-        int uptimeSeconds = _state->serverUptimeSeconds % 60;
-        uptimeText = I18n::get(I18n::Key::HUD_UPTIME_PREFIX);
-        if (uptimeHours > 0)
-            uptimeText += std::to_string(uptimeHours) + I18n::get(I18n::Key::HUD_UPTIME_H);
-        if (uptimeMinutes > 0 || uptimeHours > 0)
-            uptimeText += std::to_string(uptimeMinutes) + I18n::get(I18n::Key::HUD_UPTIME_M);
-        uptimeText += std::to_string(uptimeSeconds) + I18n::get(I18n::Key::HUD_UPTIME_S);
-    }
-
-    std::unordered_map<std::string, int> teamPlayerCounts;
-    for (const auto& teamName : _state->world.teams) teamPlayerCounts[teamName] = 0;
-    for (const auto& [id, player] : _state->world.players) teamPlayerCounts[player.team]++;
-
-    // Sort teams by player count (descending)
-    std::vector<std::pair<std::string, int>> sortedTeams(teamPlayerCounts.begin(),
-                                                         teamPlayerCounts.end());
-    std::sort(sortedTeams.begin(), sortedTeams.end(),
-              [](const auto& a, const auto& b) { return a.second > b.second; });
-
-    auto builder = TooltipRenderer::create();
-
-    if (_devMode) {
-        int fps = GetFPS();
-        Color fpsColor = fps >= 55 ? GREEN : (fps >= 30 ? YELLOW : RED);
-        builder.addLine(std::string(I18n::get(I18n::Key::HUD_FPS)) + std::to_string(fps), fpsColor);
-        builder.addLine(
-            std::string(I18n::get(I18n::Key::HUD_TIME_UNIT)) + std::to_string(_state->timeUnit),
-            accentColor);
-        builder.addLine(std::string(I18n::get(I18n::Key::HUD_PORT)) + std::to_string(_devPort),
-                        accentColor);
-        builder.addLine(std::string(I18n::get(I18n::Key::HUD_MACHINE)) + _devMachine, accentColor);
-    }
-
-    builder.addLine(mapText, accentColor).addLine(uptimeText, accentColor);
-
-    // Add top 5 teams by population
-    for (size_t i = 0; i < std::min(sortedTeams.size(), size_t(5)); i++) {
-        const auto& [teamName, playerCount] = sortedTeams[i];
-        std::string teamLine = teamName + ": " + std::to_string(playerCount);
-        builder.addLine(teamLine, _getTeamColor(teamName));
-    }
-
-    builder.setBackgroundColor(bgColor)
-        .setBackgroundAlpha(180)
-        .setBorderColor(borderColor)
-        .setBorderThickness(2)
-        .setPadding(10)
-        .setFontSize(_getScaledFontSize(18))
-        .setAnchor(TooltipRenderer::Anchor::TopLeft)
-        .draw({10.0f, 10.0f});
-}
-
 std::optional<int> RaylibRenderer::getPendingSpeedChange()
 {
     auto val = _pendingSpeed;
     _pendingSpeed.reset();
     return val;
-}
-
-void RaylibRenderer::_drawSpeedSlider()
-{
-    _speedSlider.syncFromServer(_state->timeUnit);
-    _speedSlider.draw(_getScaledFontSize(18));
 }
 
 void RaylibRenderer::_initTeamColors()

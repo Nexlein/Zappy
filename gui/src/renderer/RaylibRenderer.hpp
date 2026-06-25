@@ -8,6 +8,8 @@
 #include "ARenderer.hpp"
 #include "raylib.h"
 #include "../../external/rlights.h"
+#include "raylib_helpers/HudWidget.hpp"
+#include "raylib_helpers/PlayerPanel.hpp"
 #include "raylib_helpers/SelectionFinder.hpp"
 #include "raylib_helpers/SpeedSlider.hpp"
 #include "raylib_helpers/TileSlotMap.hpp"
@@ -77,6 +79,8 @@ class RaylibRenderer : public ARenderer {
     SelectionFinder::Selection _selection;
     TileSlotMap _tileSlotMap;
     SpeedSlider _speedSlider;
+    PlayerPanel _playerPanel;
+    HudWidget _hudWidget;
     std::optional<int> _pendingSpeed;
 
     struct WindowSnapshot {
@@ -97,7 +101,6 @@ class RaylibRenderer : public ARenderer {
 
     void _drawSelectionHighlight();
     void _drawSelectedToolip();
-    void _drawHUD();
 
     void _initTeamColors();
     Color _getTeamColor(const std::string& teamName);
