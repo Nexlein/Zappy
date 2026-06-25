@@ -9,7 +9,7 @@ auto_gui = true
 
 [[profiles.duel.teams]]
 name = "uai"
-ai = 2
+ai = 1
 strategy = "uai"
 
 [[profiles.duel.teams]]

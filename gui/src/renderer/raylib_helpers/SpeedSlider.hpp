@@ -3,6 +3,8 @@
 #include <optional>
 #include <vector>
 
+#include "IWidget.hpp"
+
 /**
  * @brief Self-contained speed slider widget.
  *
@@ -12,7 +14,7 @@
  *
  * Discrete speed steps: 1, 2, 3, 4, then 5 to 200 in steps of 5.
  */
-class SpeedSlider {
+class SpeedSlider : public IWidget {
     public:
     static constexpr int PANEL_WIDTH = 220;
     static constexpr int PANEL_HEIGHT = 58;
@@ -26,16 +28,21 @@ class SpeedSlider {
     void syncFromServer(int serverTimeUnit);
 
     /**
-     * @brief Processes mouse input. Returns the new speed if the user released
-     * the handle, std::nullopt otherwise.
+     * @brief Processes mouse input.
+     * @return true if the slider consumed the input.
      */
-    std::optional<int> handleInput();
+    bool handleInput() override;
+
+    /**
+     * @brief Returns and clears any pending speed change.
+     */
+    std::optional<int> getPendingSpeedChange();
 
     /**
      * @brief Draws the slider panel at the bottom-left of the screen.
      * @param scaledFontSize Pre-scaled font size matching the HUD.
      */
-    void draw(int scaledFontSize) const;
+    void draw(int scaledFontSize) const override;
 
     int currentSpeed() const { return STEPS[_index]; }
 
@@ -43,6 +50,7 @@ class SpeedSlider {
     int _index = 19;  // default: 100 (index 19 in STEPS)
     bool _dragging = false;
     bool _initialized = false;
+    std::optional<int> _pendingSpeed = std::nullopt;
 
     static float _trackX(float panelX);
     static float _trackY(float panelY, float panelH);

@@ -46,22 +46,19 @@ void SpeedSlider::syncFromServer(int serverTimeUnit)
     _initialized = true;
 }
 
-std::optional<int> SpeedSlider::handleInput()
+bool SpeedSlider::handleInput()
 {
     int sh = GetScreenHeight();
-    float panelX = 10.0f;
-    float panelY = static_cast<float>(sh - PANEL_HEIGHT - 10);
-    float panelW = static_cast<float>(PANEL_WIDTH);
-    float panelH = static_cast<float>(PANEL_HEIGHT);
+    Rectangle panelRect = {10.0f, static_cast<float>(sh - PANEL_HEIGHT - 10),
+                           static_cast<float>(PANEL_WIDTH), static_cast<float>(PANEL_HEIGHT)};
 
-    float tx = _trackX(panelX);
-    float ty = _trackY(panelY, panelH);
-    float tw = _trackW(panelW);
+    float tx = _trackX(panelRect.x);
+    float ty = _trackY(panelRect.y, panelRect.height);
+    float tw = _trackW(panelRect.width);
 
     float t = static_cast<float>(_index) / static_cast<float>(STEPS.size() - 1);
     float handleX = tx + tw * t;
 
-    Rectangle panelRect = {panelX, panelY, panelW, panelH};
     Rectangle handleHit = {handleX - HANDLE_RADIUS * 1.5f, ty - HANDLE_RADIUS * 1.5f,
                            HANDLE_RADIUS * 3.0f, HANDLE_RADIUS * 3.0f};
 
@@ -72,17 +69,25 @@ std::optional<int> SpeedSlider::handleInput()
         _dragging = true;
 
     if (_dragging) {
-        float frac = (mouse.x - tx) / tw;
-        frac = frac < 0.0f ? 0.0f : (frac > 1.0f ? 1.0f : frac);
-        _index = static_cast<int>(frac * static_cast<float>(STEPS.size() - 1) + 0.5f);
-
         if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
             _dragging = false;
-            return STEPS[_index];
+            _pendingSpeed = STEPS[_index];
+        } else {
+            float frac = (mouse.x - tx) / tw;
+            frac = frac < 0.0f ? 0.0f : (frac > 1.0f ? 1.0f : frac);
+            _index = static_cast<int>(frac * static_cast<float>(STEPS.size() - 1) + 0.5f);
         }
+        return true;
     }
 
-    return std::nullopt;
+    return false;
+}
+
+std::optional<int> SpeedSlider::getPendingSpeedChange()
+{
+    auto val = _pendingSpeed;
+    _pendingSpeed = std::nullopt;
+    return val;
 }
 
 void SpeedSlider::draw(int scaledFontSize) const
