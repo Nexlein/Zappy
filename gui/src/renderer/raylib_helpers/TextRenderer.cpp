@@ -44,6 +44,5 @@ void TextRenderer::draw(const std::string& text, int x, int y, int fontSize, Col
 int TextRenderer::measure(const std::string& text, int fontSize)
 {
     return static_cast<int>(
-        MeasureTextEx(_active(), text.c_str(), static_cast<float>(fontSize), _spacing(fontSize))
-            .x);
+        MeasureTextEx(_active(), text.c_str(), static_cast<float>(fontSize), _spacing(fontSize)).x);
 }

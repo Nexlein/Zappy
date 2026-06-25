@@ -17,7 +17,7 @@ class GameState {
     WorldState world;
     int timeUnit = -1;
     std::string winnerTeam = "";
-    int gameDurationSeconds = -1;  // gwt: time the winner took to win (-1 = not yet received)
+    int gameDurationSeconds = -1;    // gwt: time the winner took to win (-1 = not yet received)
     int64_t gameDurationTicks = -1;  // gwt: same in game-time ticks (-1 = not yet received)
     float tileSize = 1.0f;
     unsigned int serverUptimeSeconds = 0;

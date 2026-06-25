@@ -162,8 +162,8 @@ void TooltipWidget::draw(int scaledFontSize) const
         if (_textAlign == TextAlign::Center) textX = pos.x + (boxWidth - lineWidth) / 2.0f;
 
         for (size_t i = 0; i < line.segments.size(); ++i) {
-            TextRenderer::draw(line.segments[i], static_cast<int>(textX),
-                               static_cast<int>(textY), scaledFontSize, line.colors[i]);
+            TextRenderer::draw(line.segments[i], static_cast<int>(textX), static_cast<int>(textY),
+                               scaledFontSize, line.colors[i]);
             textX += TextRenderer::measure(line.segments[i], scaledFontSize);
         }
         textY += scaledFontSize + lineSpacing;
