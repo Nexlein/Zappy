@@ -7,6 +7,8 @@
 
 #include "ARenderer.hpp"
 #include "raylib.h"
+
+// rlights.h must come after raylib.h — it depends on Vector3 and other raylib types
 #include "../../external/rlights.h"
 #include "raylib_helpers/HudWidget.hpp"
 #include "raylib_helpers/PlayerPanel.hpp"
