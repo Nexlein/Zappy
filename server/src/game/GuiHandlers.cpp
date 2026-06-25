@@ -72,19 +72,6 @@ void CommandDispatcher::_handleStu(int connectionId)
     _clients.send(connectionId, Serializer::stu(seconds, ticks));
 }
 
-void CommandDispatcher::_handleGtt(int connectionId, const std::string& team)
-{
-    auto join = _clock.joinOf(team);
-    if (!join) {
-        _clients.send(connectionId, Serializer::gtt(team, -1, -1));
-        return;
-    }
-    int seconds =
-        static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(join->elapsed).count());
-    long long ticks = std::llround(join->ticks);
-    _clients.send(connectionId, Serializer::gtt(team, seconds, ticks));
-}
-
 void CommandDispatcher::_handleSst(int freq)
 {
     float ratio = _clock.setFreq(freq);

@@ -89,9 +89,9 @@ std::string Serializer::stu(int seconds, long long ticks)
     return "stu " + n(seconds) + " " + std::to_string(ticks) + "\n";
 }
 
-std::string Serializer::gtt(const std::string& team, int seconds, long long ticks)
+std::string Serializer::gwt(const std::string& team, int seconds, long long ticks)
 {
-    return "gtt " + team + " " + n(seconds) + " " + std::to_string(ticks) + "\n";
+    return "gwt " + team + " " + n(seconds) + " " + std::to_string(ticks) + "\n";
 }
 
 std::string Serializer::seg(const std::string& team) { return "seg " + team + "\n"; }

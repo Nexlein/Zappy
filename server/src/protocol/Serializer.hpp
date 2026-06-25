@@ -75,9 +75,9 @@ namespace Serializer {
     /// CUSTOM (non-standard): elapsed game time. Wire: `stu SECONDS TICKS\n`
     /// SECONDS is wall uptime (freq-independent), TICKS is freq-integrated game time.
     std::string stu(int seconds, long long ticks);
-    /// CUSTOM (non-standard): when @p team's first player joined.
-    /// Wire: `gtt NAME SECONDS TICKS\n`, or `gtt NAME -1 -1\n` if it never joined.
-    std::string gtt(const std::string& team, int seconds, long long ticks);
+    /// CUSTOM (non-standard): authoritative time @p team took to win, sent once
+    /// right after `seg`. Wire: `gwt NAME SECONDS TICKS\n`.
+    std::string gwt(const std::string& team, int seconds, long long ticks);
 
     /// End of game, @p team won.        Wire: `seg NAME\n`
     std::string seg(const std::string& team);

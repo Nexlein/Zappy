@@ -10,6 +10,7 @@
 #include "logging/CompositeSink.hpp"
 #include "logging/ConsoleSink.hpp"
 #include "logging/FileSink.hpp"
+#include "protocol/Serializer.hpp"
 
 Server::Server(const ServerConfig& config)
     : _config(config),
@@ -88,6 +89,8 @@ void Server::_handleGameOver()
                                  std::to_string(joinTicks) + " ticks)");
         _logger.info("GAME", winner + " took: " + std::to_string(upSeconds - joinSeconds) + " s (" +
                                  std::to_string(upTicks - joinTicks) + " ticks) to win");
+        _notifier.broadcast(Serializer::gwt(winner, static_cast<int>(upSeconds - joinSeconds),
+                                            upTicks - joinTicks));
     }
     _logger.info("GAME", "===============================");
 }

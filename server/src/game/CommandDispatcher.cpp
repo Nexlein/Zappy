@@ -86,7 +86,6 @@ void CommandDispatcher::_dispatchGui(int connectionId, const std::string& line)
                    [&](Gui::Sgt) { _handleSgt(connectionId); },
                    [&](Gui::Sst s) { _handleSst(s.freq); },
                    [&](Gui::Stu) { _handleStu(connectionId); },
-                   [&](Gui::Gtt& g) { _handleGtt(connectionId, g.team); },
                    [&](auto&) { _clients.send(connectionId, "suc\n"); },
                },
                *req);

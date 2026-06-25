@@ -67,7 +67,6 @@ class CommandDispatcher {
     void _handleSgt(int connectionId);
     void _handleSst(int freq);
     void _handleStu(int connectionId);
-    void _handleGtt(int connectionId, const std::string& team);
 
     // AI command handlers
     void _handleForward(int connectionId);

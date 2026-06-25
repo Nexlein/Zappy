@@ -116,18 +116,18 @@ These commands are not in the original specification. They were added as bonuses
 of frequency over time (see `core/GameClock`), so it tracks `sst` changes. A mid-game
 speed-up leaves `seconds` unchanged but accelerates `ticks`.
 
-**`gtt <team>` — when a team joined**
+**`gwt <team>` — win duration (server-pushed)**
 
 | Direction | Message | Description |
 |-----------|---------|-------------|
-| C→S | `gtt <team>` | GUI asks when `<team>`'s first player joined |
-| S→C | `gtt <team> <seconds> <ticks>` | Uptime (seconds) and ticks at that team's first join |
-| S→C | `gtt <team> -1 -1` | The team has never joined |
+| S→C | `gwt <team> <seconds> <ticks>` | Time `<team>` took to win, in seconds and game ticks |
 
-Lets the GUI build a win screen: pair `gtt <winner>` (from the `seg` winner) with a
-live `stu` to show both "joined at X" and "took Y to win", in seconds and ticks. The
-snapshot is taken on the team's **first** player join and never overwritten by later
-joins, forks, deaths or respawns.
+Not requested — the server broadcasts it once at game over, right after `seg`, from
+`Server::_handleGameOver`. The value is computed authoritatively at the game-over tick
+(`uptime − team-first-join`), so the GUI displays an exact "took Y to win" without
+re-deriving it from independently-sampled live `stu`/join values (which races and can
+read stale once `stu` polling is silenced). Join time is stamped on a team's **first**
+player join and never overwritten by later joins, forks, deaths or respawns.
 
 **`sse` — initial egg notification**
 
@@ -261,7 +261,7 @@ bug) is wrong the moment frequency ever changed.
 **Per-team join stamps.** `recordJoin` is called once on each team's first AI join
 (via the `CommandDispatcher` promotion hook). It captures `{elapsed, ticks}` and is
 write-once, so win timing can be measured from the team's entry instead of from server
-boot. Feeds `gtt` and the GAME OVER banner.
+boot. Feeds the `gwt` broadcast and the GAME OVER banner.
 
 ### core/World
 Pure game state + logic. No network, no scheduling — those are the server layer's job.
@@ -364,7 +364,7 @@ Parses AI client command strings into typed structs (mirror of GUI's `ProtocolPa
 ### protocol/GuiParser
 Parses GUI client request strings.
 
-- GUI-to-server commands: `msz`, `bct X Y`, `mct`, `tna`, `ppo #n`, `plv #n`, `pin #n`, `sgt`, `sst T`, `stu`, `gtt <team>`
+- GUI-to-server commands: `msz`, `bct X Y`, `mct`, `tna`, `ppo #n`, `plv #n`, `pin #n`, `sgt`, `sst T`, `stu`
 
 ### protocol/Serializer
 Generates wire strings from typed events (inverse of GUI's `ProtocolParser`).
