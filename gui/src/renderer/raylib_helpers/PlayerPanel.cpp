@@ -4,30 +4,17 @@
 
 void PlayerPanel::setWorld(const WorldState* world) { _world = world; }
 
-void PlayerPanel::draw(int scaledFontSize) const
+bool PlayerPanel::handleInput()
 {
-    if (!_world) return;
+    if (IsKeyPressed(KEY_TAB)) _isOpen = !_isOpen;
 
-    if (!_isOpen) return;
+    if (!_isOpen || !_world) return false;
 
-    Rectangle contentBox = _getPanelBounds();
-
-    Color bgColor = {30, 30, 40, 220};
-    Color borderColor = {80, 80, 90, 255};
-    Color textColor = {240, 240, 240, 255};
-
-    DrawRectangleRec(contentBox, bgColor);
-    DrawRectangleLinesEx(contentBox, 2, borderColor);
-
-    int y = static_cast<int>(contentBox.y) + 10;
-    int x = static_cast<int>(contentBox.x) + 20;
-
-    const char* title = "Player List";
-    DrawText(title,
-             static_cast<int>(contentBox.x + contentBox.width / 2 -
-                              MeasureText(title, scaledFontSize) / 2),
-             y, scaledFontSize, textColor);
-    y += ROW_HEIGHT;
+    _background.clearLines();
+    _background.addLine("Player List", WHITE);
+    _background.setAnchor(TooltipWidget::Anchor::Center);
+    _background.setMinWidth(PANEL_WIDTH);
+    _background.setTextAlign(TooltipWidget::TextAlign::Center);
 
     std::vector<const Player*> players;
     for (const auto& [id, player] : _world->players) players.push_back(&player);
@@ -37,45 +24,46 @@ void PlayerPanel::draw(int scaledFontSize) const
         return a->id < b->id;
     });
 
+    _background.setExtraBottomPadding(players.size() * ROW_HEIGHT + 10);
+
+    Rectangle bgBounds = _background.getLastBounds();
+
+    float startY = bgBounds.y + 40.0f;
+
+    _playerButtons.clear();
     for (const Player* p : players) {
         Color tColor = _colorFunc ? _colorFunc(p->team) : WHITE;
         std::string txt =
             "P" + std::to_string(p->id) + " (Lvl " + std::to_string(p->level) + ") - " + p->team;
-        DrawText(txt.c_str(), x, y, scaledFontSize, tColor);
-        y += ROW_HEIGHT;
+
+        ButtonWidget btn;
+        btn.setLabel(txt)
+            .setPosition(bgBounds.x + 10, startY)
+            .setSize(bgBounds.width > 20 ? bgBounds.width - 20 : PANEL_WIDTH - 20, ROW_HEIGHT)
+            .setNormalColor({0, 0, 0, 0})
+            .setHoverColor({100, 120, 160, 200})
+            .setTextColor(tColor)
+            .setBorderThickness(0)
+            .setRoundness(0.2f);
+
+        int pId = p->id;
+        btn.setOnClick([this, pId]() {
+            _pendingSelection =
+                SelectionFinder::Selection{SelectionFinder::EntityType::Player, pId, -1, -1};
+        });
+
+        _playerButtons.push_back(btn);
+        startY += ROW_HEIGHT;
     }
-}
 
-bool PlayerPanel::handleInput()
-{
-    if (IsKeyPressed(KEY_TAB)) _isOpen = !_isOpen;
-
-    if (!_isOpen) return false;
-
-    Vector2 mousePos = GetMousePosition();
-    Rectangle contentBox = _getPanelBounds();
-
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        if (CheckCollisionPointRec(mousePos, contentBox)) {
-            int relY = static_cast<int>(mousePos.y - contentBox.y - 10 - ROW_HEIGHT);
-            int index = relY / ROW_HEIGHT;
-
-            std::vector<const Player*> players;
-            for (const auto& [id, player] : _world->players) players.push_back(&player);
-
-            std::sort(players.begin(), players.end(), [](const Player* a, const Player* b) {
-                if (a->team != b->team) return a->team < b->team;
-                return a->id < b->id;
-            });
-
-            if (index >= 0 && index < static_cast<int>(players.size())) {
-                _pendingSelection = SelectionFinder::Selection{SelectionFinder::EntityType::Player,
-                                                               players[index]->id, -1, -1};
-                return true;
-            }
-        }
+    bool consumed = false;
+    for (auto& btn : _playerButtons) {
+        if (btn.handleInput()) consumed = true;
     }
-    return false;
+
+    if (CheckCollisionPointRec(GetMousePosition(), bgBounds)) consumed = true;
+
+    return consumed;
 }
 
 std::optional<SelectionFinder::Selection> PlayerPanel::getPendingSelection()
@@ -85,17 +73,11 @@ std::optional<SelectionFinder::Selection> PlayerPanel::getPendingSelection()
     return val;
 }
 
-Rectangle PlayerPanel::_getPanelBounds() const
+void PlayerPanel::draw(int scaledFontSize) const
 {
-    float screenW = static_cast<float>(GetScreenWidth());
-    float screenH = static_cast<float>(GetScreenHeight());
-    float h = static_cast<float>(_getContentHeight());
-    return {screenW / 2.0f - PANEL_WIDTH / 2.0f, screenH / 2.0f - h / 2.0f,
-            static_cast<float>(PANEL_WIDTH), h};
-}
+    if (!_isOpen || !_world) return;
 
-int PlayerPanel::_getContentHeight() const
-{
-    int count = _world ? static_cast<int>(_world->players.size()) : 0;
-    return std::max(50, count * ROW_HEIGHT + ROW_HEIGHT + 20);
+    _background.draw(scaledFontSize);
+
+    for (const auto& btn : _playerButtons) btn.draw(scaledFontSize);
 }

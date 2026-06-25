@@ -4,8 +4,13 @@
 #pragma once
 
 #include <functional>
+#include <optional>
+#include <vector>
 
+#include "ButtonWidget.hpp"
 #include "IWidget.hpp"
+#include "SelectionFinder.hpp"
+#include "TooltipWidget.hpp"
 #include "core/WorldState.hpp"
 #include "raylib.h"
 
@@ -46,9 +51,10 @@ class PlayerPanel : public IWidget {
     bool _isOpen = false;
     std::optional<SelectionFinder::Selection> _pendingSelection = std::nullopt;
     std::function<Color(const std::string&)> _colorFunc;
-    static constexpr int PANEL_WIDTH = 400;
-    static constexpr int ROW_HEIGHT = 30;
 
-    Rectangle _getPanelBounds() const;
-    int _getContentHeight() const;
+    mutable TooltipWidget _background;
+    mutable std::vector<ButtonWidget> _playerButtons;
+
+    static constexpr int PANEL_WIDTH = 400;
+    static constexpr int ROW_HEIGHT = 36;
 };
