@@ -15,7 +15,8 @@ void AAudioManager::handleEvent(const Event& event)
                 playSound("incantation", "gui/assets/sounds/minecraft-villager.mp3");
             } else if constexpr (std::is_same_v<T, IncantationEnd>) {
                 if (arg.success) {
-                    playSound("incantation_success", "gui/assets/sounds/minecraft-villager-trade.mp3");
+                    playSound("incantation_success",
+                              "gui/assets/sounds/minecraft-villager-trade.mp3");
                 } else {
                     playSound("incantation_fail", "gui/assets/sounds/minecraft-hit.mp3");
                 }
