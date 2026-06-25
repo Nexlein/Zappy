@@ -7,6 +7,9 @@
 
 extern volatile sig_atomic_t g_interrupted;
 
+#include "../audio/IAudioManager.hpp"
+#include "../audio/NullAudioManager.hpp"
+#include "../audio/RaylibAudioManager.hpp"
 #include "network/ProtocolParser.hpp"
 #include "network/TcpSocket.hpp"
 #include "renderer/HeadlessRenderer.hpp"
@@ -36,12 +39,15 @@ void App::run()
     if (config.headless) {
         std::cout << "[INFO] Running in headless mode\n";
         renderer = new HeadlessRenderer(std::cout);
+        _audioManager = std::make_unique<NullAudioManager>();
     } else {
         renderer = new RaylibRenderer();
+        _audioManager = std::make_unique<RaylibAudioManager>();
     }
 
     renderer->setDevMode(config.dev, config.port, config.machine);
     renderer->init();
+    _audioManager->init();
 
     _rendererActive = true;
     while (!renderer->shouldClose() && !g_interrupted) {
@@ -51,7 +57,10 @@ void App::run()
                 _trySendStu(*socket);
                 pollAndEnqueue(*socket, eventQueue);
 
-                while (auto event = eventQueue.pop()) state.applyEvent(*event);
+                while (auto event = eventQueue.pop()) {
+                    state.applyEvent(*event);
+                    _audioManager->handleEvent(*event);
+                }
 
                 renderer->setState(state);
                 renderer->handleInput();
@@ -62,6 +71,7 @@ void App::run()
         } catch (const TcpException& e) {
             std::cerr << "[Network] " << e.what() << "\n";
             renderer->shutdown();
+            _audioManager->shutdown();
             _rendererActive = false;
             socket = std::make_unique<TcpSocket>();
             if (!_connectWithRetry(*socket, config.machine, config.port)) break;
@@ -69,12 +79,16 @@ void App::run()
             eventQueue.clear();
             _resetStuState();
             renderer->init();
+            _audioManager->init();
             _rendererActive = true;
         }
     }
 
     if (g_interrupted) std::cerr << "[GUI] Stopping\n";
-    if (_rendererActive) renderer->shutdown();
+    if (_rendererActive) {
+        renderer->shutdown();
+        _audioManager->shutdown();
+    }
     delete renderer;
 }
 
