@@ -29,7 +29,7 @@ namespace clap {
         bool is_set() const noexcept override { return _value.has_value(); }
         bool takes_value() const noexcept override { return true; }
 
-        const T &get() const
+        const T& get() const
         {
             if (_value.has_value()) return _value.value();
             throw clap::MissingValue(std::string(names()));

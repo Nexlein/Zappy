@@ -56,4 +56,5 @@ class ProtocolParser {
     static std::optional<Event> _parseSBP(const std::vector<std::string_view>& tokens);
     static std::optional<Event> _parseSTU(const std::vector<std::string_view>& tokens);
     static std::optional<Event> _parseSSE(const std::vector<std::string_view>& tokens);
+    static std::optional<Event> _parseGTT(const std::vector<std::string_view>& tokens);
 };

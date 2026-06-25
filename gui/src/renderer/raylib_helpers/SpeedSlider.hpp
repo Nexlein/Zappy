@@ -27,6 +27,13 @@ class SpeedSlider : public IWidget {
      */
     void syncFromServer(int serverTimeUnit);
 
+    /** @brief Resets slider state. Call on reconnect so it re-syncs from the new server. */
+    void reset()
+    {
+        _initialized = false;
+        _dragging = false;
+    }
+
     /**
      * @brief Processes mouse input.
      * @return true if the slider consumed the input.
@@ -47,7 +54,7 @@ class SpeedSlider : public IWidget {
     int currentSpeed() const { return STEPS[_index]; }
 
     private:
-    int _index = 19;  // default: 100 (index 19 in STEPS)
+    int _index = 23;  // default: 100 (index 23 in STEPS)
     bool _dragging = false;
     bool _initialized = false;
     std::optional<int> _pendingSpeed = std::nullopt;

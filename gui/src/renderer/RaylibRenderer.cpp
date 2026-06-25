@@ -12,11 +12,15 @@
 #include "raylib_helpers/I18n.hpp"
 #include "raylib_helpers/RenderingHelper.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
+#include "raylib_helpers/WinScreen.hpp"
 #include "raymath.h"
 
 void RaylibRenderer::init()
 {
     _tileSlotMap.clear();
+    _speedSlider.reset();
+    _pendingSpeed.reset();
+    _winScreen.reset();
     SetTraceLogLevel(LOG_WARNING);
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(800, 600, "Zappy");
@@ -214,7 +218,7 @@ void RaylibRenderer::handleInput()
     }
 }
 
-bool RaylibRenderer::shouldClose() { return WindowShouldClose(); }
+bool RaylibRenderer::shouldClose() { return WindowShouldClose() || _winScreen.quitRequested(); }
 
 void RaylibRenderer::setDevMode(bool dev, int port, const std::string& machine)
 {
@@ -347,10 +351,6 @@ void RaylibRenderer::_render2D()
     }
 
     _drawSelectedToolip();
-    if (_state) {
-        _speedSlider.syncFromServer(_state->timeUnit);
-    }
-    _speedSlider.draw(_getScaledFontSize(18));
 
     if (_state) {
         _playerPanel.setWorld(&_state->world);
@@ -358,6 +358,21 @@ void RaylibRenderer::_render2D()
             [this](const std::string& teamName) { return _getTeamColor(teamName); });
         _playerPanel.draw(_getScaledFontSize(14));
     }
+
+    _drawSpeedSlider();
+
+    if (_state && !_state->winnerTeam.empty()) {
+        _winScreen.setWinner(_state->winnerTeam, _getTeamColor(_state->winnerTeam));
+        _winScreen.setDuration(_state->gameEndSeconds, _state->gameEndTicks, _state->gameEndUptime);
+        _winScreen.handleInput();
+        _winScreen.draw(_getScaledFontSize(18));
+    }
+}
+
+void RaylibRenderer::_drawSpeedSlider()
+{
+    if (_state) _speedSlider.syncFromServer(_state->timeUnit);
+    _speedSlider.draw(_getScaledFontSize(18));
 }
 
 void RaylibRenderer::_drawSelectionHighlight()

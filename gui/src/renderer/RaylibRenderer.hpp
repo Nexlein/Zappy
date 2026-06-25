@@ -16,6 +16,7 @@
 #include "raylib_helpers/SpeedSlider.hpp"
 #include "raylib_helpers/TileSlotMap.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
+#include "raylib_helpers/WinScreen.hpp"
 
 /**
  * @brief A renderer that uses Raylib to display the game state graphically.
@@ -81,6 +82,7 @@ class RaylibRenderer : public ARenderer {
     SelectionFinder::Selection _selection;
     TileSlotMap _tileSlotMap;
     SpeedSlider _speedSlider;
+    WinScreen _winScreen;
     PlayerPanel _playerPanel;
     HudWidget _hudWidget;
     std::optional<int> _pendingSpeed;

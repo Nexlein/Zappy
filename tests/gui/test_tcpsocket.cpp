@@ -27,7 +27,7 @@ class MockServer {
         int opt = 1;
         setsockopt(_serverFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-        struct sockaddr_in addr {};
+        struct sockaddr_in addr{};
         addr.sin_family = AF_INET;
         addr.sin_addr.s_addr = INADDR_ANY;
         addr.sin_port = htons(_port);
@@ -39,7 +39,7 @@ class MockServer {
 
     void acceptConnection()
     {
-        struct sockaddr_in clientAddr {};
+        struct sockaddr_in clientAddr{};
         socklen_t clientLen = sizeof(clientAddr);
         _clientFd = accept(_serverFd, (struct sockaddr*)&clientAddr, &clientLen);
         ASSERT_NE(_clientFd, -1) << "Failed to accept connection";
