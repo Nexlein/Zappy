@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 
+#include "TextRenderer.hpp"
+
 TooltipRenderer::Builder TooltipRenderer::create() { return Builder(); }
 
 TooltipRenderer::Builder::Builder()
@@ -89,7 +91,7 @@ void TooltipRenderer::Builder::draw(Vector2 position)
     for (const auto& line : _lines) {
         int lineWidth = 0;
         for (const auto& segment : line) {
-            lineWidth += MeasureText(segment.text.c_str(), _fontSize);
+            lineWidth += TextRenderer::measure(segment.text, _fontSize);
         }
         boxWidth = std::max(boxWidth, lineWidth);
         boxHeight += _fontSize + lineSpacing;
@@ -117,9 +119,9 @@ void TooltipRenderer::Builder::draw(Vector2 position)
     for (const auto& line : _lines) {
         float textX = anchoredPos.x + _padding;
         for (const auto& segment : line) {
-            DrawText(segment.text.c_str(), static_cast<int>(textX), static_cast<int>(textY),
-                     _fontSize, segment.color);
-            textX += MeasureText(segment.text.c_str(), _fontSize);
+            TextRenderer::draw(segment.text, static_cast<int>(textX), static_cast<int>(textY),
+                               _fontSize, segment.color);
+            textX += TextRenderer::measure(segment.text, _fontSize);
         }
         textY += _fontSize + lineSpacing;
     }

@@ -2,6 +2,8 @@
 
 #include "ButtonWidget.hpp"
 
+#include "TextRenderer.hpp"
+
 ButtonWidget& ButtonWidget::setLabel(const std::string& label)
 {
     _label = label;
@@ -157,9 +159,9 @@ void ButtonWidget::draw(int scaledFontSize) const
         DrawRectangleRoundedLines(bounds, _roundness, 8, _borderThickness, _borderColor);
 
     if (!_label.empty()) {
-        int tw = MeasureText(_label.c_str(), scaledFontSize);
+        int tw = TextRenderer::measure(_label, scaledFontSize);
         int tx = static_cast<int>(bounds.x + (bounds.width - tw) / 2.0f);
         int ty = static_cast<int>(bounds.y + (bounds.height - scaledFontSize) / 2.0f);
-        DrawText(_label.c_str(), tx, ty, scaledFontSize, _textColor);
+        TextRenderer::draw(_label, tx, ty, scaledFontSize, _textColor);
     }
 }

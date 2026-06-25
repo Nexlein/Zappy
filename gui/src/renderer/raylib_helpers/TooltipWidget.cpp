@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <stdexcept>
 
+#include "TextRenderer.hpp"
+
 TooltipWidget& TooltipWidget::addLine(const std::string& text, Color color)
 {
     _lines.push_back({{text}, {color}});
@@ -131,7 +133,7 @@ void TooltipWidget::draw(int scaledFontSize) const
     for (const auto& line : _lines) {
         int lineWidth = 0;
         for (size_t i = 0; i < line.segments.size(); ++i)
-            lineWidth += MeasureText(line.segments[i].c_str(), scaledFontSize);
+            lineWidth += TextRenderer::measure(line.segments[i], scaledFontSize);
         contentWidth = std::max(contentWidth, lineWidth);
         contentHeight += scaledFontSize + lineSpacing;
     }
@@ -154,15 +156,15 @@ void TooltipWidget::draw(int scaledFontSize) const
     for (const auto& line : _lines) {
         int lineWidth = 0;
         for (size_t i = 0; i < line.segments.size(); ++i)
-            lineWidth += MeasureText(line.segments[i].c_str(), scaledFontSize);
+            lineWidth += TextRenderer::measure(line.segments[i], scaledFontSize);
 
         float textX = pos.x + _padding;
         if (_textAlign == TextAlign::Center) textX = pos.x + (boxWidth - lineWidth) / 2.0f;
 
         for (size_t i = 0; i < line.segments.size(); ++i) {
-            DrawText(line.segments[i].c_str(), static_cast<int>(textX), static_cast<int>(textY),
-                     scaledFontSize, line.colors[i]);
-            textX += MeasureText(line.segments[i].c_str(), scaledFontSize);
+            TextRenderer::draw(line.segments[i], static_cast<int>(textX),
+                               static_cast<int>(textY), scaledFontSize, line.colors[i]);
+            textX += TextRenderer::measure(line.segments[i], scaledFontSize);
         }
         textY += scaledFontSize + lineSpacing;
     }
