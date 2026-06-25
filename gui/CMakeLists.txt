@@ -57,6 +57,8 @@ set(GUI_SOURCES
     src/renderer/raylib_helpers/TextRenderer.cpp
     src/renderer/raylib_helpers/TooltipRenderer.cpp
     src/renderer/raylib_helpers/SpeedSlider.cpp
+    src/renderer/raylib_helpers/PlayerPanel.cpp
+    src/renderer/raylib_helpers/HudWidget.cpp
     src/audio/AAudioManager.cpp
     src/audio/RaylibAudioManager.cpp
     src/network/TcpSocket.cpp
