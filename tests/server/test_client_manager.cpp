@@ -159,9 +159,7 @@ TEST(ClientManager, SendDataReachesClient)
     cm.poll(200);
 
     // Read on the client side to confirm bytes arrived
-    struct timeval tv {
-        1, 0
-    };
+    struct timeval tv{1, 0};
     setsockopt(clientFd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
     char buf[64] = {};
     ssize_t n = ::recv(clientFd, buf, sizeof(buf) - 1, 0);

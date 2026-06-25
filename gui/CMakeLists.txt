@@ -62,6 +62,8 @@ set(GUI_SOURCES
     src/audio/AAudioManager.cpp
     src/audio/RaylibAudioManager.cpp
     src/renderer/raylib_helpers/WinScreen.cpp
+    src/renderer/raylib_helpers/ButtonWidget.cpp
+    src/renderer/raylib_helpers/TooltipWidget.cpp
     src/network/TcpSocket.cpp
     src/network/ProtocolParser.cpp
     src/core/behaviors/MoveBehavior.cpp

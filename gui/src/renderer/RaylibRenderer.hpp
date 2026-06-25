@@ -71,10 +71,10 @@ class RaylibRenderer : public ARenderer {
     SelectionFinder::Selection _selection;
     TileSlotMap _tileSlotMap;
     SpeedSlider _speedSlider;
+    WinScreen _winScreen;
     PlayerPanel _playerPanel;
     HudWidget _hudWidget;
     std::optional<int> _pendingSpeed;
-    bool _winScreenQuit = false;
 
     struct WindowSnapshot {
         int width = 800, height = 600;

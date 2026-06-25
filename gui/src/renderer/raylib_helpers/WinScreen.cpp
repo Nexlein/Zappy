@@ -1,3 +1,5 @@
+/// @file WinScreen.cpp
+
 #include "WinScreen.hpp"
 
 #include <cstdint>
@@ -5,23 +7,43 @@
 
 #include "I18n.hpp"
 
-static constexpr float PANEL_W = 480.0f;
-static constexpr float PANEL_H = 200.0f;
-static constexpr float ROUNDNESS = 0.2f;
-static constexpr int SEGMENTS = 8;
-static constexpr float BORDER_THICKNESS = 2.0f;
-
-static constexpr Color OVERLAY_COLOR = {0, 0, 0, 178};  // ~70% opacity black vignette
-static constexpr Color BG_COLOR = {20, 25, 35, 178};    // 70% opacity panel
-static constexpr Color BORDER_COLOR = {60, 70, 90, 200};
-static constexpr Color ACCENT_COLOR = {210, 220, 240, 255};
+static constexpr float PANEL_MIN_W = 480.0f;
+static constexpr Color OVERLAY_COLOR = {0, 0, 0, 178};
+static constexpr Color PANEL_BORDER = {60, 70, 90, 200};
+static constexpr Color ACCENT = {210, 220, 240, 255};
 static constexpr Color TITLE_COLOR = {255, 220, 80, 255};
 
-static constexpr Color BTN_NORMAL = {60, 70, 90, 220};
-static constexpr Color BTN_HOVER = {100, 120, 160, 240};
-static constexpr Color BTN_TEXT = {210, 220, 240, 255};
+WinScreen::WinScreen()
+{
+    _panel.setAnchor(TooltipWidget::Anchor::Center)
+        .setBackgroundColor({20, 25, 35, 255})
+        .setBackgroundAlpha(178)
+        .setBorderColor(PANEL_BORDER)
+        .setBorderThickness(2)
+        .setPadding(18)
+        .setMinWidth(PANEL_MIN_W);
 
-std::string WinScreen::_formatUptime(unsigned int seconds)
+    _quitBtn.setSize(120.0f, 36.0f)
+        .setAnchor(ButtonWidget::Anchor::None)  // positioned relative to panel each frame
+        .setRoundness(0.3f)
+        .setBorderColor(PANEL_BORDER)
+        .setBorderThickness(2.0f);
+}
+
+void WinScreen::setWinner(const std::string& team, Color color)
+{
+    _winnerTeam = team;
+    _winnerColor = color;
+}
+
+void WinScreen::setDuration(int teamJoinSeconds, int64_t teamJoinTicks, unsigned int gameEndUptime)
+{
+    _teamJoinSeconds = teamJoinSeconds;
+    _teamJoinTicks = teamJoinTicks;
+    _gameEndUptime = gameEndUptime;
+}
+
+std::string WinScreen::_formatDuration(unsigned int seconds)
 {
     unsigned int h = seconds / 3600;
     unsigned int m = (seconds % 3600) / 60;
@@ -33,25 +55,43 @@ std::string WinScreen::_formatUptime(unsigned int seconds)
     return out;
 }
 
-bool WinScreen::_drawButton(const char* label, Rectangle rect, int fontSize)
+void WinScreen::_rebuildPanel(int scaledFontSize) const
 {
-    Vector2 mouse = GetMousePosition();
-    bool hovered = CheckCollisionPointRec(mouse, rect);
-    bool clicked = hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    (void)scaledFontSize;
+    _panel.clearLines();
 
-    DrawRectangleRounded(rect, 0.3f, 8, hovered ? BTN_HOVER : BTN_NORMAL);
-    DrawRectangleRoundedLines(rect, 0.3f, 8, BORDER_THICKNESS, BORDER_COLOR);
+    // Title line
+    _panel.addLine(I18n::get(I18n::Key::WIN_GAME_OVER), TITLE_COLOR);
 
-    int tw = MeasureText(label, fontSize);
-    int tx = static_cast<int>(rect.x + (rect.width - tw) / 2.0f);
-    int ty = static_cast<int>(rect.y + (rect.height - fontSize) / 2.0f);
-    DrawText(label, tx, ty, fontSize, BTN_TEXT);
+    // "Team X won!"
+    _panel.addColoredLine({_winnerTeam, I18n::get(I18n::Key::WIN_TEAM_WON)},
+                          {_winnerColor, ACCENT});
 
-    return clicked;
+    // Duration line
+    if (_teamJoinSeconds < 0 || _gameEndUptime == 0) {
+        _panel.addLine(I18n::get(I18n::Key::WIN_DURATION_UNKNOWN), ACCENT);
+    } else {
+        unsigned int elapsed = _gameEndUptime > static_cast<unsigned int>(_teamJoinSeconds)
+                                   ? _gameEndUptime - static_cast<unsigned int>(_teamJoinSeconds)
+                                   : 0u;
+        std::string durLine = std::string(I18n::get(I18n::Key::WIN_DURATION)) +
+                              _formatDuration(elapsed) + " (" + std::to_string(_teamJoinTicks) +
+                              I18n::get(I18n::Key::WIN_TICKS) + ")";
+        _panel.addLine(durLine, ACCENT);
+    }
+
+    // Empty line for visual spacing before the button
+    _panel.addLine("", ACCENT);
 }
 
-bool WinScreen::draw(const std::string& winnerTeam, Color winnerColor, int teamJoinSeconds,
-                     int64_t teamJoinTicks, unsigned int serverUptimeSeconds, int scaledFontSize)
+bool WinScreen::handleInput()
+{
+    _quitBtn.handleInput();
+    if (_quitBtn.wasClicked()) _quitRequested = true;
+    return true;  // overlay always consumes all input
+}
+
+void WinScreen::draw(int scaledFontSize) const
 {
     int sw = GetScreenWidth();
     int sh = GetScreenHeight();
@@ -59,50 +99,15 @@ bool WinScreen::draw(const std::string& winnerTeam, Color winnerColor, int teamJ
     // Full-screen dim
     DrawRectangle(0, 0, sw, sh, OVERLAY_COLOR);
 
-    // Centered panel
-    float px = (sw - PANEL_W) / 2.0f;
-    float py = (sh - PANEL_H) / 2.0f;
-    Rectangle panel = {px, py, PANEL_W, PANEL_H};
+    _rebuildPanel(scaledFontSize);
+    _panel.draw(scaledFontSize);
 
-    DrawRectangleRounded(panel, ROUNDNESS, SEGMENTS, BG_COLOR);
-    DrawRectangleRoundedLines(panel, ROUNDNESS, SEGMENTS, BORDER_THICKNESS, BORDER_COLOR);
-
-    int bigFont = scaledFontSize + 6;
-    int pad = 18;
-
-    // Title
-    const char* title = I18n::get(I18n::Key::WIN_GAME_OVER);
-    int titleW = MeasureText(title, bigFont);
-    DrawText(title, static_cast<int>(px + (PANEL_W - titleW) / 2.0f), static_cast<int>(py + pad),
-             bigFont, TITLE_COLOR);
-
-    // "Team X won"
-    std::string teamLine = winnerTeam + I18n::get(I18n::Key::WIN_TEAM_WON);
-    int teamFont = scaledFontSize;
-    int teamW = MeasureText(teamLine.c_str(), teamFont);
-    DrawText(teamLine.c_str(), static_cast<int>(px + (PANEL_W - teamW) / 2.0f),
-             static_cast<int>(py + pad + bigFont + 10), teamFont, winnerColor);
-
-    // Duration = serverUptime(stu) - teamJoinTime(gtt). Show "..." until gtt reply arrives.
-    std::string durLine;
-    if (teamJoinSeconds < 0 || serverUptimeSeconds == 0) {
-        durLine = I18n::get(I18n::Key::WIN_DURATION_UNKNOWN);
-    } else {
-        unsigned int duration =
-            serverUptimeSeconds > static_cast<unsigned int>(teamJoinSeconds)
-                ? serverUptimeSeconds - static_cast<unsigned int>(teamJoinSeconds)
-                : 0;
-        durLine = std::string(I18n::get(I18n::Key::WIN_DURATION)) + _formatUptime(duration) + " (" +
-                  std::to_string(teamJoinTicks) + I18n::get(I18n::Key::WIN_TICKS) + ")";
-    }
-    int durW = MeasureText(durLine.c_str(), scaledFontSize);
-    DrawText(durLine.c_str(), static_cast<int>(px + (PANEL_W - durW) / 2.0f),
-             static_cast<int>(py + pad + bigFont + 10 + teamFont + 10), scaledFontSize,
-             ACCENT_COLOR);
-
-    // Quit button
+    // Position Quit button at the bottom of the panel
+    Rectangle panelBounds = _panel.getLastBounds();
     float btnW = 120.0f;
     float btnH = 36.0f;
-    Rectangle btnRect = {px + (PANEL_W - btnW) / 2.0f, py + PANEL_H - btnH - pad, btnW, btnH};
-    return _drawButton(I18n::get(I18n::Key::WIN_QUIT), btnRect, scaledFontSize);
+    float btnX = panelBounds.x + (panelBounds.width - btnW) / 2.0f;
+    float btnY = panelBounds.y + panelBounds.height - btnH - 14.0f;
+    _quitBtn.setPosition(btnX, btnY).setSize(btnW, btnH);
+    _quitBtn.draw(scaledFontSize);
 }
