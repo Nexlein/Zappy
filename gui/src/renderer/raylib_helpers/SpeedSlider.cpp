@@ -3,6 +3,8 @@
 #include <cmath>
 #include <string>
 
+#include "I18n.hpp"
+
 const std::vector<int> SpeedSlider::STEPS = {1,   2,   3,   4,   5,   10,  15,  20,  25,  30,  35,
                                              40,  45,  50,  55,  60,  65,  70,  75,  80,  85,  90,
                                              95,  100, 105, 110, 115, 120, 125, 130, 135, 140, 145,
@@ -93,7 +95,8 @@ void SpeedSlider::draw(int scaledFontSize) const
     DrawRectangleRounded(rect, ROUNDNESS, SEGMENTS, BG_COLOR);
     DrawRectangleRoundedLines(rect, ROUNDNESS, SEGMENTS, BORDER_THICKNESS, BORDER_COLOR);
 
-    std::string label = "Speed: " + std::to_string(STEPS[_index]);
+    std::string label =
+        std::string(I18n::get(I18n::Key::SPEED_LABEL)) + std::to_string(STEPS[_index]);
     DrawText(label.c_str(), static_cast<int>(panelX + 10), static_cast<int>(panelY + 8),
              scaledFontSize, ACCENT_COLOR);
 

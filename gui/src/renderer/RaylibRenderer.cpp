@@ -11,11 +11,15 @@
 #include "raylib_helpers/I18n.hpp"
 #include "raylib_helpers/RenderingHelper.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
+#include "raylib_helpers/WinScreen.hpp"
 #include "raymath.h"
 
 void RaylibRenderer::init()
 {
     _tileSlotMap.clear();
+    _speedSlider.reset();
+    _pendingSpeed.reset();
+    _winScreenQuit = false;
     SetTraceLogLevel(LOG_WARNING);
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(800, 600, "Zappy");
@@ -162,7 +166,7 @@ void RaylibRenderer::handleInput()
     if (IsKeyPressed(KEY_F3)) _devMode = !_devMode;
 }
 
-bool RaylibRenderer::shouldClose() { return WindowShouldClose(); }
+bool RaylibRenderer::shouldClose() { return WindowShouldClose() || _winScreenQuit; }
 
 void RaylibRenderer::setDevMode(bool dev, int port, const std::string& machine)
 {
@@ -290,6 +294,13 @@ void RaylibRenderer::_render2D()
 
     _drawSelectedToolip();
     _drawSpeedSlider();
+
+    if (!_state->winnerTeam.empty()) {
+        bool quit = WinScreen::draw(_state->winnerTeam, _getTeamColor(_state->winnerTeam),
+                                    _state->gameEndSeconds, _state->gameEndTicks,
+                                    _state->gameEndUptime, _getScaledFontSize(18));
+        if (quit) _winScreenQuit = true;
+    }
 }
 
 void RaylibRenderer::_drawSelectionHighlight()

@@ -17,6 +17,9 @@ class GameState {
     WorldState world;
     int timeUnit = -1;
     std::string winnerTeam = "";
+    int gameEndSeconds = -1;         // gtt: when winning team first joined (-1 = not yet received)
+    int64_t gameEndTicks = -1;       // gtt: game-time ticks at first join (-1 = not yet received)
+    unsigned int gameEndUptime = 0;  // stu snapshot taken at the moment seg was received
     float tileSize = 1.0f;
     unsigned int serverUptimeSeconds = 0;
     bool receivedStuResponse = false;
@@ -67,6 +70,7 @@ class GameState {
     void _applyGameEnd(const GameEnd& e);
     void _applyServerUptime(const ServerUptime& e);
     void _applyServerSpawnedEgg(const ServerSpawnedEgg& e);
+    void _applyTeamJoinTime(const TeamJoinTime& e);
 
     static void _pushBehavior(VisualState& visual, std::unique_ptr<IBehavior> b);
 };

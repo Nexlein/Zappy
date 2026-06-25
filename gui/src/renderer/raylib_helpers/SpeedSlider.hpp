@@ -27,6 +27,13 @@ class SpeedSlider {
      */
     void syncFromServer(int serverTimeUnit);
 
+    /** @brief Resets slider state. Call on reconnect so it re-syncs from the new server. */
+    void reset()
+    {
+        _initialized = false;
+        _dragging = false;
+    }
+
     /**
      * @brief Processes mouse input. Returns the new speed if the user released
      * the handle, std::nullopt otherwise.
@@ -42,7 +49,7 @@ class SpeedSlider {
     int currentSpeed() const { return STEPS[_index]; }
 
     private:
-    int _index = 19;  // default: 100 (index 19 in STEPS)
+    int _index = 23;  // default: 100 (index 23 in STEPS)
     bool _dragging = false;
     bool _initialized = false;
 

@@ -11,6 +11,7 @@
 #include "raylib_helpers/SpeedSlider.hpp"
 #include "raylib_helpers/TileSlotMap.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
+#include "raylib_helpers/WinScreen.hpp"
 
 /**
  * @brief A renderer that uses Raylib to display the game state graphically.
@@ -69,6 +70,7 @@ class RaylibRenderer : public ARenderer {
     TileSlotMap _tileSlotMap;
     SpeedSlider _speedSlider;
     std::optional<int> _pendingSpeed;
+    bool _winScreenQuit = false;
 
     struct WindowSnapshot {
         int width = 800, height = 600;

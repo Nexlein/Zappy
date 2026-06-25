@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <variant>
 #include <vector>
@@ -140,6 +141,13 @@ struct GameEnd {
     std::string winningTeam;
 };
 
+// gtt <team> <seconds> <ticks>
+struct TeamJoinTime {
+    std::string team;
+    int seconds;    // -1 if the team never joined
+    int64_t ticks;  // game-time ticks at first join (-1 if never joined)
+};
+
 // smg M
 struct ServerMessage {
     std::string message;
@@ -176,4 +184,4 @@ using Event =
                  PlayerInventory, PlayerExpulsion, PlayerBroadcast, IncantationStart,
                  IncantationEnd, PlayerFork, PlayerResourceDrop, PlayerResourceTake, PlayerDeath,
                  EggNew, EggHatch, EggDeath, TimeUnit, TimeUnitChange, GameEnd, ServerMessage,
-                 UnknownCommand, BadParameters, ServerUptime, ServerSpawnedEgg>;
+                 UnknownCommand, BadParameters, ServerUptime, ServerSpawnedEgg, TeamJoinTime>;

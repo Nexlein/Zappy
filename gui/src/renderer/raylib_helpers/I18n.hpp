@@ -49,6 +49,14 @@ class I18n {
         // Player label (above head)
         PLAYER_HEAD_LEVEL,
 
+        // Win screen
+        WIN_GAME_OVER,
+        WIN_TEAM_WON,
+        WIN_DURATION,
+        WIN_DURATION_UNKNOWN,
+        WIN_TICKS,
+        WIN_QUIT,
+
         // Resource names (must stay contiguous and ordered: food=0 … thystame=6)
         RESOURCE_FOOD,
         RESOURCE_LINEMATE,
@@ -108,6 +116,13 @@ class I18n {
 
             "Level ",  // PLAYER_HEAD_LEVEL
 
+            "Game Over",      // WIN_GAME_OVER
+            " won!",          // WIN_TEAM_WON
+            "Duration: ",     // WIN_DURATION
+            "Duration: ...",  // WIN_DURATION_UNKNOWN
+            " ticks",         // WIN_TICKS
+            "Quit",           // WIN_QUIT
+
             "Food",       // RESOURCE_FOOD
             "Linemate",   // RESOURCE_LINEMATE
             "Deraumere",  // RESOURCE_DERAUMERE
@@ -144,6 +159,13 @@ class I18n {
             "  Équipe ",  // EGG_TEAM
 
             "Niveau ",  // PLAYER_HEAD_LEVEL
+
+            "Fin de partie",  // WIN_GAME_OVER
+            " a gagné !",     // WIN_TEAM_WON
+            "Durée : ",       // WIN_DURATION
+            "Durée : ...",    // WIN_DURATION_UNKNOWN
+            " ticks",         // WIN_TICKS
+            "Quitter",        // WIN_QUIT
 
             "Nourriture",  // RESOURCE_FOOD
             "Linemate",    // RESOURCE_LINEMATE
