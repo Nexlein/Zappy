@@ -57,10 +57,12 @@ std::array<int, 7> TileSlotMap::updateResourceSlots(int tileX, int tileY,
         if (hasCount && !hasSlot) {
             int slot = _tileOccupancy[tileKey(tileX, tileY)].acquire();
             _resourceSlots[rkey] = slot;
+            _resourceRotations[rkey] = static_cast<float>(rand() % 360);
             result[i] = slot;
         } else if (!hasCount && hasSlot) {
             _tileOccupancy[tileKey(tileX, tileY)].release(_resourceSlots[rkey]);
             _resourceSlots.erase(rkey);
+            _resourceRotations.erase(rkey);
         } else if (hasCount && hasSlot) {
             result[i] = _resourceSlots[rkey];
         }
@@ -105,10 +107,17 @@ int TileSlotMap::eggSlot(int eggId) const
     return it != _eggSlots.end() ? it->second : -1;
 }
 
+float TileSlotMap::resourceRotation(int tileX, int tileY, int resourceType) const
+{
+    auto it = _resourceRotations.find(resourceKey(tileX, tileY, resourceType));
+    return it != _resourceRotations.end() ? it->second : 0.0f;
+}
+
 void TileSlotMap::clear()
 {
     _tileOccupancy.clear();
     _resourceSlots.clear();
+    _resourceRotations.clear();
     _eggSlots.clear();
     _eggTile.clear();
     _knownEggs.clear();

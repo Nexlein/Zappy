@@ -34,11 +34,12 @@ class EntityRenderer {
      * @param slotIndices Slot index per resource type (0-7), or -1 if absent.
      * @param tileCenter World position of tile center.
      * @param tileSize Size of a tile in world units.
-     * @param baseSize Base size of resource spheres.
+     * @param baseSize Base size of resource models.
      */
     static void drawResources(const Resources& resources, const std::array<int, 7>& slotIndices,
-                              const Vector3& tileCenter, float tileSize, Model& foodModel,
-                              float foodModelSize, float baseSize = 0.15f);
+                              const std::array<float, 7>& rotations, const Vector3& tileCenter,
+                              float tileSize, Model& foodModel, float foodModelSize,
+                              Model& crystalModel, float crystalModelSize, float baseSize = 0.15f);
 
     private:
     static void _restoreModelBaseColors(Model& model, const Color* baseMats, int count = 6);
