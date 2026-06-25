@@ -47,6 +47,18 @@ TooltipWidget& TooltipWidget::setMinWidth(float minWidth)
     return *this;
 }
 
+TooltipWidget& TooltipWidget::setExtraBottomPadding(float px)
+{
+    _extraBottomPadding = px;
+    return *this;
+}
+
+TooltipWidget& TooltipWidget::setTextAlign(TextAlign align)
+{
+    _textAlign = align;
+    return *this;
+}
+
 TooltipWidget& TooltipWidget::setBackgroundColor(Color color)
 {
     _bgColor = color;
@@ -126,7 +138,7 @@ void TooltipWidget::draw(int scaledFontSize) const
     contentHeight -= lineSpacing;
 
     float boxWidth = std::max(static_cast<float>(contentWidth + _padding * 2), _minWidth);
-    float boxHeight = static_cast<float>(contentHeight + _padding * 2);
+    float boxHeight = static_cast<float>(contentHeight + _padding * 2) + _extraBottomPadding;
 
     Vector2 pos = _resolvePosition(boxWidth, boxHeight);
     Rectangle rect = {pos.x, pos.y, boxWidth, boxHeight};
@@ -140,7 +152,13 @@ void TooltipWidget::draw(int scaledFontSize) const
 
     float textY = pos.y + _padding;
     for (const auto& line : _lines) {
+        int lineWidth = 0;
+        for (size_t i = 0; i < line.segments.size(); ++i)
+            lineWidth += MeasureText(line.segments[i].c_str(), scaledFontSize);
+
         float textX = pos.x + _padding;
+        if (_textAlign == TextAlign::Center) textX = pos.x + (boxWidth - lineWidth) / 2.0f;
+
         for (size_t i = 0; i < line.segments.size(); ++i) {
             DrawText(line.segments[i].c_str(), static_cast<int>(textX), static_cast<int>(textY),
                      scaledFontSize, line.colors[i]);

@@ -59,7 +59,13 @@ class TooltipWidget : public IWidget {
     /// @brief Override minimum panel width (0 = fit to content).
     TooltipWidget& setMinWidth(float minWidth);
 
+    /// @brief Adds extra blank space at the bottom of the box (e.g. to reserve room for a button).
+    TooltipWidget& setExtraBottomPadding(float px);
+
     // ── Appearance ─────────────────────────────────────────────────────────
+    enum class TextAlign { Left, Center };
+    TooltipWidget& setTextAlign(TextAlign align);
+
     TooltipWidget& setBackgroundColor(Color color);
     TooltipWidget& setBackgroundAlpha(unsigned char alpha);
     TooltipWidget& setBorderColor(Color color);
@@ -89,12 +95,14 @@ class TooltipWidget : public IWidget {
     Anchor _anchor = Anchor::None;
     float _margin = 10.0f;
     float _minWidth = 0.0f;
+    float _extraBottomPadding = 0.0f;
 
     Color _bgColor = {20, 25, 35, 220};
     unsigned char _bgAlpha = 220;
     Color _borderColor = {60, 70, 90, 200};
     int _borderThickness = 2;
     int _padding = 12;
+    TextAlign _textAlign = TextAlign::Left;
 
     mutable Rectangle _lastBounds = {};
 

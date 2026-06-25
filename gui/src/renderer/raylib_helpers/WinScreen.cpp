@@ -8,6 +8,9 @@
 #include "I18n.hpp"
 
 static constexpr float PANEL_MIN_W = 480.0f;
+static constexpr float BTN_W = 140.0f;
+static constexpr float BTN_H = 40.0f;
+static constexpr float BTN_MARGIN = 20.0f;  // gap between last line and button
 static constexpr Color OVERLAY_COLOR = {0, 0, 0, 178};
 static constexpr Color PANEL_BORDER = {60, 70, 90, 200};
 static constexpr Color ACCENT = {210, 220, 240, 255};
@@ -21,7 +24,9 @@ WinScreen::WinScreen()
         .setBorderColor(PANEL_BORDER)
         .setBorderThickness(2)
         .setPadding(18)
-        .setMinWidth(PANEL_MIN_W);
+        .setMinWidth(PANEL_MIN_W)
+        .setTextAlign(TooltipWidget::TextAlign::Center)
+        .setExtraBottomPadding(BTN_H + BTN_MARGIN * 3);
 
     _quitBtn.setSize(120.0f, 36.0f)
         .setAnchor(ButtonWidget::Anchor::None)  // positioned relative to panel each frame
@@ -79,9 +84,6 @@ void WinScreen::_rebuildPanel(int scaledFontSize) const
                               I18n::get(I18n::Key::WIN_TICKS) + ")";
         _panel.addLine(durLine, ACCENT);
     }
-
-    // Empty line for visual spacing before the button
-    _panel.addLine("", ACCENT);
 }
 
 bool WinScreen::handleInput()
@@ -102,12 +104,11 @@ void WinScreen::draw(int scaledFontSize) const
     _rebuildPanel(scaledFontSize);
     _panel.draw(scaledFontSize);
 
-    // Position Quit button at the bottom of the panel
+    // Position Quit button in the reserved space at the bottom of the panel
+    _quitBtn.setLabel(I18n::get(I18n::Key::WIN_QUIT));
     Rectangle panelBounds = _panel.getLastBounds();
-    float btnW = 120.0f;
-    float btnH = 36.0f;
-    float btnX = panelBounds.x + (panelBounds.width - btnW) / 2.0f;
-    float btnY = panelBounds.y + panelBounds.height - btnH - 14.0f;
-    _quitBtn.setPosition(btnX, btnY).setSize(btnW, btnH);
+    float btnX = panelBounds.x + (panelBounds.width - BTN_W) / 2.0f;
+    float btnY = panelBounds.y + panelBounds.height - BTN_H - BTN_MARGIN;
+    _quitBtn.setPosition(btnX, btnY).setSize(BTN_W, BTN_H);
     _quitBtn.draw(scaledFontSize);
 }
