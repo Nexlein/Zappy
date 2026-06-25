@@ -68,8 +68,8 @@ void GameState::applyEvent(const Event& e)
                 _applyServerUptime(event);
             else if constexpr (std::is_same_v<T, ServerSpawnedEgg>)
                 _applyServerSpawnedEgg(event);
-            else if constexpr (std::is_same_v<T, TeamJoinTime>)
-                _applyTeamJoinTime(event);
+            else if constexpr (std::is_same_v<T, WinDuration>)
+                _applyWinDuration(event);
             else {
                 // Is a UnknownCommand or BadParameters, we can ignore them for now
             }
@@ -259,11 +259,7 @@ void GameState::_applyTimeUnit(const TimeUnit& e) { timeUnit = e.timeUnit; }
 
 void GameState::_applyTimeUnitChange(const TimeUnitChange& e) { timeUnit = e.timeUnit; }
 
-void GameState::_applyGameEnd(const GameEnd& e)
-{
-    winnerTeam = e.winningTeam;
-    gameEndUptime = serverUptimeSeconds;
-}
+void GameState::_applyGameEnd(const GameEnd& e) { winnerTeam = e.winningTeam; }
 
 void GameState::_applyServerUptime(const ServerUptime& e)
 {
@@ -281,12 +277,10 @@ void GameState::_applyServerSpawnedEgg(const ServerSpawnedEgg& e)
                   std::make_unique<ForkBehavior>(settled.visual, static_cast<float>(timeUnit)));
 }
 
-void GameState::_applyTeamJoinTime(const TeamJoinTime& e)
+void GameState::_applyWinDuration(const WinDuration& e)
 {
-    if (e.team == winnerTeam && e.seconds >= 0) {
-        gameEndSeconds = e.seconds;
-        gameEndTicks = e.ticks;
-    }
+    gameDurationSeconds = e.seconds;
+    gameDurationTicks = e.ticks;
 }
 
 void GameState::_pushBehavior(VisualState& visual, std::unique_ptr<IBehavior> b)

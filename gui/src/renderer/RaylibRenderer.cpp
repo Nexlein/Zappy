@@ -363,7 +363,7 @@ void RaylibRenderer::_render2D()
 
     if (_state && !_state->winnerTeam.empty()) {
         _winScreen.setWinner(_state->winnerTeam, _getTeamColor(_state->winnerTeam));
-        _winScreen.setDuration(_state->gameEndSeconds, _state->gameEndTicks, _state->gameEndUptime);
+        _winScreen.setDuration(_state->gameDurationSeconds, _state->gameDurationTicks);
         _winScreen.handleInput();
         _winScreen.draw(_getScaledFontSize(18));
     }

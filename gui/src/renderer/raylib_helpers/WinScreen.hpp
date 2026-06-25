@@ -20,7 +20,7 @@
 ///
 /// Usage:
 ///   winScreen.setWinner(teamName, teamColor);
-///   winScreen.setDuration(teamJoinSeconds, teamJoinTicks, gameEndUptime);
+///   winScreen.setDuration(durationSeconds, durationTicks);
 ///   if (winScreen.handleInput()) { ... }   // optional: blocks sibling input
 ///   winScreen.draw(fontSize);
 ///   if (winScreen.quitRequested()) closeWindow();
@@ -36,11 +36,10 @@ class WinScreen : public IWidget {
     /// @brief Sets the winning team name and highlight color.
     void setWinner(const std::string& team, Color color);
 
-    /// @brief Sets duration data from gtt + stu snapshots.
-    /// @param teamJoinSeconds  Seconds from server start when team first joined (-1 = unknown).
-    /// @param teamJoinTicks    Game-time ticks at first join.
-    /// @param gameEndUptime    Server uptime snapshot taken at seg moment.
-    void setDuration(int teamJoinSeconds, int64_t teamJoinTicks, unsigned int gameEndUptime);
+    /// @brief Sets the win duration (server-authoritative, from gwt).
+    /// @param seconds  Time the winner took to win, in seconds (-1 = not yet received).
+    /// @param ticks    Same in game-time ticks.
+    void setDuration(int seconds, int64_t ticks);
 
     // ── IWidget ────────────────────────────────────────────────────────────
     void draw(int scaledFontSize) const override;
@@ -55,9 +54,8 @@ class WinScreen : public IWidget {
     private:
     std::string _winnerTeam;
     Color _winnerColor = WHITE;
-    int _teamJoinSeconds = -1;
-    int64_t _teamJoinTicks = -1;
-    unsigned int _gameEndUptime = 0;
+    int _durationSeconds = -1;
+    int64_t _durationTicks = -1;
 
     bool _quitRequested = false;
 

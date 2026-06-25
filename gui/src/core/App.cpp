@@ -57,13 +57,10 @@ void App::run()
                 _trySendStu(*socket);
                 pollAndEnqueue(*socket, eventQueue);
 
-                std::string prevWinner = state.winnerTeam;
                 while (auto event = eventQueue.pop()) {
                     state.applyEvent(*event);
                     _audioManager->handleEvent(*event);
                 }
-                if (prevWinner.empty() && !state.winnerTeam.empty())
-                    socket->send("gtt " + state.winnerTeam + "\n");
 
                 renderer->setState(state);
                 renderer->handleInput();

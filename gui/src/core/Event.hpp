@@ -141,11 +141,12 @@ struct GameEnd {
     std::string winningTeam;
 };
 
-// gtt <team> <seconds> <ticks>
-struct TeamJoinTime {
+// gwt <team> <seconds> <ticks>: authoritative time the winning team took to win,
+// snapshotted server-side at the game-over tick. Sent once, right after seg.
+struct WinDuration {
     std::string team;
-    int seconds;    // -1 if the team never joined
-    int64_t ticks;  // game-time ticks at first join (-1 if never joined)
+    int seconds;
+    int64_t ticks;
 };
 
 // smg M
@@ -184,4 +185,4 @@ using Event =
                  PlayerInventory, PlayerExpulsion, PlayerBroadcast, IncantationStart,
                  IncantationEnd, PlayerFork, PlayerResourceDrop, PlayerResourceTake, PlayerDeath,
                  EggNew, EggHatch, EggDeath, TimeUnit, TimeUnitChange, GameEnd, ServerMessage,
-                 UnknownCommand, BadParameters, ServerUptime, ServerSpawnedEgg, TeamJoinTime>;
+                 UnknownCommand, BadParameters, ServerUptime, ServerSpawnedEgg, WinDuration>;

@@ -41,11 +41,10 @@ void WinScreen::setWinner(const std::string& team, Color color)
     _winnerColor = color;
 }
 
-void WinScreen::setDuration(int teamJoinSeconds, int64_t teamJoinTicks, unsigned int gameEndUptime)
+void WinScreen::setDuration(int seconds, int64_t ticks)
 {
-    _teamJoinSeconds = teamJoinSeconds;
-    _teamJoinTicks = teamJoinTicks;
-    _gameEndUptime = gameEndUptime;
+    _durationSeconds = seconds;
+    _durationTicks = ticks;
 }
 
 std::string WinScreen::_formatDuration(unsigned int seconds)
@@ -73,14 +72,12 @@ void WinScreen::_rebuildPanel(int scaledFontSize) const
                           {_winnerColor, ACCENT});
 
     // Duration line
-    if (_teamJoinSeconds < 0 || _gameEndUptime == 0) {
+    if (_durationSeconds < 0) {
         _panel.addLine(I18n::get(I18n::Key::WIN_DURATION_UNKNOWN), ACCENT);
     } else {
-        unsigned int elapsed = _gameEndUptime > static_cast<unsigned int>(_teamJoinSeconds)
-                                   ? _gameEndUptime - static_cast<unsigned int>(_teamJoinSeconds)
-                                   : 0u;
         std::string durLine = std::string(I18n::get(I18n::Key::WIN_DURATION)) +
-                              _formatDuration(elapsed) + " (" + std::to_string(_teamJoinTicks) +
+                              _formatDuration(static_cast<unsigned int>(_durationSeconds)) + " (" +
+                              std::to_string(_durationTicks) +
                               I18n::get(I18n::Key::WIN_TICKS) + ")";
         _panel.addLine(durLine, ACCENT);
     }
