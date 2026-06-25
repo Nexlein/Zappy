@@ -26,7 +26,7 @@ WinScreen::WinScreen()
         .setPadding(18)
         .setMinWidth(PANEL_MIN_W)
         .setTextAlign(TooltipWidget::TextAlign::Center)
-        .setExtraBottomPadding(BTN_H + BTN_MARGIN * 3);
+        .setExtraBottomPadding(BTN_H + BTN_MARGIN * 2);
 
     _quitBtn.setSize(120.0f, 36.0f)
         .setAnchor(ButtonWidget::Anchor::None)  // positioned relative to panel each frame
