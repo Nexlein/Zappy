@@ -6,6 +6,7 @@
 #include <string>
 
 #include "I18n.hpp"
+#include "TextRenderer.hpp"
 
 const std::vector<int> SpeedSlider::STEPS = {1,   2,   3,   4,   5,   10,  15,  20,  25,  30,  35,
                                              40,  45,  50,  55,  60,  65,  70,  75,  80,  85,  90,
@@ -104,8 +105,8 @@ void SpeedSlider::draw(int scaledFontSize) const
 
     std::string label =
         std::string(I18n::get(I18n::Key::SPEED_LABEL)) + std::to_string(STEPS[_index]);
-    DrawText(label.c_str(), static_cast<int>(panelX + 10), static_cast<int>(panelY + 8),
-             scaledFontSize, ACCENT_COLOR);
+    TextRenderer::draw(label, static_cast<int>(panelX + 10), static_cast<int>(panelY + 8),
+                       scaledFontSize, ACCENT_COLOR);
 
     float tx = _trackX(panelX);
     float ty = _trackY(panelY, panelH);

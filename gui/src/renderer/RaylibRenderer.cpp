@@ -11,6 +11,7 @@
 #include "raylib_helpers/GridRenderer.hpp"
 #include "raylib_helpers/I18n.hpp"
 #include "raylib_helpers/RenderingHelper.hpp"
+#include "raylib_helpers/TextRenderer.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
 #include "raylib_helpers/WinScreen.hpp"
 #include "raymath.h"
@@ -25,6 +26,9 @@ void RaylibRenderer::init()
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(800, 600, "Zappy");
     SetTargetFPS(60);
+
+    if (!TextRenderer::loadFont(std::string(FONT_PATH)))
+        TraceLog(LOG_WARNING, "Failed to load font %s, using default", FONT_PATH.data());
 
     if (_savedWindow.valid) {
         SetWindowMonitor(_savedWindow.monitor);
@@ -235,6 +239,7 @@ void RaylibRenderer::shutdown()
     if (_foodModel.meshCount > 0) UnloadModel(_foodModel);
     if (_crystalModel.meshCount > 0) UnloadModel(_crystalModel);
     if (_lightingShader.id > 0) UnloadShader(_lightingShader);
+    TextRenderer::unloadFont();
 
     _savedWindow = {
         .width = GetScreenWidth(),

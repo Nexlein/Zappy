@@ -77,8 +77,8 @@ void WinScreen::_rebuildPanel(int scaledFontSize) const
     } else {
         std::string durLine = std::string(I18n::get(I18n::Key::WIN_DURATION)) +
                               _formatDuration(static_cast<unsigned int>(_durationSeconds)) + " (" +
-                              std::to_string(_durationTicks) +
-                              I18n::get(I18n::Key::WIN_TICKS) + ")";
+                              std::to_string(_durationTicks) + I18n::get(I18n::Key::WIN_TICKS) +
+                              ")";
         _panel.addLine(durLine, ACCENT);
     }
 }
