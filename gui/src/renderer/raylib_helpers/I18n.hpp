@@ -46,6 +46,9 @@ class I18n {
         // Tooltip — egg
         EGG_TEAM,
 
+        // Speed slider
+        SPEED_LABEL,
+
         // Player label (above head)
         PLAYER_HEAD_LEVEL,
 
@@ -106,6 +109,8 @@ class I18n {
 
             "  Team ",  // EGG_TEAM
 
+            "Speed: ",  // SPEED_LABEL
+
             "Level ",  // PLAYER_HEAD_LEVEL
 
             "Food",       // RESOURCE_FOOD
@@ -142,6 +147,8 @@ class I18n {
             "  Inventaire :",     // PLAYER_INVENTORY
 
             "  Équipe ",  // EGG_TEAM
+
+            "Vitesse : ",  // SPEED_LABEL
 
             "Niveau ",  // PLAYER_HEAD_LEVEL
 
