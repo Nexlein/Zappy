@@ -52,19 +52,31 @@ class TestCommands(unittest.TestCase):
     def test_ai_command_local(self):
         self.assertEqual(
             ai_command("./zappy_ai", 8000, "red"),
-            ["./zappy_ai", "-p", "8000", "-n", "red"],
+            ["./zappy_ai", "-p", "8000", "-n", "red", "-v", "ai"],
         )
 
     def test_ai_command_with_host(self):
         self.assertEqual(
             ai_command("./zappy_ai", 8000, "red", host="10.0.0.1"),
-            ["./zappy_ai", "-p", "8000", "-n", "red", "-h", "10.0.0.1"],
+            ["./zappy_ai", "-p", "8000", "-n", "red", "-h", "10.0.0.1", "-v", "ai"],
         )
 
     def test_ai_command_with_strategy(self):
         self.assertEqual(
             ai_command("./zappy_ai", 8000, "red", strategy="uai"),
-            ["./zappy_ai", "-p", "8000", "-n", "red", "-s", "uai"],
+            ["./zappy_ai", "-p", "8000", "-n", "red", "-s", "uai", "-v", "ai"],
+        )
+
+    def test_ai_command_verbose_off(self):
+        self.assertEqual(
+            ai_command("./zappy_ai", 8000, "red", verbose=None),
+            ["./zappy_ai", "-p", "8000", "-n", "red"],
+        )
+
+    def test_ai_command_verbose_level(self):
+        self.assertEqual(
+            ai_command("./zappy_ai", 8000, "red", verbose="both"),
+            ["./zappy_ai", "-p", "8000", "-n", "red", "-v", "both"],
         )
 
     def test_gui_command_local(self):
