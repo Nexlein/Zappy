@@ -77,7 +77,9 @@ class ZappyManager:
     def team_names(self, game: Game) -> list[str]:
         return [team.name for team in game.profile.teams]
 
-    def default_team(self, game: Game, near: ManagedProcess | None = None) -> str | None:
+    def default_team(
+        self, game: Game, near: ManagedProcess | None = None
+    ) -> str | None:
         """Best team to preselect: the one ``near`` belongs to if it is an AI,
         else the profile's first team (None if the profile has no teams)."""
         return self._team_for(game, near)

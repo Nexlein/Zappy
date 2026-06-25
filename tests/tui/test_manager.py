@@ -96,7 +96,9 @@ class TestManager(unittest.TestCase):
     def test_team_names_and_strategy_of(self):
         with Supervisor() as sup:
             mgr = self._manager(sup)
-            game = mgr.launch("g", _profile(False, (Team("red", 0, "queen"), Team("blue", 0))))
+            game = mgr.launch(
+                "g", _profile(False, (Team("red", 0, "queen"), Team("blue", 0)))
+            )
             self.assertEqual(mgr.team_names(game), ["red", "blue"])
             self.assertEqual(mgr.strategy_of(game, "red"), "queen")
             self.assertIsNone(mgr.strategy_of(game, "blue"))
