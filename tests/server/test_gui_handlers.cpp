@@ -280,7 +280,7 @@ TEST_F(GuiHandlersTest, SstRescalesShrinksPendingDelays)
     close(aiFd);
 }
 
-// --- gtt / team join tracking ---
+// --- team join tracking ---
 
 TEST_F(GuiHandlersTest, TeamJoinStampedOnFirstAiJoin)
 {
@@ -289,23 +289,6 @@ TEST_F(GuiHandlersTest, TeamJoinStampedOnFirstAiJoin)
     auto [fd, id] = connectAsAi("TeamA");
     EXPECT_TRUE(dispatcher->teamJoin("TeamA").has_value());
     EXPECT_FALSE(dispatcher->teamJoin("TeamB").has_value());
-    close(fd);
-}
-
-TEST_F(GuiHandlersTest, GttKnownTeamQueuesResponse)
-{
-    connectAsAi("TeamA");
-    auto [fd, id] = connectAsGui();
-    dispatcher->dispatch(id, "gtt TeamA");
-    EXPECT_TRUE(cm->getConnection(id).hasPendingWrite());
-    close(fd);
-}
-
-TEST_F(GuiHandlersTest, GttUnknownTeamStillQueuesResponse)
-{
-    auto [fd, id] = connectAsGui();
-    dispatcher->dispatch(id, "gtt Ghost");  // never joined -> sentinel reply, not suc
-    EXPECT_TRUE(cm->getConnection(id).hasPendingWrite());
     close(fd);
 }
 
