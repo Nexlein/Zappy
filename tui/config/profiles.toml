@@ -26,5 +26,5 @@ auto_gui = true
 
 [[profiles.solo.teams]]
 name = "loners"
-ai = 1
+ai = 0
 strategy = "queen"
