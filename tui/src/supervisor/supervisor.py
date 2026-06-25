@@ -41,6 +41,16 @@ class Supervisor:
             reaped.append(entry.process)
         return reaped
 
+    def stop(self, process: ManagedProcess) -> None:
+        """Stop a single tracked child and release its port. The entry is kept
+        (marked dead) so the UI can still show it. Idempotent; a process we
+        don't track is ignored."""
+        for entry in self._entries:
+            if entry.process is process:
+                entry.process.stop()
+                self._release(entry)
+                return
+
     def shutdown(self) -> None:
         """Stop every child and release its port. Idempotent."""
         for entry in self._entries:
