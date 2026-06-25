@@ -12,6 +12,7 @@
  */
 
 #include <arpa/inet.h>
+#include <gtest/gtest.h>
 #include <netinet/in.h>
 #include <signal.h>
 #include <sys/socket.h>
@@ -20,8 +21,6 @@
 
 #include <cstring>
 #include <string>
-
-#include <gtest/gtest.h>
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -39,16 +38,21 @@ static pid_t spawnServer()
     if (pid != 0) return pid;  // parent returns immediately with child PID
 
     // --- child: replace this process with the server binary ---
-    char* argv[] = {
-        const_cast<char*>("./zappy_server"),
-        const_cast<char*>("-p"), const_cast<char*>("14400"),
-        const_cast<char*>("-x"), const_cast<char*>("10"),
-        const_cast<char*>("-y"), const_cast<char*>("10"),
-        const_cast<char*>("-n"), const_cast<char*>("TeamA"), const_cast<char*>("TeamB"),
-        const_cast<char*>("-c"), const_cast<char*>("5"),
-        const_cast<char*>("-f"), const_cast<char*>("100"),
-        nullptr
-    };
+    char* argv[] = {const_cast<char*>("./zappy_server"),
+                    const_cast<char*>("-p"),
+                    const_cast<char*>("14400"),
+                    const_cast<char*>("-x"),
+                    const_cast<char*>("10"),
+                    const_cast<char*>("-y"),
+                    const_cast<char*>("10"),
+                    const_cast<char*>("-n"),
+                    const_cast<char*>("TeamA"),
+                    const_cast<char*>("TeamB"),
+                    const_cast<char*>("-c"),
+                    const_cast<char*>("5"),
+                    const_cast<char*>("-f"),
+                    const_cast<char*>("100"),
+                    nullptr};
     execv("./zappy_server", argv);
     // execv only returns on error
     _exit(1);

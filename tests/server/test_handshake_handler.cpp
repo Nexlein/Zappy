@@ -1,9 +1,8 @@
 #include <arpa/inet.h>
+#include <gtest/gtest.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
-
-#include <gtest/gtest.h>
 
 #include "core/Args.hpp"
 #include "core/GameClock.hpp"
@@ -64,8 +63,7 @@ struct HandshakeFixture : public ::testing::Test {
         notifier = new GuiNotifier(*cm);
         world->addWorldObserver(notifier);
         clock = new GameClock(config.freq);
-        handler = new HandshakeHandler(*cm, *world, *notifier, config, *clock,
-                                       [](int, int) {});
+        handler = new HandshakeHandler(*cm, *world, *notifier, config, *clock, [](int, int) {});
     }
 
     void TearDown() override
@@ -128,8 +126,8 @@ TEST_F(HandshakeTest, GraphicAddsToGuiNotifier)
 
     notifier->broadcast("ping\n");
 
-    EXPECT_TRUE(cm->getConnection(id).hasPendingWrite());   // GUI gets it
-    EXPECT_FALSE(cm->getConnection(id2).hasPendingWrite()); // non-GUI doesn't
+    EXPECT_TRUE(cm->getConnection(id).hasPendingWrite());    // GUI gets it
+    EXPECT_FALSE(cm->getConnection(id2).hasPendingWrite());  // non-GUI doesn't
 
     close(clientFd);
     close(fd2);
@@ -250,7 +248,8 @@ TEST_F(HandshakeTest, AiPlayerSpawnsOnEggWhenAvailable)
 {
     // Drain the eggs spawned in SetUp so this test controls the pool exactly:
     // one egg available for TeamA at a known position.
-    while (world->popEggForTeam("TeamA")) {}
+    while (world->popEggForTeam("TeamA")) {
+    }
     int dummyId = world->addPlayer(999, "TeamA", 3, 7, Orientation::N);
     int eggId = world->addEgg(dummyId);
     (void)eggId;

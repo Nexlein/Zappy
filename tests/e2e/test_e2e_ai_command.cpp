@@ -7,6 +7,7 @@
  */
 
 #include <arpa/inet.h>
+#include <gtest/gtest.h>
 #include <netinet/in.h>
 #include <signal.h>
 #include <sys/socket.h>
@@ -14,8 +15,6 @@
 #include <unistd.h>
 
 #include <string>
-
-#include <gtest/gtest.h>
 
 static constexpr int E2E_PORT = 14401;
 static constexpr int CONNECT_RETRIES = 20;
@@ -30,16 +29,21 @@ static pid_t spawnServer()
     pid_t pid = fork();
     if (pid != 0) return pid;
 
-    char* argv[] = {
-        const_cast<char*>("./zappy_server"),
-        const_cast<char*>("-p"), const_cast<char*>("14401"),
-        const_cast<char*>("-x"), const_cast<char*>("10"),
-        const_cast<char*>("-y"), const_cast<char*>("10"),
-        const_cast<char*>("-n"), const_cast<char*>("TeamA"), const_cast<char*>("TeamB"),
-        const_cast<char*>("-c"), const_cast<char*>("5"),
-        const_cast<char*>("-f"), const_cast<char*>("10000"),  // HIGH_FREQ: delays ~= 0
-        nullptr
-    };
+    char* argv[] = {const_cast<char*>("./zappy_server"),
+                    const_cast<char*>("-p"),
+                    const_cast<char*>("14401"),
+                    const_cast<char*>("-x"),
+                    const_cast<char*>("10"),
+                    const_cast<char*>("-y"),
+                    const_cast<char*>("10"),
+                    const_cast<char*>("-n"),
+                    const_cast<char*>("TeamA"),
+                    const_cast<char*>("TeamB"),
+                    const_cast<char*>("-c"),
+                    const_cast<char*>("5"),
+                    const_cast<char*>("-f"),
+                    const_cast<char*>("10000"),  // HIGH_FREQ: delays ~= 0
+                    nullptr};
     execv("./zappy_server", argv);
     _exit(1);
 }
@@ -98,10 +102,10 @@ static int connectAsAi()
 {
     int fd = connectWithRetry();
     if (fd < 0) return -1;
-    readLine(fd);           // consume "WELCOME"
+    readLine(fd);  // consume "WELCOME"
     sendLine(fd, "TeamA");
-    readLine(fd);           // consume slots count
-    readLine(fd);           // consume map size
+    readLine(fd);  // consume slots count
+    readLine(fd);  // consume map size
     return fd;
 }
 
@@ -114,7 +118,10 @@ class E2EAiCommand : public ::testing::Test {
     pid_t serverPid = -1;
 
     void SetUp() override { serverPid = spawnServer(); }
-    void TearDown() override { if (serverPid > 0) stopServer(serverPid); }
+    void TearDown() override
+    {
+        if (serverPid > 0) stopServer(serverPid);
+    }
 };
 
 // ---------------------------------------------------------------------------

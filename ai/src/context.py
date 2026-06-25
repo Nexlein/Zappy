@@ -113,6 +113,7 @@ class DroneContext:
     target_forks: int = -1
 
     def update_roster(self) -> None:
+        """Process broadcasts to update teammate state and cull inactive members."""
         for bcst in self.broadcasts:
             if bcst.content.drone_id and bcst.content.drone_id != self.drone_id:
                 info = self.ally_roster.get(bcst.content.drone_id)

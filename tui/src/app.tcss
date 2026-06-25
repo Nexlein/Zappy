@@ -1,0 +1,85 @@
+#sidebar {
+    width: 35%;
+}
+
+ProfileList, ProcessList {
+    height: 1fr;
+    border: round $primary;
+    padding: 0 1;
+}
+
+#main {
+    width: 1fr;
+}
+
+DetailPanel {
+    height: auto;
+    min-height: 9;
+    border: round $primary;
+    padding: 0 1;
+}
+
+LogPanel {
+    height: 1fr;
+    border: round $primary;
+    padding: 0 1;
+}
+
+QuitScreen {
+    align: center middle;
+}
+
+#quit-box {
+    width: 48;
+    height: auto;
+    border: thick $error;
+    background: $surface;
+    padding: 1 2;
+}
+
+#quit-buttons {
+    height: auto;
+    align: center middle;
+    margin-top: 1;
+}
+
+#quit-buttons Button {
+    margin: 0 2;
+}
+
+/* default Button:focus is "bold reverse"; the reverse flips the label to a
+   white background. keep bold for the focus cue, drop the reverse. */
+#quit-buttons Button:focus {
+    text-style: bold;
+}
+
+AttachAiScreen {
+    align: center middle;
+}
+
+#attach-box {
+    width: 48;
+    height: auto;
+    border: thick $primary;
+    background: $surface;
+    padding: 1 2;
+}
+
+#attach-box .attach-heading {
+    margin-top: 1;
+    text-style: bold;
+}
+
+#attach-buttons {
+    height: auto;
+    align: center middle;
+    margin-top: 1;
+}
+
+#attach-buttons Button {
+    margin: 0 2;
+}
+
+#attach-buttons Button:focus {
+    text-style: bold;
+}

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "renderer/raylib_helpers/TileSlotMap.hpp"
 #include "core/Resources.hpp"
+#include "renderer/raylib_helpers/TileSlotMap.hpp"
 
 // ---- slotOffset ----
 
@@ -20,9 +20,8 @@ TEST(TileSlotMap, SlotOffsetAllIndices)
 TEST(TileSlotMap, SlotOffsetDistinct)
 {
     // All 8 slots must have distinct (dx, dz) pairs
-    std::vector<std::pair<float,float>> offsets;
-    for (int i = 0; i < 8; i++)
-        offsets.push_back(TileSlotMap::slotOffset(i));
+    std::vector<std::pair<float, float>> offsets;
+    for (int i = 0; i < 8; i++) offsets.push_back(TileSlotMap::slotOffset(i));
     for (int i = 0; i < 8; i++)
         for (int j = i + 1; j < 8; j++)
             EXPECT_NE(offsets[i], offsets[j]) << "slots " << i << " and " << j << " collide";
@@ -38,8 +37,7 @@ TEST(TileSlotMap, ResourceSlotAssignedOnAppearance)
 
     auto slots = map.updateResourceSlots(0, 0, res);
     EXPECT_GE(slots[0], 0);
-    for (int i = 1; i < 7; i++)
-        EXPECT_EQ(slots[i], -1);
+    for (int i = 1; i < 7; i++) EXPECT_EQ(slots[i], -1);
 }
 
 TEST(TileSlotMap, ResourceSlotStableAcrossFrames)
@@ -74,7 +72,8 @@ TEST(TileSlotMap, ResourceSlotsDistinctPerType)
     auto slots = map.updateResourceSlots(0, 0, res);
     for (int i = 0; i < 7; i++)
         for (int j = i + 1; j < 7; j++)
-            EXPECT_NE(slots[i], slots[j]) << "resource types " << i << " and " << j << " share slot";
+            EXPECT_NE(slots[i], slots[j])
+                << "resource types " << i << " and " << j << " share slot";
 }
 
 // ---- syncEggs / eggSlot ----

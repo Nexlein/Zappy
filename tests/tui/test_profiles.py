@@ -122,6 +122,54 @@ class TestProfiles(unittest.TestCase):
         with self.assertRaisesRegex(ProfileError, "exceeds clients"):
             load_profiles(path)
 
+    def test_strategy_optional_defaults_none(self):
+        path = self.write(
+            """
+            [profiles.solo]
+            width = 10
+            height = 10
+            clients = 4
+            freq = 50
+            [[profiles.solo.teams]]
+            name = "a"
+            ai = 1
+            """
+        )
+        self.assertIsNone(load_profiles(path)["solo"].teams[0].strategy)
+
+    def test_strategy_valid(self):
+        path = self.write(
+            """
+            [profiles.solo]
+            width = 10
+            height = 10
+            clients = 4
+            freq = 50
+            [[profiles.solo.teams]]
+            name = "a"
+            ai = 1
+            strategy = "uai"
+            """
+        )
+        self.assertEqual(load_profiles(path)["solo"].teams[0].strategy, "uai")
+
+    def test_strategy_invalid_rejected(self):
+        path = self.write(
+            """
+            [profiles.bad]
+            width = 10
+            height = 10
+            clients = 4
+            freq = 50
+            [[profiles.bad.teams]]
+            name = "a"
+            ai = 1
+            strategy = "bogus"
+            """
+        )
+        with self.assertRaisesRegex(ProfileError, "'strategy' must be one of"):
+            load_profiles(path)
+
     def test_duplicate_team_names(self):
         path = self.write(
             """
