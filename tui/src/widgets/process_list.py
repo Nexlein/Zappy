@@ -3,31 +3,51 @@ from textual.widgets import OptionList
 from textual.widgets.option_list import Option
 
 from supervisor.launcher import Launch
+from supervisor.manager import Game
 from supervisor.process import ManagedProcess
 
 
 class ProcessList(OptionList):
-    """Left-bottom pane: running children grouped by the game that launched
-    them. Each game is a disabled header row (skipped by the cursor) followed
-    by its processes; a row→process map turns the highlighted index back into
-    a process (or None for a header)."""
+    """Live children grouped by game. Only alive processes show; dead ones
+    vanish. Headers are disabled rows; a row→process map decodes the cursor."""
 
     def __init__(self) -> None:
         super().__init__()
         self._rows: list[ManagedProcess | None] = []
+        self._signature: tuple | None = None
 
     def on_mount(self) -> None:
         self.border_title = "Processes"
 
-    def show(self, games: list[tuple[str, Launch]]) -> None:
+    def show(self, games: list[Game]) -> None:
+        # Rebuilding resets scroll, so only do it when the rendered set changed.
+        signature = self._signature_of(games)
+        if signature == self._signature:
+            return
+        self._signature = signature
+
         keep = self.highlighted
+        scroll_y = self.scroll_offset.y
         self.clear_options()
         self._rows = []
-        for name, launch in games:
-            self._add(Text(f"{name}  (port {launch.port})", style="bold"), None, True)
-            for process in self._members(launch):
-                self._add(self._label(process), process, False)
+        for game in games:
+            alive = self._members(game.launch)
+            if not alive:
+                continue
+            header = Text(f"{game.name}  (port {game.launch.port})", style="bold")
+            self._add(header, None, True)
+            for process in alive:
+                self._add(Text(f"  {process.name}"), process, False)
         self.highlighted = self._keep_or_first_process(keep)
+        self.scroll_to(y=scroll_y, animate=False)
+
+    @staticmethod
+    def _signature_of(games: list[Game]) -> tuple:
+        return tuple(
+            (game.name, game.launch.port, p.name)
+            for game in games
+            for p in ProcessList._members(game.launch)
+        )
 
     def _keep_or_first_process(self, keep: int | None) -> int | None:
         """Hold the previous selection if it still points at a process,
@@ -49,14 +69,5 @@ class ProcessList(OptionList):
 
     @staticmethod
     def _members(launch: Launch) -> list[ManagedProcess]:
-        members = [launch.server, *launch.ais]
-        if launch.gui is not None:
-            members.append(launch.gui)
-        return members
-
-    @staticmethod
-    def _label(process: ManagedProcess) -> Text:
-        alive = process.is_alive()
-        text = Text(f"  {process.name:12} ")
-        text.append("alive" if alive else "dead", style="green" if alive else "red")
-        return text
+        members = [launch.server, *launch.ais, *launch.guis]
+        return [p for p in members if p.is_alive()]

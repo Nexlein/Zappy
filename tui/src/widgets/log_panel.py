@@ -2,6 +2,11 @@ from textual.widgets import RichLog
 
 from supervisor.process import ManagedProcess
 
+# Cap lines written to the widget per poll. A flooding child can produce
+# thousands of lines a second; writing them all synchronously would block the
+# event loop (UI freezes, Ctrl-C dies). We only ever show the latest few.
+_MAX_WRITE_PER_POLL = 200
+
 
 class LogPanel(RichLog):
     """Right-bottom pane: tails the output of one selected process. ``follow``
@@ -23,7 +28,7 @@ class LogPanel(RichLog):
         if not lines:
             self.write("(no output on stdout yet)")
             return
-        for line in lines:
+        for line in lines[-_MAX_WRITE_PER_POLL:]:
             self.write(line)
 
     def clear_follow(self) -> None:
@@ -37,7 +42,13 @@ class LogPanel(RichLog):
             return
         seq, lines = self._process.log_snapshot()
         new = seq - self._seq
-        if new > 0:
-            for line in lines[-new:]:  # clamp handles ring-buffer drops
-                self.write(line)
-            self._seq = seq
+        if new <= 0:
+            return
+        self._seq = seq
+        tail = lines[-new:] if new <= len(lines) else lines  # ring-buffer drops
+        if len(tail) > _MAX_WRITE_PER_POLL:
+            skipped = len(tail) - _MAX_WRITE_PER_POLL
+            tail = tail[-_MAX_WRITE_PER_POLL:]
+            self.write(f"… {skipped} line(s) skipped (flooding)")
+        for line in tail:
+            self.write(line)

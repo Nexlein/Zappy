@@ -13,6 +13,7 @@ import unittest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../tui/src"))
 
 from supervisor.ports import PortAllocator
+from supervisor.process import ManagedProcess
 from supervisor.supervisor import Supervisor
 
 
@@ -82,6 +83,32 @@ class TestSupervisor(unittest.TestCase):
             _wait_dead(p)
             self.assertEqual(sup.reap(), [p])
             self.assertEqual(sup.reap(), [])  # already reaped
+
+    def test_stop_kills_one_keeps_others(self):
+        with Supervisor() as sup:
+            a = sup.spawn("a", ["sleep", "30"])
+            b = sup.spawn("b", ["sleep", "30"])
+            sup.stop(a)
+            self.assertFalse(a.is_alive())
+            self.assertTrue(b.is_alive())
+            # entry kept so the UI can still show the dead process
+            self.assertEqual(sup.processes, [a, b])
+
+    def test_stop_releases_port(self):
+        ports = PortAllocator(8775, 8776)  # single-port range
+        with Supervisor(ports) as sup:
+            port = sup.ports.allocate()
+            p = sup.spawn("server", ["sleep", "30"], port=port)
+            sup.stop(p)
+            self.assertEqual(ports.allocate(), port)
+
+    def test_stop_idempotent_and_ignores_untracked(self):
+        with Supervisor() as sup:
+            p = sup.spawn("a", ["sleep", "30"])
+            sup.stop(p)
+            sup.stop(p)  # second call must not raise
+            other = ManagedProcess("x", ["sleep", "30"])
+            sup.stop(other)  # untracked: ignored, no raise
 
     def test_reap_frees_port_for_reuse(self):
         ports = PortAllocator(8770, 8771)  # single-port range
