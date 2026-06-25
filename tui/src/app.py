@@ -26,7 +26,8 @@ class ZappyTUI(App):
         ("a", "attach_ai", "Attach AI"),
         ("g", "attach_gui", "Attach GUI"),
         ("k", "kill_process", "Kill"),
-        ("s", "stop_game", "Stop game"),
+        ("s", "launch_server", "Server only"),
+        ("S", "stop_game", "Stop game"),
     ]
 
     def __init__(
@@ -204,6 +205,26 @@ class ZappyTUI(App):
             return
         self.notify(f"launched '{name}' on port {game.launch.port}")
         self._refresh_processes()
+
+    def action_launch_server(self) -> None:
+        """Boot the highlighted profile's server (and GUI) with no AIs, so no
+        team has joined yet — attach AIs later to control join timing."""
+        name = self._highlighted_profile()
+        if name is None:
+            return
+        try:
+            game = self._manager.launch_server(name, self._profiles[name])
+        except OSError as e:
+            self.notify(f"launch failed: {e}", severity="error")
+            return
+        self.notify(f"launched server '{name}' on port {game.launch.port}")
+        self._refresh_processes()
+
+    def _highlighted_profile(self) -> str | None:
+        plist = self.query_one(ProfileList)
+        if plist.highlighted is None:
+            return None
+        return plist.get_option_at_index(plist.highlighted).id
 
     def _tick(self) -> None:
         self._manager.reap()
