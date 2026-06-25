@@ -1,3 +1,4 @@
+#define RLIGHTS_IMPLEMENTATION
 #include "RaylibRenderer.hpp"
 
 #include <algorithm>
@@ -60,6 +61,26 @@ void RaylibRenderer::init()
     SetTraceLogLevel(LOG_WARNING);
     if (_foodModel.meshCount == 0)
         throw std::runtime_error("Failed to load food model: " + std::string(FOOD_MODEL_PATH));
+
+    SetTraceLogLevel(LOG_ERROR);
+    _crystalModel = LoadModel(CRYSTAL_MODEL_PATH.data());
+    SetTraceLogLevel(LOG_WARNING);
+    if (_crystalModel.meshCount == 0)
+        throw std::runtime_error("Failed to load crystal model: " + std::string(CRYSTAL_MODEL_PATH));
+
+    _lightingShader = LoadShader("gui/assets/shaders/lighting.vs", "gui/assets/shaders/lighting.fs");
+    _shaderViewPosLoc = GetShaderLocation(_lightingShader, "viewPos");
+
+    for (int i = 0; i < _foodModel.materialCount; i++)
+        _foodModel.materials[i].shader = _lightingShader;
+    for (int i = 0; i < _crystalModel.materialCount; i++)
+        _crystalModel.materials[i].shader = _lightingShader;
+
+    _sun = CreateLight(LIGHT_DIRECTIONAL, {0.0f, 1000.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, WHITE, _lightingShader);
+
+    // Boost ambient so unlit faces aren't black
+    float ambient[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+    SetShaderValue(_lightingShader, GetShaderLocation(_lightingShader, "ambient"), ambient, SHADER_UNIFORM_VEC4);
 }
 
 void RaylibRenderer::render()
@@ -67,6 +88,10 @@ void RaylibRenderer::render()
     _initTeamColors();
     _updateSelection(GetFrameTime());
     _updateCamera(_state->world.width, _state->world.height);
+
+    // Update shader camera position for specular lighting
+    float camPos[3] = {_camera.position.x, _camera.position.y, _camera.position.z};
+    SetShaderValue(_lightingShader, _shaderViewPosLoc, camPos, SHADER_UNIFORM_VEC3);
 
     BeginDrawing();
     ClearBackground(RAYWHITE);
@@ -176,6 +201,8 @@ void RaylibRenderer::shutdown()
     if (_playerModel.meshCount > 0) UnloadModel(_playerModel);
     if (_eggModel.meshCount > 0) UnloadModel(_eggModel);
     if (_foodModel.meshCount > 0) UnloadModel(_foodModel);
+    if (_crystalModel.meshCount > 0) UnloadModel(_crystalModel);
+    if (_lightingShader.id > 0) UnloadShader(_lightingShader);
 
     _savedWindow = {
         .width = GetScreenWidth(),
@@ -192,6 +219,7 @@ void RaylibRenderer::shutdown()
 void RaylibRenderer::_render3D()
 {
     GridRenderer::drawTiles(_state->world.width, _state->world.height, TILE_SIZE);
+
 
     for (auto& [id, player] : _state->world.players) {
         player.visual.update(GetFrameTime());
@@ -231,11 +259,15 @@ void RaylibRenderer::_render3D()
         for (int y = 0; y < _state->world.height; y++) {
             const Resources& res = _state->world.at(x, y);
             auto slotIndices = _tileSlotMap.updateResourceSlots(x, y, res);
+            std::array<float, 7> rotations;
+            for (int i = 0; i < 7; i++)
+                rotations[i] = _tileSlotMap.resourceRotation(x, y, i);
             EntityRenderer::drawResources(
-                res, slotIndices,
+                res, slotIndices, rotations,
                 RenderingHelper::tileToWorld(x, y, _state->world.width, _state->world.height,
                                              TILE_SIZE),
-                TILE_SIZE, _foodModel, FOOD_MODEL_SIZE, RESOURCE_SPHERE_BASE_SIZE);
+                TILE_SIZE, _foodModel, FOOD_MODEL_SIZE, _crystalModel,
+                CRYSTAL_MODEL_SIZE, RESOURCE_SPHERE_BASE_SIZE);
         }
     }
 

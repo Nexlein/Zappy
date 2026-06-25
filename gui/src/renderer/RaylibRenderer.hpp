@@ -7,6 +7,7 @@
 
 #include "ARenderer.hpp"
 #include "raylib.h"
+#include "../../external/rlights.h"
 #include "raylib_helpers/SelectionFinder.hpp"
 #include "raylib_helpers/SpeedSlider.hpp"
 #include "raylib_helpers/TileSlotMap.hpp"
@@ -29,9 +30,10 @@ class RaylibRenderer : public ARenderer {
     std::optional<int> getPendingSpeedChange() override;
 
     private:
-    static constexpr std::string_view PLAYER_MODEL_PATH = "gui/assets/rimuru.glb";
-    static constexpr std::string_view EGG_MODEL_PATH = "gui/assets/egg.glb";
-    static constexpr std::string_view FOOD_MODEL_PATH = "gui/assets/apple.glb";
+    static constexpr std::string_view PLAYER_MODEL_PATH = "gui/assets/models/rimuru.glb";
+    static constexpr std::string_view EGG_MODEL_PATH = "gui/assets/models/egg.glb";
+    static constexpr std::string_view FOOD_MODEL_PATH = "gui/assets/models/apple.glb";
+    static constexpr std::string_view CRYSTAL_MODEL_PATH = "gui/assets/models/crystal.glb";
 
     static constexpr float CAMERA_MOVE_SPEED = 2.0f;
     static constexpr float FREECAM_MOVE_SPEED = 5.0f;
@@ -39,6 +41,7 @@ class RaylibRenderer : public ARenderer {
     static constexpr float PLAYER_MODEL_SIZE = 0.25f;
     static constexpr float EGG_MODEL_SIZE = 0.15f;
     static constexpr float FOOD_MODEL_SIZE = 1.0f;
+    static constexpr float CRYSTAL_MODEL_SIZE = 2.0f;
     static constexpr float RESOURCE_SPHERE_BASE_SIZE = 0.05f;
     static constexpr float TILE_SIZE = 1.0f;
     static constexpr float SELECTION_LINE_THICKNESS = 5.0f;
@@ -62,6 +65,13 @@ class RaylibRenderer : public ARenderer {
     Color _eggModelBaseMats[2] = {};
 
     Model _foodModel = {};
+
+    Model _crystalModel = {};
+
+    Shader _lightingShader = {};
+    Light _sun = {};
+    int _shaderViewPosLoc = -1;
+
 
     std::unordered_map<std::string, Color> _teamColors;
 
