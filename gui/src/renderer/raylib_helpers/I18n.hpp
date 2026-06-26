@@ -50,6 +50,9 @@ class I18n {
         PANEL_PLAYER_LIST,
         PANEL_LVL,
 
+        // Entity tooltip buttons
+        BTN_FOLLOW,
+
         // Speed slider
         SPEED_LABEL,
 
@@ -124,6 +127,8 @@ class I18n {
             "Player List",  // PANEL_PLAYER_LIST
             "Lvl",          // PANEL_LVL
 
+            "Follow",  // BTN_FOLLOW
+
             "Speed: ",  // SPEED_LABEL
 
             "Level ",  // PLAYER_HEAD_LEVEL
@@ -172,6 +177,8 @@ class I18n {
 
             "Liste des joueurs",  // PANEL_PLAYER_LIST
             "Niv.",               // PANEL_LVL
+
+            "Suivre",  // BTN_FOLLOW
 
             "Vitesse : ",  // SPEED_LABEL
 
