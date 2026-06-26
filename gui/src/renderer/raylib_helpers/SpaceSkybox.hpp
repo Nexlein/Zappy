@@ -22,4 +22,5 @@ class SpaceSkybox : public IBackground {
 
     void _generateNightTexture();
     void _generateDayTexture();
+    Mesh _generateCustomSphere(float radius, int rings, int slices);
 };
