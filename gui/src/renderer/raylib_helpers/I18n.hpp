@@ -180,8 +180,8 @@ class I18n {
             "Liste des joueurs",  // PANEL_PLAYER_LIST
             "Niv.",               // PANEL_LVL
 
-            "Suivre",        // BTN_FOLLOW
-            "Arrêter",       // BTN_STOP_FOLLOW
+            "Suivre",   // BTN_FOLLOW
+            "Arrêter",  // BTN_STOP_FOLLOW
 
             "Vitesse : ",  // SPEED_LABEL
 

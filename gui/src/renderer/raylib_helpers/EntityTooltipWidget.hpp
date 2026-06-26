@@ -24,7 +24,8 @@ class EntityTooltipWidget : public IWidget {
     void setSelection(const SelectionFinder::Selection& sel);
     void setWorld(const WorldState* world);
     void setTeamColorFunc(std::function<Color(const std::string&)> func);
-    /// @brief Tells the widget whether follow mode is currently active (affects button label/color).
+    /// @brief Tells the widget whether follow mode is currently active (affects button
+    /// label/color).
     void setFollowActive(bool active);
 
     /// @brief Returns and clears the pending follow target player id.

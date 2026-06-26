@@ -35,9 +35,8 @@ bool PlayerPanel::handleInput()
     _playerButtons.clear();
     for (const Player* p : players) {
         Color tColor = _colorFunc ? _colorFunc(p->team) : WHITE;
-        std::string txt = "P" + std::to_string(p->id) + " (" +
-                          I18n::get(I18n::Key::PANEL_LVL) + " " +
-                          std::to_string(p->level) + ") - " + p->team;
+        std::string txt = "P" + std::to_string(p->id) + " (" + I18n::get(I18n::Key::PANEL_LVL) +
+                          " " + std::to_string(p->level) + ") - " + p->team;
 
         ButtonWidget btn;
         btn.setLabel(txt)

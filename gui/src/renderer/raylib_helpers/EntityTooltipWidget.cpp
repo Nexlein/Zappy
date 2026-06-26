@@ -139,7 +139,7 @@ void EntityTooltipWidget::_positionButton() const
     // Grow width to fit whichever label is longer, with horizontal padding.
     // Measure both so the button doesn't resize when toggling between the two labels.
     int mFollow = TextRenderer::measure(I18n::get(I18n::Key::BTN_FOLLOW), _scaledFontSize);
-    int mStop   = TextRenderer::measure(I18n::get(I18n::Key::BTN_STOP_FOLLOW), _scaledFontSize);
+    int mStop = TextRenderer::measure(I18n::get(I18n::Key::BTN_STOP_FOLLOW), _scaledFontSize);
     _btnW = std::max(BTN_W, static_cast<float>(std::max(mFollow, mStop)) + 24.0f);
 
     float btnX = tb.x + (tb.width - _btnW) / 2.0f;
@@ -162,8 +162,7 @@ bool EntityTooltipWidget::handleInput()
     _followBtn.handleInput();
     _btnHovered = CheckCollisionPointRec(GetMousePosition(), _followBtn.getBounds());
 
-    if (_followBtn.wasClicked())
-        _pendingFollowId = _followActive ? -2 : _selection.id;
+    if (_followBtn.wasClicked()) _pendingFollowId = _followActive ? -2 : _selection.id;
 
     return false;  // non-blocking: raycasts still fire (caller checks isFollowButtonHovered())
 }

@@ -97,7 +97,8 @@ void RaylibRenderer::render()
     _cam.update(GetFrameTime(), _state->world.width, _state->world.height, &_state->world);
 
     // Update shader camera position for specular lighting
-    float camPos[3] = {_cam.camera().position.x, _cam.camera().position.y, _cam.camera().position.z};
+    float camPos[3] = {_cam.camera().position.x, _cam.camera().position.y,
+                       _cam.camera().position.z};
     SetShaderValue(_lightingShader, _shaderViewPosLoc, camPos, SHADER_UNIFORM_VEC3);
 
     BeginDrawing();

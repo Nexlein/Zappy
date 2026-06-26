@@ -32,8 +32,8 @@ bool TextRenderer::loadFont(const std::string& path)
     if (_loaded) unloadFont();
 
     static auto codepoints = _buildCodepoints();
-    _font = LoadFontEx(path.c_str(), BASE_SIZE, codepoints.data(),
-                       static_cast<int>(codepoints.size()));
+    _font =
+        LoadFontEx(path.c_str(), BASE_SIZE, codepoints.data(), static_cast<int>(codepoints.size()));
     if (_font.texture.id == 0) return false;
 
     SetTextureFilter(_font.texture, TEXTURE_FILTER_BILINEAR);  // smooth when scaled
