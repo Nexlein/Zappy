@@ -64,7 +64,15 @@ mkdir -p "$RUNDIR"
 WORK=$(mktemp -d)
 LOCK="$WORK/lock"           # flock target for shared-state updates
 STATE="$WORK/state"         # "runs wins best_ticks best_run" (best_ticks '-' = unset)
-printf '0 0 - 0\n' >"$STATE"
+# Seed the bar-to-beat from the existing best.log so a slower session can NEVER
+# clobber the all-time best — we only overwrite it when a run truly beats it.
+# best_run=0 marks a seeded (prior-session) best.
+seed_best='-'
+if [ -f "$BEST_LOG" ]; then
+    seed_best=$(sed -n 's/.*took: [0-9]* s (\([0-9]*\) ticks).*/\1/p' "$BEST_LOG" | head -1)
+    [ -z "$seed_best" ] && seed_best='-'
+fi
+printf '0 0 %s 0\n' "$seed_best" >"$STATE"
 : >"$LOCK"
 # Per-worker live status files (phase elapsed last_ticks last_secs) start idle.
 for ((w = 1; w <= WORKERS; w++)); do printf 'idle 0 - -\n' >"$WORK/w$w"; done
@@ -127,9 +135,11 @@ render_board() {
     read -r cr cw cbt cbr <"$STATE" 2>/dev/null || return 0
     [ "$PAINTED" -eq 1 ] && printf '\e[%dA' "$BOARD_LINES"
     PAINTED=1
-    if [ "$cbt" = "-" ]; then bestcol="${D}—${R}"; cbr="-"; else bestcol="${GRN}${B}${cbt}t${R}"; fi
-    printf '\e[K %sbest%s %s %s(run %s)%s   %s·%s   %s%s wins%s / %s runs\n' \
-        "$B" "$R" "$bestcol" "$D" "$cbr" "$R" "$D" "$R" "$GRN" "$cw" "$R" "$cr"
+    local bestref="run $cbr"
+    [ "$cbr" = "0" ] && bestref="prev"
+    if [ "$cbt" = "-" ]; then bestcol="${D}—${R}"; bestref="-"; else bestcol="${GRN}${B}${cbt}t${R}"; fi
+    printf '\e[K %sbest%s %s %s(%s)%s   %s·%s   %s%s wins%s / %s runs\n' \
+        "$B" "$R" "$bestcol" "$D" "$bestref" "$R" "$D" "$R" "$GRN" "$cw" "$R" "$cr"
     for ((i = 1; i <= WORKERS; i++)); do
         read -r phase el lt ls <"$WORK/w$i" 2>/dev/null || { phase=idle; el=0; lt=-; ls=-; }
         if [ "$lt" = "-" ]; then last="${D}—${R}"; else last="${lt}t ${D}${ls}s${R}"; fi
@@ -148,9 +158,11 @@ print_summary() {
     local cr cw cbt cbr
     read -r cr cw cbt cbr <"$STATE" 2>/dev/null || return 0
     printf '\n'
+    local bestref="run $cbr"
+    [ "$cbr" = "0" ] && bestref="prev session"
     if [ "$cbt" != "-" ]; then
-        printf '%s  best this session: %s%s ticks%s (run %s) %s· %s wins / %s runs%s\n' \
-            "$B" "$GRN" "$cbt" "$R$B" "$cbr" "$D" "$cw" "$cr" "$R"
+        printf '%s  best: %s%s ticks%s (%s) %s· %s wins / %s runs%s\n' \
+            "$B" "$GRN" "$cbt" "$R$B" "$bestref" "$D" "$cw" "$cr" "$R"
         printf '  best game log: %s%s%s\n' "$CYN" "$BEST_LOG" "$R"
     else
         printf '  no finished game yet (%s runs)\n' "$cr"
