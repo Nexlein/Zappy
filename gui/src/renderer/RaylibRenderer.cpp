@@ -14,7 +14,6 @@
 #include "raylib_helpers/TextRenderer.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
 #include "raylib_helpers/WinScreen.hpp"
-#include "raymath.h"
 
 void RaylibRenderer::init()
 {
@@ -38,11 +37,7 @@ void RaylibRenderer::init()
         if (_savedWindow.fullscreen) ToggleFullscreen();
     }
 
-    _camera = {.position = {0.0f, 10.0f, 10.0f},
-               .target = {0.0f, 0.0f, 0.0f},
-               .up = {0.0f, 1.0f, 0.0f},
-               .fovy = 45.0f,
-               .projection = CAMERA_PERSPECTIVE};
+    _cam.init(10, 10);
 
     _selection = SelectionFinder::getEmptySelection();
 
@@ -99,16 +94,16 @@ void RaylibRenderer::render()
 {
     _initTeamColors();
     _updateSelection(GetFrameTime());
-    _updateCamera(_state->world.width, _state->world.height);
+    _cam.update(GetFrameTime(), _state->world.width, _state->world.height, &_state->world);
 
     // Update shader camera position for specular lighting
-    float camPos[3] = {_camera.position.x, _camera.position.y, _camera.position.z};
+    float camPos[3] = {_cam.camera().position.x, _cam.camera().position.y, _cam.camera().position.z};
     SetShaderValue(_lightingShader, _shaderViewPosLoc, camPos, SHADER_UNIFORM_VEC3);
 
     BeginDrawing();
     ClearBackground(RAYWHITE);
 
-    BeginMode3D(_camera);
+    BeginMode3D(_cam.camera());
     _render3D();
 
     EndMode3D();
@@ -125,68 +120,28 @@ void RaylibRenderer::render()
     EndDrawing();
 }
 
-void RaylibRenderer::_handleOrbitalInput()
-{
-    // KEY_A maps to 'Q' on AZERTY
-    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) _cameraAngle += CAMERA_MOVE_SPEED * GetFrameTime();
-    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
-        _cameraAngle -= CAMERA_MOVE_SPEED * GetFrameTime();
-}
-
-void RaylibRenderer::_enterFreecam()
-{
-    _savedOrbitalAngle = _cameraAngle;
-    _savedOrbitalHeight = _cameraHeight;
-    Vector3 dir = Vector3Subtract(_camera.target, _camera.position);
-    _freecamYaw = atan2f(dir.z, dir.x);
-    _freecamPitch = atan2f(dir.y, sqrtf(dir.x * dir.x + dir.z * dir.z));
-    _freecamActive = true;
-    DisableCursor();
-}
-
-void RaylibRenderer::_exitFreecam()
-{
-    _cameraAngle = _savedOrbitalAngle;
-    _cameraHeight = _savedOrbitalHeight;
-    _freecamActive = false;
-    EnableCursor();
-}
-
-void RaylibRenderer::_handleFreecamInput()
-{
-    Vector2 delta = GetMouseDelta();
-    _freecamYaw += delta.x * FREECAM_LOOK_SPEED;
-    _freecamPitch -= delta.y * FREECAM_LOOK_SPEED;
-    _freecamPitch = Clamp(_freecamPitch, -PI / 2.0f + 0.01f, PI / 2.0f - 0.01f);
-
-    Vector3 forward = {cosf(_freecamYaw) * cosf(_freecamPitch), sinf(_freecamPitch),
-                       sinf(_freecamYaw) * cosf(_freecamPitch)};
-    Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, {0.0f, 1.0f, 0.0f}));
-    float sp = FREECAM_MOVE_SPEED * GetFrameTime();
-
-    // ZQSD on AZERTY = KEY_W/KEY_A/KEY_S/KEY_D in raylib
-    if (IsKeyDown(KEY_W))
-        _camera.position = Vector3Add(_camera.position, Vector3Scale(forward, sp));
-    if (IsKeyDown(KEY_S))
-        _camera.position = Vector3Add(_camera.position, Vector3Scale(forward, -sp));
-    if (IsKeyDown(KEY_D)) _camera.position = Vector3Add(_camera.position, Vector3Scale(right, sp));
-    if (IsKeyDown(KEY_A)) _camera.position = Vector3Add(_camera.position, Vector3Scale(right, -sp));
-    if (IsKeyDown(KEY_SPACE)) _camera.position.y += sp;
-    if (IsKeyDown(KEY_LEFT_SHIFT)) _camera.position.y -= sp;
-}
-
 void RaylibRenderer::handleInput()
 {
     if (IsKeyPressed(KEY_F)) {
-        _freecamActive ? _exitFreecam() : _enterFreecam();
+        _cam.isFreecamActive() ? _cam.exitFreecam() : _cam.enterFreecam();
     }
 
-    if (_freecamActive)
-        _handleFreecamInput();
-    else
-        _handleOrbitalInput();
+    _cam.handleInput();
 
     {
+        _entityTooltip.setSelection(_selection);
+        _entityTooltip.setWorld(_state ? &_state->world : nullptr);
+        _entityTooltip.setTeamColorFunc([this](const std::string& t) { return _getTeamColor(t); });
+        _entityTooltip.setFollowActive(_cam.isFollowActive());
+        _entityTooltip.handleInput();
+        if (int fid = _entityTooltip.popFollowRequest(); fid != -1) {
+            if (fid == -2) {
+                _cam.stopFollow();
+            } else {
+                _cam.startFollow(fid);
+            }
+        }
+
         _playerPanel.setWorld(_state ? &_state->world : nullptr);
         if (_playerPanel.handleInput()) {
             if (auto pSel = _playerPanel.getPendingSelection()) {
@@ -205,10 +160,14 @@ void RaylibRenderer::handleInput()
                                static_cast<float>(SpeedSlider::PANEL_WIDTH),
                                static_cast<float>(SpeedSlider::PANEL_HEIGHT)};
         Vector2 mouse = GetMousePosition();
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !_freecamActive &&
-            !CheckCollisionPointRec(mouse, panelRect)) {
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !_cam.isFreecamActive() &&
+            !_cam.isFollowActive() && !CheckCollisionPointRec(mouse, panelRect) &&
+            !_entityTooltip.isFollowButtonHovered()) {
             if (!_playerPanel.isOpen()) _performRaycast();
         }
+
+        if (_cam.isFollowActive())
+            _selection = {SelectionFinder::EntityType::Player, _cam.followedPlayerId(), -1, -1};
     }
 
     if (IsKeyPressed(KEY_L)) {
@@ -336,7 +295,7 @@ void RaylibRenderer::_render2D()
 
         Vector3 worldPos = _groupLabelAnchor(group);
         worldPos.y = PLAYER_MODEL_SIZE * 2.0f;
-        Vector2 screenPos = GetWorldToScreen(worldPos, _camera);
+        Vector2 screenPos = GetWorldToScreen(worldPos, _cam.camera());
 
         auto builder = TooltipRenderer::create()
                            .setAnchor(TooltipRenderer::Anchor::BottomCenter)
@@ -355,7 +314,11 @@ void RaylibRenderer::_render2D()
         builder.draw(screenPos);
     }
 
-    _drawSelectedToolip();
+    _entityTooltip.setSelection(_selection);
+    _entityTooltip.setWorld(_state ? &_state->world : nullptr);
+    _entityTooltip.setTeamColorFunc([this](const std::string& t) { return _getTeamColor(t); });
+    _entityTooltip.setFollowActive(_cam.isFollowActive());
+    _entityTooltip.draw(_getScaledFontSize(18));
 
     if (_state) {
         _playerPanel.setWorld(&_state->world);
@@ -421,77 +384,6 @@ void RaylibRenderer::_drawSelectionHighlight()
     }
 }
 
-void RaylibRenderer::_drawSelectedToolip()
-{
-    if (_selection.type == SelectionFinder::EntityType::None) return;
-
-    Color bgColor = {20, 25, 35, 220};
-    Color borderColor = {60, 70, 90, 200};
-    Color textColor = {255, 255, 255, 255};
-    Color tileColor = {100, 200, 255, 255};
-    Color playerColor = {100, 255, 150, 255};
-    Color eggColor = {255, 200, 80, 255};
-
-    auto builder = TooltipRenderer::create()
-                       .setAnchor(TooltipRenderer::Anchor::TopRight)
-                       .setBackgroundColor(bgColor)
-                       .setBackgroundAlpha(180)
-                       .setBorderColor(borderColor)
-                       .setBorderThickness(2)
-                       .setPadding(10)
-                       .setFontSize(_getScaledFontSize(18));
-
-    switch (_selection.type) {
-        case SelectionFinder::EntityType::Tile: {
-            const Resources& resources = _state->world.at(_selection.tileX, _selection.tileY);
-            if (resources.isEmpty()) {
-                builder.addColoredText(
-                    {I18n::get(I18n::Key::LABEL_TILE), I18n::get(I18n::Key::TILE_EMPTY)},
-                    {tileColor, textColor});
-            } else {
-                builder.addLine(I18n::get(I18n::Key::TILE_HEADER), tileColor);
-                _addResourceLines(builder, resources, "  ", textColor);
-            }
-            break;
-        }
-
-        case SelectionFinder::EntityType::Player: {
-            if (!_state->world.playerExists(_selection.id)) return;
-            const Player& player = _state->world.players.at(_selection.id);
-            builder.addColoredText(
-                {I18n::get(I18n::Key::LABEL_PLAYER), " #" + std::to_string(player.id)},
-                {playerColor, textColor});
-            builder.addColoredText({I18n::get(I18n::Key::PLAYER_TEAM), player.team},
-                                   {textColor, _getTeamColor(player.team)});
-            builder.addLine(
-                std::string(I18n::get(I18n::Key::PLAYER_LEVEL)) + std::to_string(player.level),
-                textColor);
-            if (player.inventory.isEmpty()) {
-                builder.addLine(I18n::get(I18n::Key::PLAYER_INVENTORY_EMPTY), textColor);
-            } else {
-                builder.addLine(I18n::get(I18n::Key::PLAYER_INVENTORY), textColor);
-                _addResourceLines(builder, player.inventory, "    ", textColor);
-            }
-            break;
-        }
-
-        case SelectionFinder::EntityType::Egg: {
-            if (!_state->world.eggExists(_selection.id)) return;
-            const Egg& egg = _state->world.eggs.at(_selection.id);
-            builder.addColoredText({I18n::get(I18n::Key::LABEL_EGG), " #" + std::to_string(egg.id)},
-                                   {eggColor, textColor});
-            builder.addColoredText({I18n::get(I18n::Key::EGG_TEAM), egg.team},
-                                   {textColor, _getTeamColor(egg.team)});
-            break;
-        }
-
-        default:
-            return;
-    }
-
-    builder.draw({GetScreenWidth() - 10.0f, 10.0f});
-}
-
 std::optional<int> RaylibRenderer::getPendingSpeedChange()
 {
     auto val = _pendingSpeed;
@@ -526,41 +418,11 @@ int RaylibRenderer::_getScaledFontSize(int baseFontSize) const
     return static_cast<int>(baseFontSize * scale);
 }
 
-void RaylibRenderer::_updateCamera(float worldWidth, float worldHeight)
-{
-    if (_freecamActive) {
-        Vector3 dir = {cosf(_freecamYaw) * cosf(_freecamPitch), sinf(_freecamPitch),
-                       sinf(_freecamYaw) * cosf(_freecamPitch)};
-        _camera.target = Vector3Add(_camera.position, dir);
-        return;
-    }
-
-    float maxDim = std::max(worldWidth, worldHeight);
-    float adaptiveRadius = maxDim * 1.25f;
-
-    float rawAspectX = worldWidth / maxDim;
-    float rawAspectZ = worldHeight / maxDim;
-
-    // Lerp toward circle (50% blend)
-    float aspectX = 0.5f * (1.0f + rawAspectX);
-    float aspectZ = 0.5f * (1.0f + rawAspectZ);
-
-    _camera.position.x = cos(_cameraAngle) * adaptiveRadius * aspectX;
-    _camera.position.z = sin(_cameraAngle) * adaptiveRadius * aspectZ;
-
-    float currentRadius = sqrt(pow(_camera.position.x, 2) + pow(_camera.position.z, 2));
-
-    float heightScale = currentRadius / adaptiveRadius;
-    _camera.position.y = _cameraHeight * heightScale;
-
-    _camera.target = {0.0f, 0.0f, 0.0f};
-}
-
 void RaylibRenderer::_performRaycast()
 {
     if (!_state) return;
 
-    Ray ray = GetMouseRay(GetMousePosition(), _camera);
+    Ray ray = GetMouseRay(GetMousePosition(), _cam.camera());
     _selection =
         SelectionFinder::findFromRay(ray, *_state, TILE_SIZE, _playerModel, PLAYER_MODEL_SIZE,
                                      _eggModel, EGG_MODEL_SIZE, _tileSlotMap);
@@ -571,16 +433,6 @@ void RaylibRenderer::_performRaycast()
 }
 
 void RaylibRenderer::_updateSelection([[maybe_unused]] float deltaTime) {}
-
-void RaylibRenderer::_addResourceLines(TooltipRenderer::Builder& builder, const Resources& res,
-                                       const std::string& indent, Color color)
-{
-    for (int i = 0; i < 7; i++) {
-        int qty = res[i];
-        if (qty <= 0) continue;
-        builder.addLine(indent + I18n::resourceName(i) + ": " + std::to_string(qty), color);
-    }
-}
 
 std::vector<std::vector<const Player*>> RaylibRenderer::_groupPlayersByVisualProximity() const
 {

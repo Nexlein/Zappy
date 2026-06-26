@@ -47,6 +47,7 @@ set(GUI_SOURCES
     src/main.cpp
     src/renderer/HeadlessRenderer.cpp
     src/renderer/RaylibRenderer.cpp
+    src/renderer/raylib_helpers/CameraController.cpp
     src/renderer/raylib_helpers/ColorPalette.cpp
     src/renderer/raylib_helpers/SelectionFinder.cpp
     src/renderer/raylib_helpers/GridRenderer.cpp
@@ -64,6 +65,7 @@ set(GUI_SOURCES
     src/renderer/raylib_helpers/WinScreen.cpp
     src/renderer/raylib_helpers/ButtonWidget.cpp
     src/renderer/raylib_helpers/TooltipWidget.cpp
+    src/renderer/raylib_helpers/EntityTooltipWidget.cpp
     src/network/TcpSocket.cpp
     src/network/ProtocolParser.cpp
     src/core/behaviors/MoveBehavior.cpp

@@ -10,12 +10,13 @@
 
 // rlights.h must come after raylib.h — it depends on Vector3 and other raylib types
 #include "../../external/rlights.h"
+#include "raylib_helpers/CameraController.hpp"
+#include "raylib_helpers/EntityTooltipWidget.hpp"
 #include "raylib_helpers/HudWidget.hpp"
 #include "raylib_helpers/PlayerPanel.hpp"
 #include "raylib_helpers/SelectionFinder.hpp"
 #include "raylib_helpers/SpeedSlider.hpp"
 #include "raylib_helpers/TileSlotMap.hpp"
-#include "raylib_helpers/TooltipRenderer.hpp"
 #include "raylib_helpers/WinScreen.hpp"
 
 /**
@@ -41,9 +42,6 @@ class RaylibRenderer : public ARenderer {
     static constexpr std::string_view CRYSTAL_MODEL_PATH = "gui/assets/models/crystal.glb";
     static constexpr std::string_view FONT_PATH = "gui/assets/fonts/JetBrainsMono-Bold.ttf";
 
-    static constexpr float CAMERA_MOVE_SPEED = 2.0f;
-    static constexpr float FREECAM_MOVE_SPEED = 5.0f;
-    static constexpr float FREECAM_LOOK_SPEED = 0.002f;
     static constexpr float PLAYER_MODEL_SIZE = 0.25f;
     static constexpr float EGG_MODEL_SIZE = 0.15f;
     static constexpr float FOOD_MODEL_SIZE = 1.0f;
@@ -54,15 +52,7 @@ class RaylibRenderer : public ARenderer {
     static constexpr float SELECTION_WIREFRAME_THICKNESS = 5.0f;
     static constexpr Color SELECTION_COLOR = {128, 0, 128, 255};  // purple
 
-    Camera3D _camera;
-    float _cameraAngle = 0.0f;
-    float _cameraHeight = 5.0f;
-
-    bool _freecamActive = false;
-    float _savedOrbitalAngle = 0.0f;
-    float _savedOrbitalHeight = 5.0f;
-    float _freecamYaw = 0.0f;
-    float _freecamPitch = 0.0f;
+    CameraController _cam;
 
     Model _playerModel = {};
     Color _playerModelBaseMats[6] = {};
@@ -86,6 +76,7 @@ class RaylibRenderer : public ARenderer {
     WinScreen _winScreen;
     PlayerPanel _playerPanel;
     HudWidget _hudWidget;
+    EntityTooltipWidget _entityTooltip;
     std::optional<int> _pendingSpeed;
 
     struct WindowSnapshot {
@@ -105,25 +96,15 @@ class RaylibRenderer : public ARenderer {
     void _render2D();
 
     void _drawSelectionHighlight();
-    void _drawSelectedToolip();
 
     void _initTeamColors();
     Color _getTeamColor(const std::string& teamName);
     int _getScaledFontSize(int baseFontSize) const;
 
-    void _updateCamera(float worldWidth, float worldHeight);
     void _updateSelection(float deltaTime);
-
-    void _enterFreecam();
-    void _exitFreecam();
-    void _handleFreecamInput();
-    void _handleOrbitalInput();
 
     void _performRaycast();
     void _drawBehaviorParticles(const VisualState& visual);
-
-    void _addResourceLines(TooltipRenderer::Builder& builder, const Resources& res,
-                           const std::string& indent, Color color);
 
     std::vector<std::vector<const Player*>> _groupPlayersByVisualProximity() const;
     Vector3 _groupLabelAnchor(const std::vector<const Player*>& group) const;
