@@ -60,6 +60,7 @@ set(GUI_SOURCES
     src/renderer/raylib_helpers/SpeedSlider.cpp
     src/renderer/raylib_helpers/PlayerPanel.cpp
     src/renderer/raylib_helpers/HudWidget.cpp
+    src/renderer/raylib_helpers/SpaceSkybox.cpp
     src/audio/AAudioManager.cpp
     src/audio/RaylibAudioManager.cpp
     src/renderer/raylib_helpers/WinScreen.cpp

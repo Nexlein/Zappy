@@ -11,6 +11,7 @@
 #include "raylib_helpers/GridRenderer.hpp"
 #include "raylib_helpers/I18n.hpp"
 #include "raylib_helpers/RenderingHelper.hpp"
+#include "raylib_helpers/SpaceSkybox.hpp"
 #include "raylib_helpers/TextRenderer.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
 #include "raylib_helpers/WinScreen.hpp"
@@ -38,6 +39,9 @@ void RaylibRenderer::init()
     }
 
     _cam.init(10, 10);
+
+    _background = std::make_unique<SpaceSkybox>();
+    _background->init();
 
     _selection = SelectionFinder::getEmptySelection();
 
@@ -96,13 +100,15 @@ void RaylibRenderer::render()
     _updateSelection(GetFrameTime());
     _cam.update(GetFrameTime(), _state->world.width, _state->world.height, &_state->world);
 
+    if (_background) _background->update();
+
     // Update shader camera position for specular lighting
     float camPos[3] = {_cam.camera().position.x, _cam.camera().position.y,
                        _cam.camera().position.z};
     SetShaderValue(_lightingShader, _shaderViewPosLoc, camPos, SHADER_UNIFORM_VEC3);
 
     BeginDrawing();
-    ClearBackground(RAYWHITE);
+    ClearBackground(BLACK);
 
     BeginMode3D(_cam.camera());
     _render3D();
@@ -200,6 +206,7 @@ void RaylibRenderer::shutdown()
     if (_crystalModel.meshCount > 0) UnloadModel(_crystalModel);
     if (_lightingShader.id > 0) UnloadShader(_lightingShader);
     TextRenderer::unloadFont();
+    if (_background) _background->unload();
 
     _savedWindow = {
         .width = GetScreenWidth(),
@@ -215,6 +222,7 @@ void RaylibRenderer::shutdown()
 
 void RaylibRenderer::_render3D()
 {
+    if (_background) _background->draw(_cam.camera());
     GridRenderer::drawTiles(_state->world.width, _state->world.height, TILE_SIZE);
 
     for (auto& [id, player] : _state->world.players) {

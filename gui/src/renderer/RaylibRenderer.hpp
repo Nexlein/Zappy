@@ -13,6 +13,7 @@
 #include "raylib_helpers/CameraController.hpp"
 #include "raylib_helpers/EntityTooltipWidget.hpp"
 #include "raylib_helpers/HudWidget.hpp"
+#include "raylib_helpers/IBackground.hpp"
 #include "raylib_helpers/PlayerPanel.hpp"
 #include "raylib_helpers/SelectionFinder.hpp"
 #include "raylib_helpers/SpeedSlider.hpp"
@@ -77,6 +78,7 @@ class RaylibRenderer : public ARenderer {
     PlayerPanel _playerPanel;
     HudWidget _hudWidget;
     EntityTooltipWidget _entityTooltip;
+    std::unique_ptr<IBackground> _background;
     std::optional<int> _pendingSpeed;
 
     struct WindowSnapshot {
