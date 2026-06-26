@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "I18n.hpp"
+
 void PlayerPanel::setWorld(const WorldState* world) { _world = world; }
 
 bool PlayerPanel::handleInput()
@@ -11,7 +13,7 @@ bool PlayerPanel::handleInput()
     if (!_isOpen || !_world) return false;
 
     _background.clearLines();
-    _background.addLine("Player List", WHITE);
+    _background.addLine(I18n::get(I18n::Key::PANEL_PLAYER_LIST), WHITE);
     _background.setAnchor(TooltipWidget::Anchor::Center);
     _background.setMinWidth(PANEL_WIDTH);
     _background.setTextAlign(TooltipWidget::TextAlign::Center);
@@ -33,8 +35,9 @@ bool PlayerPanel::handleInput()
     _playerButtons.clear();
     for (const Player* p : players) {
         Color tColor = _colorFunc ? _colorFunc(p->team) : WHITE;
-        std::string txt =
-            "P" + std::to_string(p->id) + " (Lvl " + std::to_string(p->level) + ") - " + p->team;
+        std::string txt = "P" + std::to_string(p->id) + " (" +
+                          I18n::get(I18n::Key::PANEL_LVL) + " " +
+                          std::to_string(p->level) + ") - " + p->team;
 
         ButtonWidget btn;
         btn.setLabel(txt)

@@ -46,6 +46,10 @@ class I18n {
         // Tooltip — egg
         EGG_TEAM,
 
+        // Player panel (Tab)
+        PANEL_PLAYER_LIST,
+        PANEL_LVL,
+
         // Speed slider
         SPEED_LABEL,
 
@@ -117,6 +121,9 @@ class I18n {
 
             "  Team ",  // EGG_TEAM
 
+            "Player List",  // PANEL_PLAYER_LIST
+            "Lvl",          // PANEL_LVL
+
             "Speed: ",  // SPEED_LABEL
 
             "Level ",  // PLAYER_HEAD_LEVEL
@@ -151,7 +158,7 @@ class I18n {
 
             "Case",    // LABEL_TILE
             "Joueur",  // LABEL_PLAYER
-            "Oeuf",    // LABEL_EGG
+            "Oeuf",    // LABEL_EGG  (Œuf needs U+0152, outside Latin-1 Supplement)
 
             " est vide",  // TILE_EMPTY
             "Case :",     // TILE_HEADER
@@ -162,6 +169,9 @@ class I18n {
             "  Inventaire :",     // PLAYER_INVENTORY
 
             "  Équipe ",  // EGG_TEAM
+
+            "Liste des joueurs",  // PANEL_PLAYER_LIST
+            "Niv.",               // PANEL_LVL
 
             "Vitesse : ",  // SPEED_LABEL
 

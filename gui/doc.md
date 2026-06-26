@@ -165,9 +165,11 @@ Text-based state dump for testing/debugging. Prints game state updates to stdout
 - Camera height scales with orbit radius to maintain viewing angle
 
 **3D Rendering**
-- Players: 3D GLB model (rimuru slime, `gui/assets/rimuru.glb`) tinted per team via `ColorPalette::getSlimePalette()`, falls back to colored cube if model fails to load
-- Eggs: 3D GLB model (`gui/assets/egg.glb`) with team-colored inner layer, random stable Y rotation set at spawn
-- Tiles: grid with per-tile resource indicators (spheres scaled logarithmically by quantity, stable random positions per tile)
+- Players: 3D GLB model (`gui/assets/models/rimuru.glb`) tinted per team via `ColorPalette::getSlimePalette()`, falls back to colored cube if model fails to load
+- Eggs: 3D GLB model (`gui/assets/models/egg.glb`) with team-colored inner layer, random stable Y rotation set at spawn
+- Food: 3D GLB model (`gui/assets/models/apple.glb`)
+- Stones: 3D GLB model (`gui/assets/models/crystal.glb`)
+- Tiles: grid with per-tile resource indicators (3D models or spheres scaled logarithmically by quantity, stable slot positions per tile)
 - All world coordinates computed via `RenderingHelper::tileToWorld()`
 
 **Selection System**
@@ -196,7 +198,10 @@ Text-based state dump for testing/debugging. Prints game state updates to stdout
 - Built with `TooltipRenderer` builder pattern
 
 **Keybinds**
-- `Q`/`A` or Left/Right arrows: rotate camera
+- `Q`/`D` or Left/Right arrows: rotate camera (orbital mode)
+- `Z`/`Q`/`S`/`D` + Space/Shift: move in freecam
+- `F`: toggle freecam mode (cursor captured while active)
+- `Tab`: open/close player list panel
 - `L`: cycle UI language (EN↔FR)
 - `F3`: toggle dev HUD on/off at runtime
 
@@ -205,7 +210,7 @@ Text-based state dump for testing/debugging. Prints game state updates to stdout
 
 ### renderer/raylib_helpers
 
-Static helper classes extracted from RaylibRenderer for maintainability:
+Helper classes in `raylib_helpers/` — static drawing utilities and stateful widget components:
 
 | Class | Responsibility |
 |-------|---------------|
@@ -213,8 +218,15 @@ Static helper classes extracted from RaylibRenderer for maintainability:
 | `RenderingHelper` | World↔screen coordinate conversion (`tileToWorld`) |
 | `EntityRenderer` | Draw players, eggs, resources, and their highlights |
 | `GridRenderer` | Draw tile grid and tile highlights |
-| `TextRenderer` | Draw text anchored to 3D world positions |
-| `TooltipRenderer` | Builder-pattern 2D tooltip renderer (multi-line, colored segments, anchored) |
+| `TextRenderer` | Central font wrapper — loads JetBrainsMono once (Latin-1 + ASCII codepoints), exposes `draw()` and `measure()`; falls back to raylib default font if unloaded |
+| `TooltipRenderer` | Stateless builder-pattern 2D tooltip renderer (multi-line, colored segments, anchored); one-shot: build and call `.draw()` each frame |
+| `TooltipWidget` | Stateful `IWidget` wrapper around `TooltipRenderer`; fluent API, remembers content and anchor between frames, exposes `getLastBounds()` |
+| `ButtonWidget` | Stateful `IWidget` clickable button with hover, callback, and anchor support |
+| `IWidget` | Pure interface for all UI widgets: `draw(scaledFontSize)` + `handleInput()` → consumed |
+| `HudWidget` | Top-left HUD panel (map size, uptime, team scores, optional dev info); `IWidget`, not interactive |
+| `SpeedSlider` | Bottom-left speed slider; `IWidget`, draggable, fires `getPendingSpeedChange()` on release |
+| `WinScreen` | Full-screen end-game overlay; `IWidget`, always consumes input; poll `quitRequested()` |
+| `PlayerPanel` | Tab-toggled player list; `IWidget`, clicking a row fires a player selection |
 | `SelectionFinder` | Raycast against world entities, returns closest hit; takes `TileSlotMap` to apply egg slot offsets |
 | `TileSlotMap` | Per-tile slot occupancy: assigns and tracks stable visual positions for resources and eggs (8 slots/tile) |
 | `I18n` | Compile-time EN/FR string table; O(1) lookup via static constexpr 2D array indexed by `[Language][Key]` |
@@ -248,7 +260,7 @@ All UI strings are stored as a static `constexpr` 2D array indexed by `[Language
 - Language set at startup via `--language` arg; toggled live with `L` key (EN↔FR cycle)
 - French typography: space before `:` in all FR label prefixes
 
-**TooltipRenderer builder API:**
+**TooltipRenderer builder API (stateless, one-shot per frame):**
 ```cpp
 TooltipRenderer::create()
     .setAnchor(Anchor::TopRight)
@@ -259,17 +271,14 @@ TooltipRenderer::create()
     .setPadding(px)
     .setFontSize(px)
     .addLine("text", color)
-    .addColoredText({"seg1", "seg2"}, {color1, color2})
+    .addColoredLine({"seg1", "seg2"}, {color1, color2})
     .draw({x, y});
 ```
 
 ## Planned / Ideas
 
-- OBJ model support for players and eggs (replace placeholder cubes)
-- Improved resource visuals (3D models or icons instead of dots)
 - Map aesthetics: skybox, ground texture, decorative elements
 - Incantation visual feedback (glow, particle effect, frozen player indicator)
-- Win screen / end game display when a team reaches 6 players at level 8
 - Incantation progress bar on the tile (300/f duration, visual countdown until success or failure)
 - Player history trail — faint path showing recent movement of selected player (style TBD based on overall visual direction)
 - Spectate / follow mode — camera locks onto and follows a selected player (3rd person or overhead, TBD)
@@ -388,12 +397,19 @@ gui/
 │       ├── HeadlessRenderer.hpp/cpp
 │       ├── RaylibRenderer.hpp/cpp
 │       └── raylib_helpers/
+│           ├── IWidget.hpp
 │           ├── ColorPalette.hpp/cpp
 │           ├── RenderingHelper.hpp/cpp
 │           ├── EntityRenderer.hpp/cpp
 │           ├── GridRenderer.hpp/cpp
 │           ├── TextRenderer.hpp/cpp
 │           ├── TooltipRenderer.hpp/cpp
+│           ├── TooltipWidget.hpp/cpp
+│           ├── ButtonWidget.hpp/cpp
+│           ├── HudWidget.hpp/cpp
+│           ├── SpeedSlider.hpp/cpp
+│           ├── WinScreen.hpp/cpp
+│           ├── PlayerPanel.hpp/cpp
 │           ├── SelectionFinder.hpp/cpp
 │           ├── TileSlotMap.hpp/cpp
 │           └── I18n.hpp/cpp
@@ -434,4 +450,4 @@ Slot positions are purely visual — the server never communicates them and they
 Languages are a compile-time concern. A config file adds a runtime failure mode (file missing, bad path) for something that never changes without a recompile. The 2D array gives O(1) lookup with zero allocation — straightforward to extend (add a language = add a column, add a string = add a row).
 
 **Why `Oeuf` not `Œuf` in French?**
-Raylib's default font is ASCII-only. The `Œ` ligature renders as `?` at runtime. Accented letters like `É`, `é`, `à` work fine as they fall in the extended Latin range the bundled font covers.
+`Œ` (U+0152) is a Latin Extended-A codepoint, outside the Latin-1 Supplement range (U+00A0–U+00FF) baked into the font atlas. All other accented letters (`é`, `è`, `à`, `ç`, etc.) are in Latin-1 Supplement and render correctly. `Œuf` would require adding U+0152/U+0153 to the codepoint list in `TextRenderer::loadFont`.

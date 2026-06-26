@@ -1,5 +1,7 @@
 #include "TextRenderer.hpp"
 
+#include <vector>
+
 Font TextRenderer::_font = {};
 bool TextRenderer::_loaded = false;
 
@@ -14,11 +16,24 @@ const Font& TextRenderer::_active()
     return _loaded ? _font : fallback;
 }
 
+// Codepoints to bake: ASCII (32–126) + Latin-1 Supplement (160–255).
+// Covers é, è, ê, à, ù, ç, ô, î, û and all FR characters used in I18n strings.
+static std::vector<int> _buildCodepoints()
+{
+    std::vector<int> cp;
+    cp.reserve(95 + 96);
+    for (int i = 32; i <= 126; ++i) cp.push_back(i);
+    for (int i = 160; i <= 255; ++i) cp.push_back(i);
+    return cp;
+}
+
 bool TextRenderer::loadFont(const std::string& path)
 {
     if (_loaded) unloadFont();
 
-    _font = LoadFontEx(path.c_str(), BASE_SIZE, nullptr, 0);
+    static auto codepoints = _buildCodepoints();
+    _font = LoadFontEx(path.c_str(), BASE_SIZE, codepoints.data(),
+                       static_cast<int>(codepoints.size()));
     if (_font.texture.id == 0) return false;
 
     SetTextureFilter(_font.texture, TEXTURE_FILTER_BILINEAR);  // smooth when scaled
