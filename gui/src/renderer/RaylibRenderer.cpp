@@ -100,7 +100,11 @@ void RaylibRenderer::render()
     _updateSelection(GetFrameTime());
     _cam.update(GetFrameTime(), _state->world.width, _state->world.height, &_state->world);
 
-    if (_background) _background->update();
+    if (_background) {
+        float scaledDelta = GetFrameTime();
+        if (_state && _state->timeUnit > 0) scaledDelta *= (_state->timeUnit / 100.0f);
+        _background->update(scaledDelta);
+    }
 
     // Update shader camera position for specular lighting
     float camPos[3] = {_cam.camera().position.x, _cam.camera().position.y,
