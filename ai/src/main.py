@@ -244,20 +244,21 @@ class Orchestrator:
             self._context.available_slots = int(response)
 
     def _spawn_child(self):
-        subprocess.Popen(
-            [
-                sys.executable,
-                sys.argv[0],
-                "-p",
-                str(self._config.port),
-                "-n",
-                self._config.teamName,
-                "-h",
-                self._config.host,
-                "-s",
-                self._config.strategy,
-            ]
-        )
+        cmd = [
+            sys.executable,
+            sys.argv[0],
+            "-p",
+            str(self._config.port),
+            "-n",
+            self._config.teamName,
+            "-h",
+            self._config.host,
+            "-s",
+            self._config.strategy,
+        ]
+        if self._config.verbose:
+            cmd.extend(["-v", self._config.verbose])
+        subprocess.Popen(cmd)
 
     def _handle_fork_response(self, response: str):
         if response == "ok":
@@ -266,6 +267,7 @@ class Orchestrator:
 
 
 def main():
+    """Entrypoint: parse args, configure logger, and run orchestrator loop."""
     config = parseArgs()
     load_strategy_config(config.strategy)
 
@@ -275,7 +277,7 @@ def main():
         "host": config.host,
         "strategy": config.strategy,
     }
-    ai_logger.configure(config.teamName, config_dict)
+    ai_logger.configure(config.teamName, config_dict, config.verbose)
 
     signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 

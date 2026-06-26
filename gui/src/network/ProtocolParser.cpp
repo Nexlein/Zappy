@@ -21,7 +21,7 @@ std::optional<Event> ProtocolParser::parse(std::string_view input)
         {"ebo", _parseEBO},         {"edi", _parseEDI},         {"sgt", _parseSGT},
         {"sst", _parseSST},         {"seg", _parseSEG},         {"smg", _parseSMG},
         {"suc", _parseSUC},         {"sbp", _parseSBP},         {"stu", _parseSTU},
-        {"sse", _parseSSE}};
+        {"sse", _parseSSE},         {"gwt", _parseGWT}};
 
     auto it = parsers.find(tokens[0]);
     if (it != parsers.end()) {
@@ -469,6 +469,21 @@ std::optional<Event> ProtocolParser::_parseSSE(const std::vector<std::string_vie
         int y = std::stoi(std::string(tokens[4]));
 
         return ServerSpawnedEgg{eggId, team, x, y};
+    } catch (...) {
+        return std::nullopt;
+    }
+}
+
+std::optional<Event> ProtocolParser::_parseGWT(const std::vector<std::string_view>& tokens)
+{
+    // gwt <team> <seconds> <ticks>
+    if (tokens.size() != 4) return std::nullopt;
+
+    try {
+        std::string team = std::string(tokens[1]);
+        int seconds = std::stoi(std::string(tokens[2]));
+        int64_t ticks = std::stoll(std::string(tokens[3]));
+        return WinDuration{team, seconds, ticks};
     } catch (...) {
         return std::nullopt;
     }

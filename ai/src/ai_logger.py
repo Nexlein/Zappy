@@ -7,6 +7,8 @@ from utils.config_loader import get_config
 
 
 class JsonFormatter(logging.Formatter):
+    """Format log records into structured JSON."""
+
     def format(self, record):
         log_obj = {
             "timestamp": datetime.fromtimestamp(record.created).isoformat(),
@@ -28,6 +30,8 @@ class JsonFormatter(logging.Formatter):
 
 
 class AILogger:
+    """Handles structured JSONL file logging and optional terminal output."""
+
     def __init__(self):
         self.logger = logging.getLogger("ZappyAI")
         self.net_logger = logging.getLogger("ZappyAINet")
@@ -45,7 +49,13 @@ class AILogger:
         self.highest_level = 1
         self.run_id = ""
 
-    def configure(self, team_name: str, config_dict: dict | None = None):
+    def configure(
+        self,
+        team_name: str,
+        config_dict: dict | None = None,
+        verbose: str | None = None,
+    ):
+        """Setup output files, directories, and terminal stream handlers."""
         run_id_env = os.environ.get("ZAPPY_RUN_ID")
         if not run_id_env:
             run_id_env = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -82,10 +92,27 @@ class AILogger:
         fh_net.setFormatter(JsonFormatter())
         self.net_logger.addHandler(fh_net)
 
+        if verbose in ["ai", "both"]:
+            sh_ai = logging.StreamHandler()
+            sh_ai.setLevel(logging.DEBUG)
+            sh_ai.setFormatter(
+                logging.Formatter("%(asctime)s - [AI] - %(message)s", "%H:%M:%S")
+            )
+            self.logger.addHandler(sh_ai)
+
+        if verbose in ["network", "both"]:
+            sh_net = logging.StreamHandler()
+            sh_net.setLevel(logging.DEBUG)
+            sh_net.setFormatter(
+                logging.Formatter("%(asctime)s - [NET] - %(message)s", "%H:%M:%S")
+            )
+            self.net_logger.addHandler(sh_net)
+
     def get_log_dir(self) -> str | None:
         return getattr(self, "log_dir", None)
 
     def dump_metrics(self):
+        """Save AI run statistics (PID, survival time, highest level) to JSON."""
         log_dir = os.path.join(
             os.path.dirname(__file__), "..", "logs", self.run_id, "metrics"
         )
@@ -111,6 +138,7 @@ class AILogger:
         self.logger.error("error", extra={"event": f"ERROR: {msg}"})
 
     def log_state(self, state: str, action: str, level: int | str, inventory):
+        """Log the drone's current FSM state, intended action, and resources."""
         inv_str = f"Food:{inventory.food} Lm:{inventory.linemate} Der:{inventory.deraumere} Sib:{inventory.sibur} Men:{inventory.mendiane} Phi:{inventory.phiras} Thy:{inventory.thystame}"
         msg = f"Lvl:{level} | {inv_str} | State:{state} | Action:{action}"
 
@@ -134,6 +162,7 @@ class AILogger:
         self.last_command = message
 
     def log_receive(self, response: str):
+        """Record incoming network payload and calculate round-trip latency."""
         if self.last_command_time > 0:
             elapsed = time.perf_counter() - self.last_command_time
             ms = int(elapsed * 1000)

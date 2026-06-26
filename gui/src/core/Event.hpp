@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <variant>
 #include <vector>
@@ -140,6 +141,14 @@ struct GameEnd {
     std::string winningTeam;
 };
 
+// gwt <team> <seconds> <ticks>: authoritative time the winning team took to win,
+// snapshotted server-side at the game-over tick. Sent once, right after seg.
+struct WinDuration {
+    std::string team;
+    int seconds;
+    int64_t ticks;
+};
+
 // smg M
 struct ServerMessage {
     std::string message;
@@ -176,4 +185,4 @@ using Event =
                  PlayerInventory, PlayerExpulsion, PlayerBroadcast, IncantationStart,
                  IncantationEnd, PlayerFork, PlayerResourceDrop, PlayerResourceTake, PlayerDeath,
                  EggNew, EggHatch, EggDeath, TimeUnit, TimeUnitChange, GameEnd, ServerMessage,
-                 UnknownCommand, BadParameters, ServerUptime, ServerSpawnedEgg>;
+                 UnknownCommand, BadParameters, ServerUptime, ServerSpawnedEgg, WinDuration>;

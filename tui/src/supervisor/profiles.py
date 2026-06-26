@@ -11,6 +11,7 @@ class ProfileError(Exception):
 class Team:
     name: str
     ai: int
+    strategy: str | None = None
 
 
 @dataclass(frozen=True)
@@ -25,6 +26,9 @@ class Profile:
 
 
 _MISSING = object()
+
+# Mirrors the values accepted by `zappy_ai -s`; unset means the AI's own default.
+_AI_STRATEGIES = {"fsm", "utility", "uai", "queen"}
 
 
 def load_profiles(path: Path) -> dict[str, Profile]:
@@ -108,7 +112,7 @@ def _build_teams(profile_name: str, raw, clients: int) -> tuple[Team, ...]:
         if not isinstance(entry, dict):
             raise ProfileError(f"{ctx}: expected a table, got {type(entry).__name__}")
 
-        unknown = set(entry) - {"name", "ai"}
+        unknown = set(entry) - {"name", "ai", "strategy"}
         if unknown:
             raise ProfileError(f"{ctx}: unknown key(s) {sorted(unknown)}")
 
@@ -132,6 +136,13 @@ def _build_teams(profile_name: str, raw, clients: int) -> tuple[Team, ...]:
                 f"server would refuse the extra clients"
             )
 
-        teams.append(Team(name=name, ai=ai))
+        strategy = entry.get("strategy")
+        if strategy is not None and strategy not in _AI_STRATEGIES:
+            raise ProfileError(
+                f"{ctx}: 'strategy' must be one of {sorted(_AI_STRATEGIES)}, "
+                f"got {strategy!r}"
+            )
+
+        teams.append(Team(name=name, ai=ai, strategy=strategy))
 
     return tuple(teams)

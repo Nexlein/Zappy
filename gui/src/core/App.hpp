@@ -1,7 +1,9 @@
 #pragma once
 
 #include <chrono>
+#include <memory>
 
+#include "../audio/IAudioManager.hpp"
 #include "Args.hpp"
 #include "EventQueue.hpp"
 #include "GameState.hpp"
@@ -58,4 +60,6 @@ class App {
     std::chrono::steady_clock::time_point _lastStuSent{};
     int _stuMissedResponses = 0;
     bool _stuSilenced = false;
+
+    std::unique_ptr<IAudioManager> _audioManager;
 };

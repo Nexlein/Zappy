@@ -47,21 +47,33 @@ set(GUI_SOURCES
     src/main.cpp
     src/renderer/HeadlessRenderer.cpp
     src/renderer/RaylibRenderer.cpp
+    src/renderer/raylib_helpers/CameraController.cpp
     src/renderer/raylib_helpers/ColorPalette.cpp
     src/renderer/raylib_helpers/SelectionFinder.cpp
     src/renderer/raylib_helpers/GridRenderer.cpp
     src/renderer/raylib_helpers/EntityRenderer.cpp
     src/renderer/raylib_helpers/TileSlotMap.cpp
     src/renderer/raylib_helpers/I18n.cpp
-    src/renderer/raylib_helpers/RenderingHelper.cpp
     src/renderer/raylib_helpers/TextRenderer.cpp
+    src/renderer/raylib_helpers/RenderingHelper.cpp
     src/renderer/raylib_helpers/TooltipRenderer.cpp
+    src/renderer/raylib_helpers/SpeedSlider.cpp
+    src/renderer/raylib_helpers/PlayerPanel.cpp
+    src/renderer/raylib_helpers/HudWidget.cpp
+    src/renderer/raylib_helpers/SpaceSkybox.cpp
+    src/audio/AAudioManager.cpp
+    src/audio/RaylibAudioManager.cpp
+    src/renderer/raylib_helpers/WinScreen.cpp
+    src/renderer/raylib_helpers/ButtonWidget.cpp
+    src/renderer/raylib_helpers/TooltipWidget.cpp
+    src/renderer/raylib_helpers/EntityTooltipWidget.cpp
     src/network/TcpSocket.cpp
     src/network/ProtocolParser.cpp
     src/core/behaviors/MoveBehavior.cpp
     src/core/behaviors/TurnBehavior.cpp
     src/core/behaviors/DeathBehavior.cpp
     src/core/behaviors/ForkBehavior.cpp
+    src/core/behaviors/IncantationBehavior.cpp
     src/core/behaviors/LevelUpBehavior.cpp
     src/core/behaviors/BroadcastBehavior.cpp
     src/core/EventQueue.cpp

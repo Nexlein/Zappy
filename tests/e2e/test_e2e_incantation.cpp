@@ -15,6 +15,7 @@
  */
 
 #include <arpa/inet.h>
+#include <gtest/gtest.h>
 #include <netinet/in.h>
 #include <signal.h>
 #include <sys/socket.h>
@@ -26,8 +27,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-
-#include <gtest/gtest.h>
 
 static constexpr int E2E_PORT = 14403;
 static constexpr int MAP_W = 3;
@@ -47,16 +46,21 @@ static pid_t spawnServer()
     pid_t pid = fork();
     if (pid != 0) return pid;
 
-    char* argv[] = {
-        const_cast<char*>("./zappy_server"),
-        const_cast<char*>("-p"), const_cast<char*>("14403"),
-        const_cast<char*>("-x"), const_cast<char*>("3"),
-        const_cast<char*>("-y"), const_cast<char*>("3"),
-        const_cast<char*>("-n"), const_cast<char*>("TeamA"), const_cast<char*>("TeamB"),
-        const_cast<char*>("-c"), const_cast<char*>("5"),
-        const_cast<char*>("-f"), const_cast<char*>("10000"),
-        nullptr
-    };
+    char* argv[] = {const_cast<char*>("./zappy_server"),
+                    const_cast<char*>("-p"),
+                    const_cast<char*>("14403"),
+                    const_cast<char*>("-x"),
+                    const_cast<char*>("3"),
+                    const_cast<char*>("-y"),
+                    const_cast<char*>("3"),
+                    const_cast<char*>("-n"),
+                    const_cast<char*>("TeamA"),
+                    const_cast<char*>("TeamB"),
+                    const_cast<char*>("-c"),
+                    const_cast<char*>("5"),
+                    const_cast<char*>("-f"),
+                    const_cast<char*>("10000"),
+                    nullptr};
     execv("./zappy_server", argv);
     _exit(1);
 }
@@ -106,8 +110,12 @@ static void stopServer(pid_t pid)
 // Protocol helpers
 // ---------------------------------------------------------------------------
 
-struct Tile { int x, y, linemate; };
-struct Pos  { int x, y, orientation; };  // orientation: 1=N 2=E 3=S 4=W
+struct Tile {
+    int x, y, linemate;
+};
+struct Pos {
+    int x, y, orientation;
+};  // orientation: 1=N 2=E 3=S 4=W
 
 // Parse "bct X Y food linemate deraumere sibur mendiane phiras thystame"
 static Tile parseBct(const std::string& line)
@@ -126,11 +134,10 @@ static int connectAsGui(std::vector<Tile>& bctOut)
 {
     int fd = connectWithRetry();
     if (fd < 0) return -1;
-    readLine(fd);               // WELCOME
+    readLine(fd);  // WELCOME
     sendLine(fd, "GRAPHIC");
-    readLine(fd);               // msz line (first in burst)
-    for (int i = 0; i < MAP_W * MAP_H; ++i)
-        bctOut.push_back(parseBct(readLine(fd)));
+    readLine(fd);  // msz line (first in burst)
+    for (int i = 0; i < MAP_W * MAP_H; ++i) bctOut.push_back(parseBct(readLine(fd)));
     // drain remainder of burst (tna * TEAM_COUNT, sgt, sse * CLIENTS_NB * TEAM_COUNT)
     for (int i = 0; i < TEAM_COUNT + 1 + CLIENTS_NB * TEAM_COUNT; ++i) readLine(fd);
     return fd;
@@ -141,10 +148,10 @@ static int connectAsAi(int& playerId)
 {
     int fd = connectWithRetry();
     if (fd < 0) return -1;
-    readLine(fd);               // WELCOME
+    readLine(fd);  // WELCOME
     sendLine(fd, "TeamA");
-    readLine(fd);               // slots
-    readLine(fd);               // map size
+    readLine(fd);  // slots
+    readLine(fd);  // map size
 
     // The server broadcasts pnw when a player connects.
     // We learn the player ID from it via the GUI — caller must do that.
@@ -181,36 +188,86 @@ static void navigateTo(int aiFd, int& x, int& y, int& ori, int toX, int toY)
 {
     // ori: 1=N(y-1) 2=E(x+1) 3=S(y+1) 4=W(x-1)
     auto faceEast = [&]() {
-        if (ori == 1) { turnRight(aiFd); ori = 2; }
-        else if (ori == 3) { turnLeft(aiFd); ori = 2; }
-        else if (ori == 4) { turnRight(aiFd); ori = 1; turnRight(aiFd); ori = 2; }
+        if (ori == 1) {
+            turnRight(aiFd);
+            ori = 2;
+        } else if (ori == 3) {
+            turnLeft(aiFd);
+            ori = 2;
+        } else if (ori == 4) {
+            turnRight(aiFd);
+            ori = 1;
+            turnRight(aiFd);
+            ori = 2;
+        }
     };
     auto faceWest = [&]() {
-        if (ori == 1) { turnLeft(aiFd); ori = 4; }
-        else if (ori == 3) { turnRight(aiFd); ori = 4; }
-        else if (ori == 2) { turnRight(aiFd); ori = 3; turnRight(aiFd); ori = 4; }
+        if (ori == 1) {
+            turnLeft(aiFd);
+            ori = 4;
+        } else if (ori == 3) {
+            turnRight(aiFd);
+            ori = 4;
+        } else if (ori == 2) {
+            turnRight(aiFd);
+            ori = 3;
+            turnRight(aiFd);
+            ori = 4;
+        }
     };
     auto faceNorth = [&]() {
-        if (ori == 2) { turnLeft(aiFd); ori = 1; }
-        else if (ori == 4) { turnRight(aiFd); ori = 1; }
-        else if (ori == 3) { turnRight(aiFd); ori = 4; turnRight(aiFd); ori = 1; }
+        if (ori == 2) {
+            turnLeft(aiFd);
+            ori = 1;
+        } else if (ori == 4) {
+            turnRight(aiFd);
+            ori = 1;
+        } else if (ori == 3) {
+            turnRight(aiFd);
+            ori = 4;
+            turnRight(aiFd);
+            ori = 1;
+        }
     };
     auto faceSouth = [&]() {
-        if (ori == 2) { turnRight(aiFd); ori = 3; }
-        else if (ori == 4) { turnLeft(aiFd); ori = 3; }
-        else if (ori == 1) { turnRight(aiFd); ori = 2; turnRight(aiFd); ori = 3; }
+        if (ori == 2) {
+            turnRight(aiFd);
+            ori = 3;
+        } else if (ori == 4) {
+            turnLeft(aiFd);
+            ori = 3;
+        } else if (ori == 1) {
+            turnRight(aiFd);
+            ori = 2;
+            turnRight(aiFd);
+            ori = 3;
+        }
     };
 
     // Move along X axis first, then Y axis.
     while (x != toX) {
         int dx = ((toX - x) % MAP_W + MAP_W) % MAP_W;
-        if (dx <= MAP_W / 2) { faceEast(); stepForward(aiFd); x = (x + 1) % MAP_W; }
-        else                  { faceWest(); stepForward(aiFd); x = (x - 1 + MAP_W) % MAP_W; }
+        if (dx <= MAP_W / 2) {
+            faceEast();
+            stepForward(aiFd);
+            x = (x + 1) % MAP_W;
+        } else {
+            faceWest();
+            stepForward(aiFd);
+            x = (x - 1 + MAP_W) % MAP_W;
+        }
     }
     while (y != toY) {
         int dy = ((toY - y) % MAP_H + MAP_H) % MAP_H;
-        if (dy <= MAP_H / 2) { faceSouth(); stepForward(aiFd); y = (y + 1) % MAP_H; }
-        else                  { faceNorth(); stepForward(aiFd); y = (y - 1 + MAP_H) % MAP_H; }
+        if (dy <= MAP_H / 2) {
+            faceSouth();
+            stepForward(aiFd);
+            y = (y + 1) % MAP_H;
+        } else {
+            faceNorth();
+            stepForward(aiFd);
+            y = (y - 1 + MAP_H) % MAP_H;
+        }
     }
 }
 
@@ -233,7 +290,10 @@ class E2EIncantation : public ::testing::Test {
     pid_t serverPid = -1;
 
     void SetUp() override { serverPid = spawnServer(); }
-    void TearDown() override { if (serverPid > 0) stopServer(serverPid); }
+    void TearDown() override
+    {
+        if (serverPid > 0) stopServer(serverPid);
+    }
 };
 
 // ---------------------------------------------------------------------------
@@ -250,7 +310,10 @@ TEST_F(E2EIncantation, SinglePlayerLevelsUpToTwo)
     // Find a tile that has at least 1 linemate (level 1→2 requirement).
     Tile* target = nullptr;
     for (auto& t : tiles) {
-        if (t.linemate >= 1) { target = &t; break; }
+        if (t.linemate >= 1) {
+            target = &t;
+            break;
+        }
     }
     ASSERT_NE(target, nullptr) << "No tile with linemate found in initial map state";
 

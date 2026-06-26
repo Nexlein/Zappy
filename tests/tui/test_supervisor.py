@@ -7,12 +7,20 @@
 
 import os
 import sys
+import time
 import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../tui/src"))
 
 from supervisor.ports import PortAllocator
+from supervisor.process import ManagedProcess
 from supervisor.supervisor import Supervisor
+
+
+def _wait_dead(process, timeout=2.0):
+    deadline = time.monotonic() + timeout
+    while process.is_alive() and time.monotonic() < deadline:
+        time.sleep(0.01)
 
 
 class TestSupervisor(unittest.TestCase):
@@ -55,6 +63,61 @@ class TestSupervisor(unittest.TestCase):
         sup.spawn("sleep", ["sleep", "30"])
         sup.shutdown()
         sup.shutdown()  # second call must not raise
+
+    def test_reap_returns_dead_keeps_entry(self):
+        with Supervisor() as sup:
+            p = sup.spawn("quick", ["true"])
+            _wait_dead(p)
+            self.assertEqual(sup.reap(), [p])
+            # entry kept so the UI can still show the dead process
+            self.assertEqual(sup.processes, [p])
+
+    def test_reap_ignores_alive(self):
+        with Supervisor() as sup:
+            sup.spawn("sleep", ["sleep", "30"])
+            self.assertEqual(sup.reap(), [])
+
+    def test_reap_is_idempotent(self):
+        with Supervisor() as sup:
+            p = sup.spawn("quick", ["true"])
+            _wait_dead(p)
+            self.assertEqual(sup.reap(), [p])
+            self.assertEqual(sup.reap(), [])  # already reaped
+
+    def test_stop_kills_one_keeps_others(self):
+        with Supervisor() as sup:
+            a = sup.spawn("a", ["sleep", "30"])
+            b = sup.spawn("b", ["sleep", "30"])
+            sup.stop(a)
+            self.assertFalse(a.is_alive())
+            self.assertTrue(b.is_alive())
+            # entry kept so the UI can still show the dead process
+            self.assertEqual(sup.processes, [a, b])
+
+    def test_stop_releases_port(self):
+        ports = PortAllocator(8775, 8776)  # single-port range
+        with Supervisor(ports) as sup:
+            port = sup.ports.allocate()
+            p = sup.spawn("server", ["sleep", "30"], port=port)
+            sup.stop(p)
+            self.assertEqual(ports.allocate(), port)
+
+    def test_stop_idempotent_and_ignores_untracked(self):
+        with Supervisor() as sup:
+            p = sup.spawn("a", ["sleep", "30"])
+            sup.stop(p)
+            sup.stop(p)  # second call must not raise
+            other = ManagedProcess("x", ["sleep", "30"])
+            sup.stop(other)  # untracked: ignored, no raise
+
+    def test_reap_frees_port_for_reuse(self):
+        ports = PortAllocator(8770, 8771)  # single-port range
+        with Supervisor(ports) as sup:
+            port = sup.ports.allocate()
+            p = sup.spawn("server", ["true"], port=port)
+            _wait_dead(p)
+            sup.reap()
+            self.assertEqual(ports.allocate(), port)
 
 
 if __name__ == "__main__":

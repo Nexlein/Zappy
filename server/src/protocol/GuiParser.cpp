@@ -59,11 +59,5 @@ std::optional<Gui::Request> GuiParser::parse(std::string_view line)
             return std::nullopt;
         }
     }
-    if (line.starts_with("gtt ")) {
-        auto team = line.substr(4);
-        if (team.empty() || team.find(' ') != std::string_view::npos) return std::nullopt;
-        return Gui::Gtt{std::string(team)};
-    }
-
     return std::nullopt;
 }

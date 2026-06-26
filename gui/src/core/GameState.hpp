@@ -17,6 +17,8 @@ class GameState {
     WorldState world;
     int timeUnit = -1;
     std::string winnerTeam = "";
+    int gameDurationSeconds = -1;    // gwt: time the winner took to win (-1 = not yet received)
+    int64_t gameDurationTicks = -1;  // gwt: same in game-time ticks (-1 = not yet received)
     float tileSize = 1.0f;
     unsigned int serverUptimeSeconds = 0;
     bool receivedStuResponse = false;
@@ -67,6 +69,7 @@ class GameState {
     void _applyGameEnd(const GameEnd& e);
     void _applyServerUptime(const ServerUptime& e);
     void _applyServerSpawnedEgg(const ServerSpawnedEgg& e);
+    void _applyWinDuration(const WinDuration& e);
 
     static void _pushBehavior(VisualState& visual, std::unique_ptr<IBehavior> b);
 };

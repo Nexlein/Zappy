@@ -1,3 +1,4 @@
+#define RLIGHTS_IMPLEMENTATION
 #include "RaylibRenderer.hpp"
 
 #include <algorithm>
@@ -10,16 +11,24 @@
 #include "raylib_helpers/GridRenderer.hpp"
 #include "raylib_helpers/I18n.hpp"
 #include "raylib_helpers/RenderingHelper.hpp"
+#include "raylib_helpers/SpaceSkybox.hpp"
+#include "raylib_helpers/TextRenderer.hpp"
 #include "raylib_helpers/TooltipRenderer.hpp"
-#include "raymath.h"
+#include "raylib_helpers/WinScreen.hpp"
 
 void RaylibRenderer::init()
 {
     _tileSlotMap.clear();
+    _speedSlider.reset();
+    _pendingSpeed.reset();
+    _winScreen.reset();
     SetTraceLogLevel(LOG_WARNING);
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(800, 600, "Zappy");
     SetTargetFPS(60);
+
+    if (!TextRenderer::loadFont(std::string(FONT_PATH)))
+        TraceLog(LOG_WARNING, "Failed to load font %s, using default", FONT_PATH.data());
 
     if (_savedWindow.valid) {
         SetWindowMonitor(_savedWindow.monitor);
@@ -29,11 +38,10 @@ void RaylibRenderer::init()
         if (_savedWindow.fullscreen) ToggleFullscreen();
     }
 
-    _camera = {.position = {0.0f, 10.0f, 10.0f},
-               .target = {0.0f, 0.0f, 0.0f},
-               .up = {0.0f, 1.0f, 0.0f},
-               .fovy = 45.0f,
-               .projection = CAMERA_PERSPECTIVE};
+    _cam.init(10, 10);
+
+    _background = std::make_unique<SpaceSkybox>();
+    _background->init();
 
     _selection = SelectionFinder::getEmptySelection();
 
@@ -60,104 +68,134 @@ void RaylibRenderer::init()
     SetTraceLogLevel(LOG_WARNING);
     if (_foodModel.meshCount == 0)
         throw std::runtime_error("Failed to load food model: " + std::string(FOOD_MODEL_PATH));
+
+    SetTraceLogLevel(LOG_ERROR);
+    _crystalModel = LoadModel(CRYSTAL_MODEL_PATH.data());
+    SetTraceLogLevel(LOG_WARNING);
+    if (_crystalModel.meshCount == 0)
+        throw std::runtime_error("Failed to load crystal model: " +
+                                 std::string(CRYSTAL_MODEL_PATH));
+
+    _lightingShader =
+        LoadShader("gui/assets/shaders/lighting.vs", "gui/assets/shaders/lighting.fs");
+    _shaderViewPosLoc = GetShaderLocation(_lightingShader, "viewPos");
+
+    for (int i = 0; i < _foodModel.materialCount; i++)
+        _foodModel.materials[i].shader = _lightingShader;
+    for (int i = 0; i < _crystalModel.materialCount; i++)
+        _crystalModel.materials[i].shader = _lightingShader;
+
+    _sun = CreateLight(LIGHT_DIRECTIONAL, {0.0f, 1000.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, WHITE,
+                       _lightingShader);
+
+    // Boost ambient so unlit faces aren't black
+    float ambient[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+    SetShaderValue(_lightingShader, GetShaderLocation(_lightingShader, "ambient"), ambient,
+                   SHADER_UNIFORM_VEC4);
 }
 
 void RaylibRenderer::render()
 {
     _initTeamColors();
     _updateSelection(GetFrameTime());
-    _updateCamera(_state->world.width, _state->world.height);
+    _cam.update(GetFrameTime(), _state->world.width, _state->world.height, &_state->world);
+
+    if (_background) _background->update();
+
+    // Update shader camera position for specular lighting
+    float camPos[3] = {_cam.camera().position.x, _cam.camera().position.y,
+                       _cam.camera().position.z};
+    SetShaderValue(_lightingShader, _shaderViewPosLoc, camPos, SHADER_UNIFORM_VEC3);
 
     BeginDrawing();
-    ClearBackground(RAYWHITE);
+    ClearBackground(BLACK);
 
-    BeginMode3D(_camera);
+    BeginMode3D(_cam.camera());
     _render3D();
+
     EndMode3D();
 
+    if (_state) {
+        _hudWidget.setWorld(&_state->world);
+        _hudWidget.setTimeUnit(_state->timeUnit);
+        _hudWidget.setServerUptime(_state->serverUptimeSeconds);
+        _hudWidget.setTeamColorFunc([this](const std::string& t) { return _getTeamColor(t); });
+        _hudWidget.draw(_getScaledFontSize(18));
+    }
+
     _render2D();
-    _drawHUD();
     EndDrawing();
-}
-
-void RaylibRenderer::_handleOrbitalInput()
-{
-    // KEY_A maps to 'Q' on AZERTY
-    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) _cameraAngle += CAMERA_MOVE_SPEED * GetFrameTime();
-    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))
-        _cameraAngle -= CAMERA_MOVE_SPEED * GetFrameTime();
-}
-
-void RaylibRenderer::_enterFreecam()
-{
-    _savedOrbitalAngle = _cameraAngle;
-    _savedOrbitalHeight = _cameraHeight;
-    Vector3 dir = Vector3Subtract(_camera.target, _camera.position);
-    _freecamYaw = atan2f(dir.z, dir.x);
-    _freecamPitch = atan2f(dir.y, sqrtf(dir.x * dir.x + dir.z * dir.z));
-    _freecamActive = true;
-    DisableCursor();
-}
-
-void RaylibRenderer::_exitFreecam()
-{
-    _cameraAngle = _savedOrbitalAngle;
-    _cameraHeight = _savedOrbitalHeight;
-    _freecamActive = false;
-    EnableCursor();
-}
-
-void RaylibRenderer::_handleFreecamInput()
-{
-    Vector2 delta = GetMouseDelta();
-    _freecamYaw += delta.x * FREECAM_LOOK_SPEED;
-    _freecamPitch -= delta.y * FREECAM_LOOK_SPEED;
-    _freecamPitch = Clamp(_freecamPitch, -PI / 2.0f + 0.01f, PI / 2.0f - 0.01f);
-
-    Vector3 forward = {cosf(_freecamYaw) * cosf(_freecamPitch), sinf(_freecamPitch),
-                       sinf(_freecamYaw) * cosf(_freecamPitch)};
-    Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, {0.0f, 1.0f, 0.0f}));
-    float sp = FREECAM_MOVE_SPEED * GetFrameTime();
-
-    // ZQSD on AZERTY = KEY_W/KEY_A/KEY_S/KEY_D in raylib
-    if (IsKeyDown(KEY_W))
-        _camera.position = Vector3Add(_camera.position, Vector3Scale(forward, sp));
-    if (IsKeyDown(KEY_S))
-        _camera.position = Vector3Add(_camera.position, Vector3Scale(forward, -sp));
-    if (IsKeyDown(KEY_D)) _camera.position = Vector3Add(_camera.position, Vector3Scale(right, sp));
-    if (IsKeyDown(KEY_A)) _camera.position = Vector3Add(_camera.position, Vector3Scale(right, -sp));
-    if (IsKeyDown(KEY_SPACE)) _camera.position.y += sp;
-    if (IsKeyDown(KEY_LEFT_SHIFT)) _camera.position.y -= sp;
 }
 
 void RaylibRenderer::handleInput()
 {
     if (IsKeyPressed(KEY_F)) {
-        _freecamActive ? _exitFreecam() : _enterFreecam();
+        _cam.isFreecamActive() ? _cam.exitFreecam() : _cam.enterFreecam();
     }
 
-    if (_freecamActive)
-        _handleFreecamInput();
-    else
-        _handleOrbitalInput();
+    _cam.handleInput();
 
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !_freecamActive) _performRaycast();
+    {
+        _entityTooltip.setSelection(_selection);
+        _entityTooltip.setWorld(_state ? &_state->world : nullptr);
+        _entityTooltip.setTeamColorFunc([this](const std::string& t) { return _getTeamColor(t); });
+        _entityTooltip.setFollowActive(_cam.isFollowActive());
+        _entityTooltip.handleInput();
+        if (int fid = _entityTooltip.popFollowRequest(); fid != -1) {
+            if (fid == -2) {
+                _cam.stopFollow();
+            } else {
+                _cam.startFollow(fid);
+            }
+        }
+
+        _playerPanel.setWorld(_state ? &_state->world : nullptr);
+        if (_playerPanel.handleInput()) {
+            if (auto pSel = _playerPanel.getPendingSelection()) {
+                _selection = *pSel;
+            }
+        }
+
+        if (_speedSlider.handleInput()) {
+            if (auto speed = _speedSlider.getPendingSpeedChange()) {
+                _pendingSpeed = speed;
+            }
+        }
+
+        int sh = GetScreenHeight();
+        Rectangle panelRect = {10.0f, static_cast<float>(sh - SpeedSlider::PANEL_HEIGHT - 10),
+                               static_cast<float>(SpeedSlider::PANEL_WIDTH),
+                               static_cast<float>(SpeedSlider::PANEL_HEIGHT)};
+        Vector2 mouse = GetMousePosition();
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !_cam.isFreecamActive() &&
+            !_cam.isFollowActive() && !CheckCollisionPointRec(mouse, panelRect) &&
+            !_entityTooltip.isFollowButtonHovered()) {
+            if (!_playerPanel.isOpen()) _performRaycast();
+        }
+
+        if (_cam.isFollowActive())
+            _selection = {SelectionFinder::EntityType::Player, _cam.followedPlayerId(), -1, -1};
+    }
 
     if (IsKeyPressed(KEY_L)) {
         auto lang = I18n::getLanguage();
         I18n::setLanguage(lang == I18n::Language::EN ? I18n::Language::FR : I18n::Language::EN);
     }
 
-    if (IsKeyPressed(KEY_F3)) _devMode = !_devMode;
+    if (IsKeyPressed(KEY_F3)) {
+        _devMode = !_devMode;
+        _hudWidget.setDevMode(_devMode, _devPort, _devMachine);
+    }
 }
 
-bool RaylibRenderer::shouldClose() { return WindowShouldClose(); }
+bool RaylibRenderer::shouldClose() { return WindowShouldClose() || _winScreen.quitRequested(); }
 
 void RaylibRenderer::setDevMode(bool dev, int port, const std::string& machine)
 {
     _devMode = dev;
     _devPort = port;
     _devMachine = machine;
+    _hudWidget.setDevMode(dev, port, machine);
 }
 
 void RaylibRenderer::shutdown()
@@ -165,6 +203,10 @@ void RaylibRenderer::shutdown()
     if (_playerModel.meshCount > 0) UnloadModel(_playerModel);
     if (_eggModel.meshCount > 0) UnloadModel(_eggModel);
     if (_foodModel.meshCount > 0) UnloadModel(_foodModel);
+    if (_crystalModel.meshCount > 0) UnloadModel(_crystalModel);
+    if (_lightingShader.id > 0) UnloadShader(_lightingShader);
+    TextRenderer::unloadFont();
+    if (_background) _background->unload();
 
     _savedWindow = {
         .width = GetScreenWidth(),
@@ -180,6 +222,7 @@ void RaylibRenderer::shutdown()
 
 void RaylibRenderer::_render3D()
 {
+    if (_background) _background->draw(_cam.camera());
     GridRenderer::drawTiles(_state->world.width, _state->world.height, TILE_SIZE);
 
     for (auto& [id, player] : _state->world.players) {
@@ -220,11 +263,14 @@ void RaylibRenderer::_render3D()
         for (int y = 0; y < _state->world.height; y++) {
             const Resources& res = _state->world.at(x, y);
             auto slotIndices = _tileSlotMap.updateResourceSlots(x, y, res);
+            std::array<float, 7> rotations;
+            for (int i = 0; i < 7; i++) rotations[i] = _tileSlotMap.resourceRotation(x, y, i);
             EntityRenderer::drawResources(
-                res, slotIndices,
+                res, slotIndices, rotations,
                 RenderingHelper::tileToWorld(x, y, _state->world.width, _state->world.height,
                                              TILE_SIZE),
-                TILE_SIZE, _foodModel, FOOD_MODEL_SIZE, RESOURCE_SPHERE_BASE_SIZE);
+                TILE_SIZE, _foodModel, FOOD_MODEL_SIZE, _crystalModel, CRYSTAL_MODEL_SIZE,
+                RESOURCE_SPHERE_BASE_SIZE);
         }
     }
 
@@ -256,9 +302,9 @@ void RaylibRenderer::_render2D()
         std::sort(group.begin(), group.end(),
                   [](const Player* a, const Player* b) { return a->level > b->level; });
 
-        Vector3 worldPos = group[0]->visual.pos;
+        Vector3 worldPos = _groupLabelAnchor(group);
         worldPos.y = PLAYER_MODEL_SIZE * 2.0f;
-        Vector2 screenPos = GetWorldToScreen(worldPos, _camera);
+        Vector2 screenPos = GetWorldToScreen(worldPos, _cam.camera());
 
         auto builder = TooltipRenderer::create()
                            .setAnchor(TooltipRenderer::Anchor::BottomCenter)
@@ -277,7 +323,33 @@ void RaylibRenderer::_render2D()
         builder.draw(screenPos);
     }
 
-    _drawSelectedToolip();
+    _entityTooltip.setSelection(_selection);
+    _entityTooltip.setWorld(_state ? &_state->world : nullptr);
+    _entityTooltip.setTeamColorFunc([this](const std::string& t) { return _getTeamColor(t); });
+    _entityTooltip.setFollowActive(_cam.isFollowActive());
+    _entityTooltip.draw(_getScaledFontSize(18));
+
+    if (_state) {
+        _playerPanel.setWorld(&_state->world);
+        _playerPanel.setTeamColorFunc(
+            [this](const std::string& teamName) { return _getTeamColor(teamName); });
+        _playerPanel.draw(_getScaledFontSize(14));
+    }
+
+    _drawSpeedSlider();
+
+    if (_state && !_state->winnerTeam.empty()) {
+        _winScreen.setWinner(_state->winnerTeam, _getTeamColor(_state->winnerTeam));
+        _winScreen.setDuration(_state->gameDurationSeconds, _state->gameDurationTicks);
+        _winScreen.handleInput();
+        _winScreen.draw(_getScaledFontSize(18));
+    }
+}
+
+void RaylibRenderer::_drawSpeedSlider()
+{
+    if (_state) _speedSlider.syncFromServer(_state->timeUnit);
+    _speedSlider.draw(_getScaledFontSize(18));
 }
 
 void RaylibRenderer::_drawSelectionHighlight()
@@ -321,143 +393,11 @@ void RaylibRenderer::_drawSelectionHighlight()
     }
 }
 
-void RaylibRenderer::_drawSelectedToolip()
+std::optional<int> RaylibRenderer::getPendingSpeedChange()
 {
-    if (_selection.type == SelectionFinder::EntityType::None) return;
-
-    Color bgColor = {20, 25, 35, 220};
-    Color borderColor = {60, 70, 90, 200};
-    Color textColor = {255, 255, 255, 255};
-    Color tileColor = {100, 200, 255, 255};
-    Color playerColor = {100, 255, 150, 255};
-    Color eggColor = {255, 200, 80, 255};
-
-    auto builder = TooltipRenderer::create()
-                       .setAnchor(TooltipRenderer::Anchor::TopRight)
-                       .setBackgroundColor(bgColor)
-                       .setBackgroundAlpha(180)
-                       .setBorderColor(borderColor)
-                       .setBorderThickness(2)
-                       .setPadding(10)
-                       .setFontSize(_getScaledFontSize(18));
-
-    switch (_selection.type) {
-        case SelectionFinder::EntityType::Tile: {
-            const Resources& resources = _state->world.at(_selection.tileX, _selection.tileY);
-            if (resources.isEmpty()) {
-                builder.addColoredText(
-                    {I18n::get(I18n::Key::LABEL_TILE), I18n::get(I18n::Key::TILE_EMPTY)},
-                    {tileColor, textColor});
-            } else {
-                builder.addLine(I18n::get(I18n::Key::TILE_HEADER), tileColor);
-                _addResourceLines(builder, resources, "  ", textColor);
-            }
-            break;
-        }
-
-        case SelectionFinder::EntityType::Player: {
-            if (!_state->world.playerExists(_selection.id)) return;
-            const Player& player = _state->world.players.at(_selection.id);
-            builder.addColoredText(
-                {I18n::get(I18n::Key::LABEL_PLAYER), " #" + std::to_string(player.id)},
-                {playerColor, textColor});
-            builder.addColoredText({I18n::get(I18n::Key::PLAYER_TEAM), player.team},
-                                   {textColor, _getTeamColor(player.team)});
-            builder.addLine(
-                std::string(I18n::get(I18n::Key::PLAYER_LEVEL)) + std::to_string(player.level),
-                textColor);
-            if (player.inventory.isEmpty()) {
-                builder.addLine(I18n::get(I18n::Key::PLAYER_INVENTORY_EMPTY), textColor);
-            } else {
-                builder.addLine(I18n::get(I18n::Key::PLAYER_INVENTORY), textColor);
-                _addResourceLines(builder, player.inventory, "    ", textColor);
-            }
-            break;
-        }
-
-        case SelectionFinder::EntityType::Egg: {
-            if (!_state->world.eggExists(_selection.id)) return;
-            const Egg& egg = _state->world.eggs.at(_selection.id);
-            builder.addColoredText({I18n::get(I18n::Key::LABEL_EGG), " #" + std::to_string(egg.id)},
-                                   {eggColor, textColor});
-            builder.addColoredText({I18n::get(I18n::Key::EGG_TEAM), egg.team},
-                                   {textColor, _getTeamColor(egg.team)});
-            break;
-        }
-
-        default:
-            return;
-    }
-
-    builder.draw({GetScreenWidth() - 10.0f, 10.0f});
-}
-
-void RaylibRenderer::_drawHUD()
-{
-    Color bgColor = {20, 25, 35, 220};
-    Color borderColor = {60, 70, 90, 200};
-    Color accentColor = {210, 220, 240, 255};
-
-    std::string mapText = std::string(I18n::get(I18n::Key::HUD_MAP)) +
-                          std::to_string(_state->world.width) + "x" +
-                          std::to_string(_state->world.height);
-
-    std::string uptimeText;
-    if (_state->serverUptimeSeconds == 0) {
-        uptimeText = I18n::get(I18n::Key::HUD_UPTIME_UNKNOWN);
-    } else {
-        int uptimeHours = _state->serverUptimeSeconds / 3600;
-        int uptimeMinutes = (_state->serverUptimeSeconds % 3600) / 60;
-        int uptimeSeconds = _state->serverUptimeSeconds % 60;
-        uptimeText = I18n::get(I18n::Key::HUD_UPTIME_PREFIX);
-        if (uptimeHours > 0)
-            uptimeText += std::to_string(uptimeHours) + I18n::get(I18n::Key::HUD_UPTIME_H);
-        if (uptimeMinutes > 0 || uptimeHours > 0)
-            uptimeText += std::to_string(uptimeMinutes) + I18n::get(I18n::Key::HUD_UPTIME_M);
-        uptimeText += std::to_string(uptimeSeconds) + I18n::get(I18n::Key::HUD_UPTIME_S);
-    }
-
-    std::unordered_map<std::string, int> teamPlayerCounts;
-    for (const auto& teamName : _state->world.teams) teamPlayerCounts[teamName] = 0;
-    for (const auto& [id, player] : _state->world.players) teamPlayerCounts[player.team]++;
-
-    // Sort teams by player count (descending)
-    std::vector<std::pair<std::string, int>> sortedTeams(teamPlayerCounts.begin(),
-                                                         teamPlayerCounts.end());
-    std::sort(sortedTeams.begin(), sortedTeams.end(),
-              [](const auto& a, const auto& b) { return a.second > b.second; });
-
-    auto builder = TooltipRenderer::create();
-
-    if (_devMode) {
-        int fps = GetFPS();
-        Color fpsColor = fps >= 55 ? GREEN : (fps >= 30 ? YELLOW : RED);
-        builder.addLine(std::string(I18n::get(I18n::Key::HUD_FPS)) + std::to_string(fps), fpsColor);
-        builder.addLine(
-            std::string(I18n::get(I18n::Key::HUD_TIME_UNIT)) + std::to_string(_state->timeUnit),
-            accentColor);
-        builder.addLine(std::string(I18n::get(I18n::Key::HUD_PORT)) + std::to_string(_devPort),
-                        accentColor);
-        builder.addLine(std::string(I18n::get(I18n::Key::HUD_MACHINE)) + _devMachine, accentColor);
-    }
-
-    builder.addLine(mapText, accentColor).addLine(uptimeText, accentColor);
-
-    // Add top 5 teams by population
-    for (size_t i = 0; i < std::min(sortedTeams.size(), size_t(5)); i++) {
-        const auto& [teamName, playerCount] = sortedTeams[i];
-        std::string teamLine = teamName + ": " + std::to_string(playerCount);
-        builder.addLine(teamLine, _getTeamColor(teamName));
-    }
-
-    builder.setBackgroundColor(bgColor)
-        .setBackgroundAlpha(180)
-        .setBorderColor(borderColor)
-        .setBorderThickness(2)
-        .setPadding(10)
-        .setFontSize(_getScaledFontSize(18))
-        .setAnchor(TooltipRenderer::Anchor::TopLeft)
-        .draw({10.0f, 10.0f});
+    auto val = _pendingSpeed;
+    _pendingSpeed.reset();
+    return val;
 }
 
 void RaylibRenderer::_initTeamColors()
@@ -487,41 +427,11 @@ int RaylibRenderer::_getScaledFontSize(int baseFontSize) const
     return static_cast<int>(baseFontSize * scale);
 }
 
-void RaylibRenderer::_updateCamera(float worldWidth, float worldHeight)
-{
-    if (_freecamActive) {
-        Vector3 dir = {cosf(_freecamYaw) * cosf(_freecamPitch), sinf(_freecamPitch),
-                       sinf(_freecamYaw) * cosf(_freecamPitch)};
-        _camera.target = Vector3Add(_camera.position, dir);
-        return;
-    }
-
-    float maxDim = std::max(worldWidth, worldHeight);
-    float adaptiveRadius = maxDim * 1.25f;
-
-    float rawAspectX = worldWidth / maxDim;
-    float rawAspectZ = worldHeight / maxDim;
-
-    // Lerp toward circle (50% blend)
-    float aspectX = 0.5f * (1.0f + rawAspectX);
-    float aspectZ = 0.5f * (1.0f + rawAspectZ);
-
-    _camera.position.x = cos(_cameraAngle) * adaptiveRadius * aspectX;
-    _camera.position.z = sin(_cameraAngle) * adaptiveRadius * aspectZ;
-
-    float currentRadius = sqrt(pow(_camera.position.x, 2) + pow(_camera.position.z, 2));
-
-    float heightScale = currentRadius / adaptiveRadius;
-    _camera.position.y = _cameraHeight * heightScale;
-
-    _camera.target = {0.0f, 0.0f, 0.0f};
-}
-
 void RaylibRenderer::_performRaycast()
 {
     if (!_state) return;
 
-    Ray ray = GetMouseRay(GetMousePosition(), _camera);
+    Ray ray = GetMouseRay(GetMousePosition(), _cam.camera());
     _selection =
         SelectionFinder::findFromRay(ray, *_state, TILE_SIZE, _playerModel, PLAYER_MODEL_SIZE,
                                      _eggModel, EGG_MODEL_SIZE, _tileSlotMap);
@@ -532,16 +442,6 @@ void RaylibRenderer::_performRaycast()
 }
 
 void RaylibRenderer::_updateSelection([[maybe_unused]] float deltaTime) {}
-
-void RaylibRenderer::_addResourceLines(TooltipRenderer::Builder& builder, const Resources& res,
-                                       const std::string& indent, Color color)
-{
-    for (int i = 0; i < 7; i++) {
-        int qty = res[i];
-        if (qty <= 0) continue;
-        builder.addLine(indent + I18n::resourceName(i) + ": " + std::to_string(qty), color);
-    }
-}
 
 std::vector<std::vector<const Player*>> RaylibRenderer::_groupPlayersByVisualProximity() const
 {
@@ -565,7 +465,10 @@ std::vector<std::vector<const Player*>> RaylibRenderer::_groupPlayersByVisualPro
             const Vector3& pj = all[j]->visual.pos;
             float dx = pi.x - pj.x;
             float dz = pi.z - pj.z;
-            if (dx * dx + dz * dz < threshSq) {
+            bool nearbyVisual = dx * dx + dz * dz < threshSq;
+            bool sameIncant = all[i]->incanting && all[j]->incanting && all[i]->x == all[j]->x &&
+                              all[i]->y == all[j]->y;
+            if (nearbyVisual || sameIncant) {
                 group.push_back(all[j]);
                 assigned[j] = true;
             }
@@ -573,6 +476,21 @@ std::vector<std::vector<const Player*>> RaylibRenderer::_groupPlayersByVisualPro
         groups.push_back(std::move(group));
     }
     return groups;
+}
+
+Vector3 RaylibRenderer::_groupLabelAnchor(const std::vector<const Player*>& group) const
+{
+    if (group.size() > 1) {
+        const Player* ref = group[0];
+        bool allIncantingOnSameTile = ref->incanting;
+        for (size_t k = 1; allIncantingOnSameTile && k < group.size(); k++)
+            allIncantingOnSameTile =
+                group[k]->incanting && group[k]->x == ref->x && group[k]->y == ref->y;
+        if (allIncantingOnSameTile)
+            return RenderingHelper::tileToWorld(ref->x, ref->y, _state->world.width,
+                                                _state->world.height, TILE_SIZE);
+    }
+    return group[0]->visual.pos;
 }
 
 void RaylibRenderer::_drawSelectionArrow(Vector3 basePos, float modelTopY) const

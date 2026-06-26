@@ -1,6 +1,25 @@
 # Zappy
 
-Zappy is a multiplayer network game. Autonomous AI players form teams and compete on a flat, wrap-around map called Trantor. The first team to have six players reach the maximum elevation (level 8) wins the game.
+Autonomous AI teams race to evolve on a flat, wrap-around tile world. A C++ game server, a C++ 3D graphic client, and Python AI players, all talking over TCP. First team to push six players to the top elevation (level 8) wins.
+
+---
+
+![C++](https://img.shields.io/badge/C%2B%2B-20-blue)
+![Python](https://img.shields.io/badge/Python-3-blue)
+![Last commit](https://img.shields.io/github/last-commit/Nexlein/Zappy)
+![Contributors](https://img.shields.io/github/contributors/Nexlein/Zappy)
+![Code size](https://img.shields.io/github/languages/code-size/Nexlein/Zappy)
+![Top language](https://img.shields.io/github/languages/top/Nexlein/Zappy)
+![Server CI](https://github.com/Nexlein/Zappy/actions/workflows/server.yml/badge.svg)
+![GUI CI](https://github.com/Nexlein/Zappy/actions/workflows/gui.yml/badge.svg)
+![AI CI](https://github.com/Nexlein/Zappy/actions/workflows/ai.yml/badge.svg)
+![Docs](https://github.com/Nexlein/Zappy/actions/workflows/docs.yml/badge.svg)
+
+[![Contributors](https://contrib.rocks/image?repo=Nexlein/Zappy)](https://github.com/Nexlein/Zappy/graphs/contributors)
+
+**📖 API docs** (Doxygen, published on every push to `main`): [Server](https://nexlein.github.io/Zappy/server/) · [GUI](https://nexlein.github.io/Zappy/gui/)
+
+---
 
 We split the project into three distinct components that communicate over TCP sockets.
 

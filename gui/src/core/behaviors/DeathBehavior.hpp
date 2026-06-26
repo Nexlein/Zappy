@@ -13,7 +13,7 @@ class DeathBehavior : public ADrawableBehavior {
     void update(float dt) override;
     bool isDone() const override;
     float getDuration() const override { return _duration; }
-    float minDuration() const override { return 0.3f; }
+    float minDuration() const override { return 0.0f; }
 
     private:
     void _spawnParticles();

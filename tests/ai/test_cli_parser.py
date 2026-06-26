@@ -39,6 +39,7 @@ class TestParseArgs(unittest.TestCase):
                     teamName="team1",
                     host="192.168.1.1",
                     strategy="utility",
+                    verbose=None,
                 ),
             )
 
@@ -58,6 +59,16 @@ class TestParseArgs(unittest.TestCase):
             config = parseArgs()
             self.assertEqual(config.host, "localhost")
             self.assertEqual(config.strategy, "fsm")
+            self.assertIsNone(config.verbose)
+
+    def test_verbose_flag(self):
+        with patch("sys.argv", ["zappy_ai", "-p", "4242", "-n", "team1", "-v"]):
+            config = parseArgs()
+            self.assertEqual(config.verbose, "both")
+
+        with patch("sys.argv", ["zappy_ai", "-p", "4242", "-n", "team1", "-v", "ai"]):
+            config = parseArgs()
+            self.assertEqual(config.verbose, "ai")
 
     @patch("argsParser.get_client_config", return_value={})
     def test_missing_port(self, mock_defaults):

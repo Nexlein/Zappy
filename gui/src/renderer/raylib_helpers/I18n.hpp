@@ -46,8 +46,27 @@ class I18n {
         // Tooltip — egg
         EGG_TEAM,
 
+        // Player panel (Tab)
+        PANEL_PLAYER_LIST,
+        PANEL_LVL,
+
+        // Entity tooltip buttons
+        BTN_FOLLOW,
+        BTN_STOP_FOLLOW,
+
+        // Speed slider
+        SPEED_LABEL,
+
         // Player label (above head)
         PLAYER_HEAD_LEVEL,
+
+        // Win screen
+        WIN_GAME_OVER,
+        WIN_TEAM_WON,
+        WIN_DURATION,
+        WIN_DURATION_UNKNOWN,
+        WIN_TICKS,
+        WIN_QUIT,
 
         // Resource names (must stay contiguous and ordered: food=0 … thystame=6)
         RESOURCE_FOOD,
@@ -106,7 +125,22 @@ class I18n {
 
             "  Team ",  // EGG_TEAM
 
+            "Player List",  // PANEL_PLAYER_LIST
+            "Lvl",          // PANEL_LVL
+
+            "Follow",       // BTN_FOLLOW
+            "Stop Follow",  // BTN_STOP_FOLLOW
+
+            "Speed: ",  // SPEED_LABEL
+
             "Level ",  // PLAYER_HEAD_LEVEL
+
+            "Game Over",      // WIN_GAME_OVER
+            " won!",          // WIN_TEAM_WON
+            "Duration: ",     // WIN_DURATION
+            "Duration: ...",  // WIN_DURATION_UNKNOWN
+            " ticks",         // WIN_TICKS
+            "Quit",           // WIN_QUIT
 
             "Food",       // RESOURCE_FOOD
             "Linemate",   // RESOURCE_LINEMATE
@@ -131,7 +165,7 @@ class I18n {
 
             "Case",    // LABEL_TILE
             "Joueur",  // LABEL_PLAYER
-            "Oeuf",    // LABEL_EGG
+            "Oeuf",    // LABEL_EGG  (Œuf needs U+0152, outside Latin-1 Supplement)
 
             " est vide",  // TILE_EMPTY
             "Case :",     // TILE_HEADER
@@ -143,7 +177,22 @@ class I18n {
 
             "  Équipe ",  // EGG_TEAM
 
+            "Liste des joueurs",  // PANEL_PLAYER_LIST
+            "Niv.",               // PANEL_LVL
+
+            "Suivre",   // BTN_FOLLOW
+            "Arrêter",  // BTN_STOP_FOLLOW
+
+            "Vitesse : ",  // SPEED_LABEL
+
             "Niveau ",  // PLAYER_HEAD_LEVEL
+
+            "Fin de partie",  // WIN_GAME_OVER
+            " a gagné !",     // WIN_TEAM_WON
+            "Durée : ",       // WIN_DURATION
+            "Durée : ...",    // WIN_DURATION_UNKNOWN
+            " ticks",         // WIN_TICKS
+            "Quitter",        // WIN_QUIT
 
             "Nourriture",  // RESOURCE_FOOD
             "Linemate",    // RESOURCE_LINEMATE

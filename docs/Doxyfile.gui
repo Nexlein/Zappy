@@ -1,0 +1,13 @@
+# GUI sub-site -> site/gui
+@INCLUDE = docs/Doxyfile.common
+
+PROJECT_NAME           = "Zappy GUI"
+PROJECT_BRIEF          = "C++ graphic client: renderer, camera, network"
+HTML_OUTPUT            = gui
+INPUT                  = gui/src gui/doc.md
+USE_MDFILE_AS_MAINPAGE = gui/doc.md
+
+# Emit this site's tag file; consume the server tag file for cross-links.
+# Path after '=' is the server html dir relative to the gui html dir.
+GENERATE_TAGFILE       = build/tags/gui.tag
+TAGFILES               = build/tags/server.tag=../server

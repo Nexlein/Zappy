@@ -39,6 +39,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 ai/logs/
+server/logs/
 
 # Test outputs
 Testing/
@@ -48,3 +49,10 @@ Testing/
 /zappy_tui
 tui/.venv/
 tui/*.md
+
+# Doxygen docs (generated locally + in CI)
+/site/
+docs/doxygen-awesome/
+docs/header.html
+docs/footer.html
+docs/_throwaway.css

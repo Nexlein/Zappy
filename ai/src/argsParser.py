@@ -13,13 +13,17 @@ from utils.config_loader import get_client_config
 
 @dataclass
 class Config:
+    """CLI and config file parameters for the AI client."""
+
     port: int
     teamName: str
     host: str
     strategy: str
+    verbose: str | None
 
 
 def parseArgs() -> Config:
+    """Parse command line arguments and merge with defaults."""
     if "--help" in sys.argv:
         print("USAGE: ./zappy_ai -p PORT -n NAME [-h HOST] [-s STRATEGY]")
         print("")
@@ -28,6 +32,7 @@ def parseArgs() -> Config:
         print("-n name\t\tname of the team")
         print("-h machine\tname of the machine; localhost by default")
         print("-s strategy\tAI strategy: fsm, utility, uai or queen; fsm by default")
+        print("-v [type]\tVerbose terminal logging: network, ai, or both (default)")
         sys.exit(0)
 
     defaults = get_client_config()
@@ -62,6 +67,14 @@ def parseArgs() -> Config:
         choices=["fsm", "utility", "uai", "queen"],
         help="AI strategy: fsm, utility, uai or queen (default: fsm)",
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        nargs="?",
+        const="both",
+        choices=["network", "ai", "both"],
+        help="Enable verbose terminal logging",
+    )
 
     args = parser.parse_args()
 
@@ -77,4 +90,5 @@ def parseArgs() -> Config:
         teamName=args.name,
         host=args.host,
         strategy=args.strategy,
+        verbose=args.verbose,
     )

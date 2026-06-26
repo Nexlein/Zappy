@@ -1,0 +1,71 @@
+name: Docs
+
+# Builds two physically separated Doxygen sub-sites (server, gui) plus a README
+# landing hub, styled with doxygen-awesome-css, and deploys them to GitHub Pages.
+# Requires repo Settings -> Pages -> Source = "GitHub Actions".
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only the latest run to main publishes; in-progress runs are cancelled.
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+env:
+  DOXYGEN_AWESOME_VERSION: v2.3.4
+
+jobs:
+  build:
+    if: github.repository == 'Nexlein/Zappy'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code
+        uses: actions/checkout@v6
+
+      - name: Install Doxygen + Graphviz
+        run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
+
+      - name: Fetch doxygen-awesome-css (pinned)
+        run: |
+          git clone --depth 1 --branch "${DOXYGEN_AWESOME_VERSION}" \
+            https://github.com/jothepro/doxygen-awesome-css.git docs/doxygen-awesome
+
+      - name: Generate + patch HTML header (dark-mode toggle, copy buttons)
+        run: |
+          doxygen -w html docs/header.html docs/footer.html docs/_throwaway.css docs/Doxyfile.common
+          awk '/<\/head>/ { while ((getline line < "docs/header-scripts.html") > 0) print line }
+               { print }' docs/header.html > docs/header.patched.html
+          mv docs/header.patched.html docs/header.html
+
+      - name: Build sub-sites (two-way cross-linked tag files)
+        run: |
+          mkdir -p build/tags
+          doxygen docs/Doxyfile.server
+          doxygen docs/Doxyfile.gui
+          ( cat docs/Doxyfile.server; echo 'TAGFILES = build/tags/gui.tag=../gui' ) | doxygen -
+          doxygen docs/Doxyfile.hub
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    if: github.repository == 'Nexlein/Zappy'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,12 +1,11 @@
 #include <arpa/inet.h>
+#include <gtest/gtest.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
 #include <chrono>
 #include <thread>
-
-#include <gtest/gtest.h>
 
 #include "core/Args.hpp"
 #include "core/Scheduler.hpp"

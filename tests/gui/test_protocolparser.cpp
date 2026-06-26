@@ -295,6 +295,22 @@ TEST(ProtocolParserTest, ParseSBP)
     ASSERT_TRUE(std::holds_alternative<BadParameters>(*event));
 }
 
+TEST(ProtocolParserTest, ParseGWT)
+{
+    auto event = ProtocolParser::parse("gwt queen 78 7748\n");
+    ASSERT_TRUE(event.has_value());
+    ASSERT_TRUE(std::holds_alternative<WinDuration>(*event));
+    const auto& w = std::get<WinDuration>(*event);
+    EXPECT_EQ(w.team, "queen");
+    EXPECT_EQ(w.seconds, 78);
+    EXPECT_EQ(w.ticks, 7748);
+}
+
+TEST(ProtocolParserTest, ParseGWTMalformed)
+{
+    EXPECT_FALSE(ProtocolParser::parse("gwt queen 78\n").has_value());
+}
+
 // Error cases
 TEST(ProtocolParserTest, ParseEmptyString)
 {
