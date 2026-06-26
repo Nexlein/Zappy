@@ -4,8 +4,8 @@
 PROJECT_NAME           = "Zappy GUI"
 PROJECT_BRIEF          = "C++ graphic client: renderer, camera, network"
 HTML_OUTPUT            = gui
-INPUT                  = gui/src gui/doc.md
-USE_MDFILE_AS_MAINPAGE = gui/doc.md
+INPUT                  = gui/src gui/overview.md
+USE_MDFILE_AS_MAINPAGE = gui/overview.md
 
 # Emit this site's tag file; consume the server tag file for cross-links.
 # Path after '=' is the server html dir relative to the gui html dir.

@@ -4,8 +4,8 @@
 PROJECT_NAME           = "Zappy Server"
 PROJECT_BRIEF          = "C++ game server: world, rules, scheduler, network"
 HTML_OUTPUT            = server
-INPUT                  = server/src server/doc.md
-USE_MDFILE_AS_MAINPAGE = server/doc.md
+INPUT                  = server/src server/overview.md
+USE_MDFILE_AS_MAINPAGE = server/overview.md
 
 # Emit this site's tag file; consume the GUI tag file.
 # TAGFILES is empty here on the first pass (gui.tag does not exist yet) and is
