@@ -1,0 +1,86 @@
+# Shared Doxygen config @INCLUDE'd by every sub-site Doxyfile.
+# Per-site files override PROJECT_NAME, INPUT, HTML_OUTPUT, mainpage and tag files.
+# All doxygen invocations are run from the repo root, so every path here is
+# relative to the repo root.
+
+#---------------------------------------------------------------------------
+# Project
+#---------------------------------------------------------------------------
+PROJECT_NAME           = "Zappy"
+PROJECT_BRIEF          = "Networked tile-world game: server, GUI, AI"
+OUTPUT_DIRECTORY       = site
+CREATE_SUBDIRS         = NO
+OUTPUT_LANGUAGE        = English
+MARKDOWN_SUPPORT       = YES
+AUTOLINK_SUPPORT       = YES
+TAB_SIZE               = 4
+OPTIMIZE_OUTPUT_FOR_C  = NO
+BUILTIN_STL_SUPPORT    = YES
+
+#---------------------------------------------------------------------------
+# Build / extraction
+#---------------------------------------------------------------------------
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+EXTRACT_ANON_NSPACES   = YES
+RECURSIVE              = YES
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+GENERATE_TODOLIST      = YES
+WARN_IF_UNDOCUMENTED   = NO
+QUIET                  = YES
+
+FILE_PATTERNS          = *.c *.cc *.cpp *.cxx *.h *.hh *.hpp *.hxx *.md
+EXTENSION_MAPPING      = inc=C++
+EXCLUDE_PATTERNS       = */build/* */external/* */.venv/* */tests/* */logs/*
+
+#---------------------------------------------------------------------------
+# Output formats
+#---------------------------------------------------------------------------
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+GENERATE_XML           = NO
+DISABLE_INDEX          = NO
+GENERATE_TREEVIEW      = YES
+FULL_SIDEBAR           = NO
+HTML_COLORSTYLE        = LIGHT
+HTML_DYNAMIC_SECTIONS  = YES
+
+#---------------------------------------------------------------------------
+# doxygen-awesome-css + dark-mode toggle
+# (css/js cloned into docs/doxygen-awesome by the workflow,
+#  docs/header.html generated + script-injected by the workflow)
+#---------------------------------------------------------------------------
+HTML_HEADER            = docs/header.html
+HTML_EXTRA_STYLESHEET  = docs/doxygen-awesome/doxygen-awesome.css \
+                         docs/doxygen-awesome/doxygen-awesome-sidebar-only.css \
+                         docs/doxygen-awesome/doxygen-awesome-sidebar-only-darkmode-toggle.css
+HTML_EXTRA_FILES       = docs/doxygen-awesome/doxygen-awesome-darkmode-toggle.js \
+                         docs/doxygen-awesome/doxygen-awesome-fragment-copy-button.js \
+                         docs/doxygen-awesome/doxygen-awesome-paragraph-link.js \
+                         docs/doxygen-awesome/doxygen-awesome-interactive-toc.js
+
+#---------------------------------------------------------------------------
+# UML / graphs via Graphviz dot (full depth)
+#---------------------------------------------------------------------------
+HAVE_DOT               = YES
+DOT_IMAGE_FORMAT       = svg
+INTERACTIVE_SVG        = YES
+UML_LOOK               = YES
+TEMPLATE_RELATIONS     = YES
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+GROUP_GRAPHS           = YES
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+GRAPHICAL_HIERARCHY    = YES
+DIRECTORY_GRAPH        = YES
+DOT_MULTI_TARGETS      = YES
+DOT_GRAPH_MAX_NODES    = 100
+MAX_DOT_GRAPH_DEPTH    = 0

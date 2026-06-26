@@ -1,0 +1,15 @@
+# Root hub -> site/ (README.md as the landing mainpage, links to both sub-sites)
+@INCLUDE = docs/Doxyfile.common
+
+PROJECT_NAME           = "Zappy"
+PROJECT_BRIEF          = "Documentation hub"
+HTML_OUTPUT            = .
+INPUT                  = README.md
+USE_MDFILE_AS_MAINPAGE = README.md
+
+# Hub is a landing page only: no source extraction, no graphs, no tag files.
+EXTRACT_ALL            = NO
+SOURCE_BROWSER         = NO
+HAVE_DOT               = NO
+GENERATE_TAGFILE       =
+TAGFILES               =
