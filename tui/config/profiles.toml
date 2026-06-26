@@ -26,5 +26,17 @@ auto_gui = true
 
 [[profiles.solo.teams]]
 name = "loners"
+ai = 1
+strategy = "queen"
+
+[profiles.no_ai]
+width = 7
+height = 7
+clients = 1
+freq = 50
+auto_gui = true
+
+[[profiles.no_ai.teams]]
+name = "spectators"
 ai = 0
 strategy = "queen"
