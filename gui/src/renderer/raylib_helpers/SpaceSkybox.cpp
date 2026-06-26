@@ -1,6 +1,6 @@
 #include "SpaceSkybox.hpp"
 
-#include <cstdlib>
+#include <random>
 
 #include "raymath.h"
 #include "rlgl.h"
@@ -21,13 +21,19 @@ void SpaceSkybox::_generateTexture()
     // Generate a smooth gradient from deep dark blue -> black (0 degrees = vertical)
     Image img = GenImageGradientLinear(width, height, 0, {10, 5, 20, 255}, {0, 0, 0, 255});
 
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distX(0, width - 1);
+    std::uniform_int_distribution<> distY(0, height - 1);
+    std::uniform_int_distribution<> distIntensity(100, 255);
+
     // Add scattered stars
     for (int i = 0; i < 2000; ++i) {
-        int x = rand() % width;
-        int y = rand() % height;
+        int x = distX(gen);
+        int y = distY(gen);
 
         // Make most stars faint, some bright
-        int intensity = (rand() % 155) + 100;
+        int intensity = distIntensity(gen);
         unsigned char c = static_cast<unsigned char>(intensity);
 
         ImageDrawPixel(&img, x, y, {c, c, static_cast<unsigned char>(c > 200 ? 255 : c), 255});
