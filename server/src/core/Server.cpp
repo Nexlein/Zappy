@@ -2,10 +2,18 @@
 
 #include <chrono>
 #include <cmath>
+#include <csignal>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
+
+namespace {
+
+    volatile std::sig_atomic_t g_stopRequested = 0;
+    extern "C" void requestStop(int) { g_stopRequested = 1; }
+
+}  // namespace
 
 #include "logging/CompositeSink.hpp"
 #include "logging/ConsoleSink.hpp"
@@ -97,10 +105,13 @@ void Server::_handleGameOver()
 
 void Server::run()
 {
+    std::signal(SIGINT, requestStop);
+    std::signal(SIGTERM, requestStop);
+
     _scheduleRespawn();
     _logStartup();
 
-    while (true) {
+    while (!g_stopRequested) {
         try {
             int timeout = _scheduler.msUntilNext();
             PollResult pr = _clients.poll(timeout);
@@ -123,4 +134,6 @@ void Server::run()
             std::cerr << "[error] " << e.what() << "\n";
         }
     }
+
+    _logger.info("Server", "Shutdown signal received, closing server");
 }
