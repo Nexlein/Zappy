@@ -15,7 +15,7 @@
 
 static ServerConfig makeConfig(int port, int clientsNb = 2)
 {
-    return ServerConfig{port, 10, 10, {"TeamA", "TeamB"}, clientsNb, 100};
+    return ServerConfig{port, 10, 10, {"TeamA", "TeamB"}, clientsNb, 100, 42};
 }
 
 static int connectTo(int port)
@@ -58,7 +58,7 @@ struct HandshakeFixture : public ::testing::Test {
     {
         listener = new Listener(port);
         cm = new ClientManager(*listener);
-        world = new World(config.width, config.height, config.teamNames);
+        world = new World(config.width, config.height, config.teamNames, 42);
         world->spawnInitialEggs(config.clientsNb);
         notifier = new GuiNotifier(*cm);
         world->addWorldObserver(notifier);

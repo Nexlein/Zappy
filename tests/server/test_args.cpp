@@ -49,11 +49,13 @@ TEST(ServerArgsTest, HelpFlag)
 // Missing required flags
 TEST(ServerArgsTest, NoArguments)
 {
+    // Bare invocation prints the full help and exits successfully (treated like --help).
     const char* argv[] = {"prog"};
     Args args(1, const_cast<char**>(argv));
 
     EXPECT_FALSE(args.isValid());
-    EXPECT_EQ(args.exitCode(), 84);
+    EXPECT_TRUE(args.isHelpRequested());
+    EXPECT_EQ(args.exitCode(), 0);
 }
 
 TEST(ServerArgsTest, MissingPort)
