@@ -51,6 +51,9 @@ namespace clap {
 
         void parse(int argc, char** argv);
 
+        /// Print the usage/options block to stdout (also used for bare invocation).
+        void print_help();
+
         private:
         std::string name;
         std::string description;
@@ -60,6 +63,5 @@ namespace clap {
 
         IArgument* find_argument(std::string_view name);
         static bool starts_with(std::string_view str, std::string_view prefix);
-        void print_help();
     };
 }  // namespace clap

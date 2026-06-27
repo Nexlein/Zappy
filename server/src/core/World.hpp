@@ -46,7 +46,8 @@ struct IncantationReq {
  */
 class World {
     public:
-    World(int width, int height, const std::vector<std::string>& teamNames);
+    /// @param seed value for the world RNG (egg + resource placement), for reproducible games.
+    World(int width, int height, const std::vector<std::string>& teamNames, unsigned int seed);
 
     /// Access a tile by position. Map is toroidal, coordinates wrap.
     Tile& at(int x, int y);
@@ -124,7 +125,7 @@ class World {
     std::unordered_map<int, Player> _players;
     std::unordered_map<int, Egg> _eggs;
     std::vector<std::string> _teamNames;
-    std::mt19937 _rng{std::random_device{}()};
+    std::mt19937 _rng;
     int _nextPlayerId = 0;
     int _nextEggId = 0;
     bool _gameEnded = false;

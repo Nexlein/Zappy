@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <set>
 
-World::World(int width, int height, const std::vector<std::string>& teamNames)
-    : _width(width), _height(height), _teamNames(teamNames)
+World::World(int width, int height, const std::vector<std::string>& teamNames, unsigned int seed)
+    : _width(width), _height(height), _teamNames(teamNames), _rng(seed)
 {
     _tiles = std::vector<Tile>(width * height);
 }

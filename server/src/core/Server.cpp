@@ -24,14 +24,12 @@ Server::Server(const ServerConfig& config)
     : _config(config),
       _listener(config.port),
       _clients(_listener),
-      _world(config.width, config.height, config.teamNames),
+      _world(config.width, config.height, config.teamNames, config.seed),
       _notifier(_clients),
       _logObserver(_logger),
       _dispatcher(_clients, _world, _notifier, _config, _scheduler)
 {
     auto sinks = std::make_unique<CompositeSink>();
-    // Both at Info: structural events only. Debug (per-tick NET I/O, broadcasts)
-    // is dropped to keep the log bounded under broadcast-heavy AI traffic.
     sinks->add(std::make_unique<ConsoleSink>(LogLevel::Info));
     sinks->add(FileSink::forRun("server_p" + std::to_string(_config.port), LogLevel::Info));
     _logger.setSink(std::move(sinks));
@@ -56,6 +54,7 @@ void Server::_logStartup() const
 {
     std::cout << "Server listening on port " << _config.port << "\n";
     std::cout << "Map size: " << _config.width << "x" << _config.height << "\n";
+    std::cout << "Seed: " << _config.seed << "\n";
     std::cout << "Teams: ";
     for (const auto& name : _config.teamNames) std::cout << name << " ";
     std::cout << "\n";
@@ -64,13 +63,8 @@ void Server::_logStartup() const
 void Server::_handleGameOver()
 {
     _gameOverHandled = true;
-    // Freeze the world: cancelling pending events stops moves, incantations,
-    // respawns and starvation, so the final state stays visible on the GUI.
     _scheduler.clear();
 
-    // Close every AI socket so the AI programs hit EOF and exit cleanly. We close
-    // at the socket level WITHOUT removing the players from the world, so no pdi is
-    // emitted and the GUI keeps showing the final board. GUI sockets stay open.
     std::vector<int> aiConns;
     for (const auto& [pid, p] : _world.getPlayers()) aiConns.push_back(p.connectionId);
     for (int conn : aiConns) _clients.disconnect(conn);
@@ -88,8 +82,6 @@ void Server::_handleGameOver()
     _logger.info("GAME", "Server uptime: " + std::to_string(upSeconds) + " s (" +
                              std::to_string(upTicks) + " ticks)");
 
-    // Time-to-win measured from when the winning team entered, not from server
-    // boot (which would count idle lobby time before any AI connected).
     if (auto join = _dispatcher.teamJoin(winner)) {
         long long joinSeconds = join->elapsed.count() / 1000000;
         long long joinTicks = std::llround(join->ticks);
