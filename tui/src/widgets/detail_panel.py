@@ -26,12 +26,14 @@ class DetailPanel(Static):
             f"  - {t.name}: {t.ai} ai ({t.strategy or 'default'})"
             for t in profile.teams
         )
+        seed = "" if profile.seed is None else f"seed:    {profile.seed}\n"
         self.update(
             f"profile: {profile.name}\n"
             f"map:     {profile.width}x{profile.height}\n"
             f"clients: {profile.clients}\n"
             f"freq:    {profile.freq}\n"
             f"auto_gui: {profile.auto_gui}\n"
+            f"{seed}"
             f"teams:\n{teams}"
         )
 

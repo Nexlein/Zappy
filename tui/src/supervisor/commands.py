@@ -21,7 +21,7 @@ AI_VERBOSE = "ai"
 
 
 def server_command(binary: str, port: int, profile: Profile) -> list[str]:
-    """``-p -x -y -n <team names...> -c <clients> -f <freq>``."""
+    """``-p -x -y -n <team names...> -c <clients> -f <freq> [-s <seed>]``."""
     args = [
         binary,
         "-p",
@@ -37,6 +37,8 @@ def server_command(binary: str, port: int, profile: Profile) -> list[str]:
         "-f",
         str(profile.freq),
     ]
+    if profile.seed is not None:
+        args += ["-s", str(profile.seed)]
     return args
 
 

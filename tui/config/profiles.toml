@@ -40,3 +40,16 @@ auto_gui = true
 name = "spectators"
 ai = 0
 strategy = "queen"
+
+[profiles.setseed]
+width = 10
+height = 10
+clients = 3
+freq = 100
+auto_gui = true
+seed = 676767
+
+[[profiles.setseed.teams]]
+name = "queen"
+ai = 1
+strategy = "queen"
