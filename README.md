@@ -27,23 +27,23 @@ The first team to push six players to the top elevation (level 8) wins.
 
 The project is split into three main components and one bonus tool, all communicating over TCP.
 
-### 1. Server (`zappy_server`)
+### 1. Server (zappy_server)
 
 **C++** • Manages game state, timing, and rules. Uses a single-threaded `poll()` loop to accept both GUI and AI connections.
 
-### 2. Graphic Client (`zappy_gui`)
+### 2. Graphic Client (zappy_gui)
 
 **C++ / Raylib** • A 3D spectator client that requests the map state and renders the world.
 
 - *Feature:* Run with `--headless` for text-only logs.
 
-### 3. AI Client (`zappy_ai`)
+### 3. AI Client (zappy_ai)
 
 **Python** • An autonomous player that survives, gathers resources, and incants to level up.
 
 - *Strategies (`-s`):* `fsm` (rule-based), `uai` (score-based) or `queen`.
 
-### Bonus: TUI Orchestrator (`zappy_tui`)
+### Bonus: TUI Orchestrator (zappy_tui)
 
 **Python / Textual** • A terminal dashboard to monitor games, manage profiles, attach clients, and track live logs.
 
