@@ -4,6 +4,7 @@
 
 #include <algorithm>
 
+#include "ColorPalette.hpp"
 #include "I18n.hpp"
 #include "TextRenderer.hpp"
 
@@ -80,9 +81,9 @@ void EntityTooltipWidget::_rebuild() const
                 _tooltip.addLine(I18n::get(I18n::Key::TILE_HEADER), TILE_COLOR);
                 for (int i = 0; i < 7; i++) {
                     if (res[i] <= 0) continue;
-                    _tooltip.addLine(
-                        std::string("  ") + I18n::resourceName(i) + ": " + std::to_string(res[i]),
-                        TEXT_COLOR);
+                    _tooltip.addColoredLine(
+                        {std::string("  ") + I18n::resourceName(i), ": " + std::to_string(res[i])},
+                        {ColorPalette::getResourceColor(i), TEXT_COLOR});
                 }
             }
             break;
@@ -106,9 +107,9 @@ void EntityTooltipWidget::_rebuild() const
                 _tooltip.addLine(I18n::get(I18n::Key::PLAYER_INVENTORY), TEXT_COLOR);
                 for (int i = 0; i < 7; i++) {
                     if (p.inventory[i] <= 0) continue;
-                    _tooltip.addLine(std::string("    ") + I18n::resourceName(i) + ": " +
-                                         std::to_string(p.inventory[i]),
-                                     TEXT_COLOR);
+                    _tooltip.addColoredLine({std::string("    ") + I18n::resourceName(i),
+                                             ": " + std::to_string(p.inventory[i])},
+                                            {ColorPalette::getResourceColor(i), TEXT_COLOR});
                 }
             }
             break;

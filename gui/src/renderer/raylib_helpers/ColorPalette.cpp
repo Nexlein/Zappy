@@ -42,3 +42,19 @@ bool ColorPalette::colorEquals(Color a, Color b)
 {
     return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
 }
+
+Color ColorPalette::getResourceColor(int resourceIndex)
+{
+    static const Color resourceColors[] = {
+        RED,       // food
+        DARKGRAY,  // linemate
+        GREEN,     // deraumere
+        BLUE,      // sibur
+        YELLOW,    // mendiane
+        ORANGE,    // phiras
+        PURPLE     // thystame
+    };
+
+    if (resourceIndex < 0 || resourceIndex >= 7) return WHITE;
+    return resourceColors[resourceIndex];
+}

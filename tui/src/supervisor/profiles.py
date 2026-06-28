@@ -23,6 +23,8 @@ class Profile:
     freq: int
     auto_gui: bool
     teams: tuple[Team, ...]
+    # Optional RNG seed (server `-s`). None means omit the flag (server draws one).
+    seed: int | None = None
 
 
 _MISSING = object()
@@ -52,7 +54,7 @@ def _read_toml(path: Path) -> dict:
         raise ProfileError(f"{path}: invalid TOML: {e}") from e
 
 
-_ALLOWED_KEYS = {"width", "height", "clients", "freq", "auto_gui", "teams"}
+_ALLOWED_KEYS = {"width", "height", "clients", "freq", "auto_gui", "teams", "seed"}
 
 
 def _build_profile(name: str, body: dict) -> Profile:
@@ -89,14 +91,27 @@ def _build_profile(name: str, body: dict) -> Profile:
             )
         return value
 
+    def get_optional_nonneg_int(key: str) -> int | None:
+        value = body.get(key, _MISSING)
+        if value is _MISSING:
+            return None
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise ProfileError(
+                f"profile {name}: '{key}' must be an integer, got {value!r}"
+            )
+        if value < 0:
+            raise ProfileError(f"profile {name}: '{key}' must be >= 0, got {value}")
+        return value
+
     width = get_positive_int("width")
     height = get_positive_int("height")
     clients = get_positive_int("clients")
     freq = get_positive_int("freq")
     auto_gui = get_bool("auto_gui", False)
+    seed = get_optional_nonneg_int("seed")
     teams = _build_teams(name, get("teams"), clients)
 
-    return Profile(name, width, height, clients, freq, auto_gui, teams)
+    return Profile(name, width, height, clients, freq, auto_gui, teams, seed)
 
 
 def _build_teams(profile_name: str, raw, clients: int) -> tuple[Team, ...]:

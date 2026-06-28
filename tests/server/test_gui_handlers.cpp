@@ -16,7 +16,7 @@ static constexpr int HIGH_FREQ = 10000;
 
 static ServerConfig makeConfig(int port)
 {
-    return ServerConfig{port, 10, 10, {"TeamA", "TeamB"}, 5, HIGH_FREQ};
+    return ServerConfig{port, 10, 10, {"TeamA", "TeamB"}, 5, HIGH_FREQ, 42};
 }
 
 static int connectTo(int port)
@@ -59,7 +59,7 @@ struct GuiHandlersFixture : public ::testing::Test {
     {
         listener = new Listener(port);
         cm = new ClientManager(*listener);
-        world = new World(config.width, config.height, config.teamNames);
+        world = new World(config.width, config.height, config.teamNames, 42);
         world->spawnInitialEggs(config.clientsNb);
         notifier = new GuiNotifier(*cm);
         scheduler = new Scheduler();

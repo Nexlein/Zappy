@@ -25,6 +25,11 @@ class ColorPalette {
     static Color getTeamColor(int index);
 
     /**
+     * @brief Returns the designated UI/3D color for a given resource index.
+     */
+    static Color getResourceColor(int resourceIndex);
+
+    /**
      * @brief Returns a slime palette with variations based on the team color.
      * @param teamColor The base color of the team.
      * @return SlimePalette with colors derived from the team color.

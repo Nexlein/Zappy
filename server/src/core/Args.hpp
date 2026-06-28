@@ -12,6 +12,7 @@
  * - nameX: name of the teams (-n followed by team names)
  * - clientsNb: number of clients per team (-c)
  * - freq: frequency of the game (-f)
+ * - seed: seed for the world (-s)
  */
 struct ServerConfig {
     int port;
@@ -20,6 +21,7 @@ struct ServerConfig {
     std::vector<std::string> teamNames;
     int clientsNb;
     int freq;
+    unsigned int seed;
 
     friend std::ostream& operator<<(std::ostream& os, const ServerConfig& c)
     {
@@ -28,6 +30,7 @@ struct ServerConfig {
            << "  Map     : " << c.width << "x" << c.height << "\n"
            << "  Clients : " << c.clientsNb << " per team\n"
            << "  Freq    : " << c.freq << " Hz\n"
+           << "  Seed    : " << c.seed << "\n"
            << "  Teams   : ";
         for (size_t i = 0; i < c.teamNames.size(); ++i) {
             if (i) os << ", ";
@@ -71,6 +74,6 @@ class Args {
     static constexpr int SUCCESS = 0;
     static constexpr int ERROR = 84;
 
-    ServerConfig config = {-1, -1, -1, {}, 10, 100};
+    ServerConfig config = {-1, -1, -1, {}, 10, 100, 0};
     ParseResult result = ParseResult::Error;
 };

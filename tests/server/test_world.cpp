@@ -2,7 +2,7 @@
 
 #include "../../server/src/core/World.hpp"
 
-static World makeWorld(int w, int h) { return World(w, h, {"TeamA", "TeamB"}); }
+static World makeWorld(int w, int h) { return World(w, h, {"TeamA", "TeamB"}, 42); }
 
 // --- at() toroidal wrap ---
 
