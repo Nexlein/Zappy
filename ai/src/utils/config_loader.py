@@ -47,6 +47,35 @@ def load_strategy_config(strategy: str) -> None:
             print(f"Warning: Failed to load {strategy}_config.json: {e}")
 
 
+# Average map dimension the base config thresholds were tuned for (10x10).
+_MAP_SCALE_REF = 10
+# Extra food a drone carries per unit of average map dimension above the ref.
+_FOOD_TARGET_PER_SIZE = 1.5
+
+
+def apply_map_scaling(map_width: int, map_height: int):
+    """Scale survival food thresholds to map size and return before/after."""
+    keys = (
+        "SAFE_FOOD_THRESHOLD",
+        "FOOD_TARGET",
+        "FOOD_CEILING",
+    )
+    surv = get_config().get("survival", {})
+    before = {k: surv.get(k) for k in keys}
+
+    avg_size = (map_width + map_height) / 2
+    growth = max(0.0, avg_size - _MAP_SCALE_REF)
+
+    base_target = before["FOOD_TARGET"] or 25
+    base_safe = before["SAFE_FOOD_THRESHOLD"] or 15
+    safe_ratio = base_safe / base_target if base_target else 0.6
+
+    food_target = int(round(base_target + _FOOD_TARGET_PER_SIZE * growth))
+    surv["FOOD_TARGET"] = food_target
+    surv["SAFE_FOOD_THRESHOLD"] = int(round(food_target * safe_ratio))
+    surv["FOOD_CEILING"] = max(before["FOOD_CEILING"] or 45, food_target + 10)
+
+
 def get_survival_config() -> dict[str, Any]:
     return get_config().get("survival", {})
 
