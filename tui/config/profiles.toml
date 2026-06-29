@@ -53,3 +53,15 @@ seed = 676767
 name = "queen"
 ai = 1
 strategy = "queen"
+
+[profiles.evaluation]
+width = 42
+height = 42
+clients = 5
+freq = 100
+auto_gui = true
+
+[[profiles.evaluation.teams]]
+name = "team1"
+ai = 1
+strategy = "queen"
