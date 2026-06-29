@@ -148,6 +148,10 @@ class BroadcastHelp(AState):
             if stone:
                 return f"Set {stone}"
 
+        if context.vision[0].food > 0 and context.inventory.food < safe_food:
+            context.vision.clear()
+            return "Take food"
+
         # Periodically re-broadcast the RALLY signal (only if higher than solo)
         if context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
             msg_type = (
@@ -214,6 +218,7 @@ class MapsToAlly(AState):
         self._leave_target = None
         self._leave_emitted = False
         self.tick_since_bcast = 0
+        self.last_known_direction: int | None = None
         self.leader_id = max(
             (
                 id
@@ -307,7 +312,7 @@ class MapsToAlly(AState):
 
         best_direction = None
         if self.leader_id:
-            # ONLY act on fresh directional data from the current tick
+            # Look for fresh directional data
             for bcst in context.broadcasts:
                 if (
                     bcst.content.drone_id == self.leader_id
@@ -315,7 +320,11 @@ class MapsToAlly(AState):
                     in (MessageType.RALLY, MessageType.RALLY_FULL)
                 ):
                     best_direction = bcst.direction
+                    self.last_known_direction = bcst.direction
                     break
+
+        if best_direction is None and self._last_turn_action == "Forward":
+            best_direction = self.last_known_direction
 
         if best_direction is not None:
             if best_direction != 0 and self.arrived:

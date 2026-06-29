@@ -35,7 +35,19 @@ class SearchStone(AState):
         if context.level >= evo_cfg.get("MAX_LEVEL", 8):
             return AIState.FORAGE_FOOD
 
-        if context.inventory.food < surv_cfg.get("SAFE_FOOD_THRESHOLD", 15):
+        if not context.vision:
+            return None
+
+        gathered = context.vision and context.vision[0].player >= (
+            len(context.ally_roster) + 1
+        )
+
+        if gathered:
+            safe_food_threshold = (evo_cfg.get("MAX_LEVEL", 8) - context.level) * 3 + 2
+        else:
+            safe_food_threshold = surv_cfg.get("SAFE_FOOD_THRESHOLD", 15)
+
+        if context.inventory.food < safe_food_threshold:
             return AIState.FORAGE_FOOD
 
         # Rush behavior: The Queen must spawn enough children to reach exactly 6 players
@@ -61,9 +73,15 @@ class SearchStone(AState):
         if not missing:
             # Check if entire swarm is well-fed before rallying
             # They need ~3 food per remaining ritual to survive
+            gathered = context.vision and context.vision[0].player >= (
+                len(context.ally_roster) + 1
+            )
+            travel_food = (
+                0 if gathered else int((context.map_width + context.map_height) / 10)
+            )
             required_food_per_drone = (
                 evo_cfg.get("MAX_LEVEL", 8) - context.level
-            ) * 3 + 5
+            ) * 3 + travel_food
 
             if global_inventory.get("food", 0) < required_food_per_drone * (
                 len(context.ally_roster) + 1

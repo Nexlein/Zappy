@@ -35,6 +35,9 @@ class SearchStone(AState):
         if context.level >= evo_cfg.get("MAX_LEVEL", 8):
             return AIState.FORAGE_FOOD
 
+        if not context.vision:
+            return None
+
         if context.inventory.food < surv_cfg.get("SAFE_FOOD_THRESHOLD", 10):
             return AIState.FORAGE_FOOD
 
