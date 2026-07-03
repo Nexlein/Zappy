@@ -24,6 +24,10 @@ def get_exploration_action(
     Returns:
         (action_string, updated_forward_streak)
     """
+    if context.vision and context.vision[0].player > 1:
+        if random.random() < 0.5:
+            new_streak = forward_streak + 1
+            return random.choice(["Right", "Left", "Forward"]), new_streak
     best_path = find_closest_resource_path(context.vision, target_resources)
 
     if best_path:

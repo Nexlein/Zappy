@@ -92,6 +92,7 @@ class TestSearchStone(unittest.TestCase):
 
     def test_update_low_food_trigger(self):
         self.context.inventory.food = 4
+        self.context.vision = [Tile()]
         res = self.state.update(self.context)
         self.assertEqual(res, "ForageFood")
 
@@ -99,6 +100,7 @@ class TestSearchStone(unittest.TestCase):
         self.context.level = 1
         self.context.inventory.food = 25
         self.context.inventory.linemate = 1
+        self.context.vision = [Tile()]
         res = self.state.update(self.context)
         self.assertEqual(res, "BroadcastHelp")
 
@@ -108,6 +110,7 @@ class TestSearchStone(unittest.TestCase):
         self.context.inventory.linemate = 1
         self.context.inventory.deraumere = 1
         self.context.inventory.sibur = 1
+        self.context.vision = [Tile()]
         res = self.state.update(self.context)
         self.assertEqual(res, "BroadcastHelp")
 
@@ -142,6 +145,7 @@ class TestSearchStone(unittest.TestCase):
         self.context.team_name = "team5"
         self.context.broadcasts = [_rally("team5", 2)]
         self.context.update_roster()
+        self.context.vision = [Tile()]
         res = self.state.update(self.context)
         self.assertEqual(res, "MapsToAlly")
 

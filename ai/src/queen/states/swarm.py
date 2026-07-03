@@ -148,6 +148,10 @@ class BroadcastHelp(AState):
             if stone:
                 return f"Set {stone}"
 
+        if context.vision[0].food > 0 and context.inventory.food < safe_food:
+            context.vision.clear()
+            return "Take food"
+
         # Periodically re-broadcast the RALLY signal (only if higher than solo)
         if context.level > evo_cfg.get("SOLO_INCANTATION_LEVEL", 1):
             msg_type = (
@@ -203,6 +207,7 @@ class MapsToAlly(AState):
         self._leave_target = None
         self.waiting_incant = False
         self.incant_ticks_waited = 0
+        self.last_known_direction: int | None = None
 
     def enter(self, context: DroneContext) -> None:
         self._entry_level = context.level
@@ -214,6 +219,7 @@ class MapsToAlly(AState):
         self._leave_target = None
         self._leave_emitted = False
         self.tick_since_bcast = 0
+        self.last_known_direction = None
         self.leader_id = max(
             (
                 id
@@ -307,7 +313,6 @@ class MapsToAlly(AState):
 
         best_direction = None
         if self.leader_id:
-            # ONLY act on fresh directional data from the current tick
             for bcst in context.broadcasts:
                 if (
                     bcst.content.drone_id == self.leader_id
@@ -315,11 +320,14 @@ class MapsToAlly(AState):
                     in (MessageType.RALLY, MessageType.RALLY_FULL)
                 ):
                     best_direction = bcst.direction
+                    self.last_known_direction = bcst.direction
                     break
+
+        if best_direction is None and self._last_turn_action == "Forward":
+            best_direction = self.last_known_direction
 
         if best_direction is not None:
             if best_direction != 0 and self.arrived:
-                # The highest leader is not here! We must have arrived at an abandoned tile.
                 self.arrived = False
                 self.ready_sent = False
 
@@ -344,10 +352,15 @@ class MapsToAlly(AState):
                     )
                     return action
 
-        # -- Already on the rally tile (or just arrived): wait for the leader. --
         if self.arrived:
             if not context.vision:
                 return "Look"
+
+            if context.vision[0].food > 0:
+                surv_cfg = get_survival_config()
+                if context.inventory.food < surv_cfg.get("SAFE_FOOD_THRESHOLD", 15):
+                    context.vision.clear()
+                    return "Take food"
 
             evo_cfg = get_evolution_config()
             reqs = evo_cfg.get("ELEVATION_REQUIREMENTS", {}).get(str(context.level), {})
@@ -366,9 +379,8 @@ class MapsToAlly(AState):
                     context.drone_id,
                 )
                 return f"Broadcast {payload}"
-            return None  # Wait for INCANT
+            return None
 
-        # No RALLY heard this tick and not arrived — stay put and wait for the next broadcast.
         return None
 
     def exit(self, context: DroneContext) -> None:

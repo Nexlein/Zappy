@@ -31,9 +31,9 @@
 set -u
 
 # --- config (mirrors profiles.toml [profiles.solo] "loners") ----------------
-WIDTH=7
-HEIGHT=7
-CLIENTS=4
+WIDTH=10
+HEIGHT=10
+CLIENTS=5
 FREQ=100
 TEAM=loners
 STRATEGY=queen
@@ -43,7 +43,7 @@ PORT_BASE=${2:-7000}
 CORES=$(nproc 2>/dev/null || echo 2)
 WORKERS=${3:-$(( CORES > 2 ? (CORES + 1) / 2 : 1 ))}   # default ~half the cores
 WORKER_SPAN=20              # ports reserved per worker (one run at a time)
-TIMEOUT=80                  # s, per run before declaring it stuck
+TIMEOUT=180                 # s, per run before declaring it stuck
 
 SERVER=./zappy_server
 AI=./zappy_ai

@@ -1,8 +1,8 @@
 # Zappy game profiles. Each [profiles.<name>] is one launchable game setup.
 
 [profiles.duel]
-width = 10
-height = 10
+width = 8
+height = 8
 clients = 3
 freq = 100
 auto_gui = true
@@ -51,5 +51,17 @@ seed = 676767
 
 [[profiles.setseed.teams]]
 name = "queen"
+ai = 1
+strategy = "queen"
+
+[profiles.evaluation]
+width = 42
+height = 42
+clients = 5
+freq = 100
+auto_gui = true
+
+[[profiles.evaluation.teams]]
+name = "team1"
 ai = 1
 strategy = "queen"

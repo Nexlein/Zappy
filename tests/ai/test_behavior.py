@@ -93,9 +93,9 @@ class TestBehavior(unittest.TestCase):
 
         # Simulate success
         self.context.inventory.linemate += 1
-        self.context.vision.clear()
 
         # Next tick, SearchStone will evaluate, see we have enough stones, and transition to BroadcastHelp.
+        self.context.vision = [Tile()]
         self.controller.tick()
         self.assertEqual(self.controller.current_state_name, "BroadcastHelp")
 

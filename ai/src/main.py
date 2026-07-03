@@ -19,7 +19,11 @@ import subprocess
 import sys
 import signal
 import time
-from utils.config_loader import get_network_config, load_strategy_config
+from utils.config_loader import (
+    get_network_config,
+    load_strategy_config,
+    apply_map_scaling,
+)
 
 
 class DroneDied(Exception):
@@ -77,6 +81,8 @@ class Orchestrator:
         self._context.map_width = w
         self._context.map_height = h
         self._config = config
+
+        apply_map_scaling(w, h)
 
         self._net = NetworkBuffer(client)
         self._controller = create_ai_controller(config.strategy, self._context)
