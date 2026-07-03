@@ -1,8 +1,8 @@
 # Zappy game profiles. Each [profiles.<name>] is one launchable game setup.
 
 [profiles.duel]
-width = 10
-height = 10
+width = 8
+height = 8
 clients = 3
 freq = 100
 auto_gui = true
